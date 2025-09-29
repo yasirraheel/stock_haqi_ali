@@ -117,5 +117,15 @@ Thumbs.db
 # public/screenshots/*
 # public/videos/*
 
+# Vendor directories with sensitive data
+public/stripe_web/
+public/stripe-php/
+public/paypal_braintree/
+public/coingate/
+public/device-detector/
+public/mercadopago/
+public/paytm/
+public/cashfree/
+
 # License files
 public/.lic
