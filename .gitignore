@@ -19,8 +19,6 @@ yarn-error.log
 # Laravel specific
 bootstrap/cache/*.php
 config/cache.php
-config/session.php
-config/view.php
 .env.local
 .env.*.local
 
