@@ -120,7 +120,7 @@ public/stripe_web/
 public/stripe-php/
 public/paypal_braintree/
 public/coingate/
-public/device-detector/
+# public/device-detector/ - Now included for device detection functionality
 public/mercadopago/
 public/paytm/
 public/cashfree/
