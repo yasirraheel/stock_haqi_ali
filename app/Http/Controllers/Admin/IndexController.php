@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\UsersDeviceHistory;
 
-// Device detector is now loaded via Composer autoloader
+require(base_path() . '/public/device-detector/vendor/autoload.php');
 use DeviceDetector\ClientHints;
 use DeviceDetector\DeviceDetector;
 use DeviceDetector\Parser\Device\AbstractDeviceParser;

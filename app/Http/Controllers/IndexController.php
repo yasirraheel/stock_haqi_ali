@@ -33,7 +33,7 @@ use FFMpeg\Format\Video\X264;
 use FFMpeg\Filters\AdvancedMedia\ComplexFilters;
 use FFMpeg\Filters\Video\WatermarkFilter;
 
-// Device detector is now loaded via Composer autoloader
+require(base_path() . '/public/device-detector/vendor/autoload.php');
 
 use DeviceDetector\ClientHints;
 use DeviceDetector\DeviceDetector;
