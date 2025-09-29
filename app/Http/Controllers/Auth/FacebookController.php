@@ -10,7 +10,7 @@ use App\User;
 use Session;
 use App\UsersDeviceHistory;
 
-require(base_path() . '/public/device-detector/vendor/autoload.php');
+// Device detector is now loaded via Composer autoloader
 use DeviceDetector\ClientHints;
 use DeviceDetector\DeviceDetector;
 use DeviceDetector\Parser\Device\AbstractDeviceParser;

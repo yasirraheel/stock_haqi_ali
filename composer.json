@@ -22,7 +22,8 @@
         "spatie/laravel-cookie-consent": "^3.2",
         "srmklive/paypal": "~3.0",
         "unicodeveloper/laravel-paystack": "^1.1",
-        "webklex/php-imap": "^5.5"
+        "webklex/php-imap": "^5.5",
+        "piwik/device-detector": "^6.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.13",
