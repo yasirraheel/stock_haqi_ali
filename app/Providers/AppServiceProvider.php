@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+
+
+    public function register(): void
+    {
+        $FWDEVPlayer = "FWDEVPlayer2.js";
+
+        // Share the variable with all views
+        View::share('FWDEVPlayer', $FWDEVPlayer);
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        //
+    }
+}

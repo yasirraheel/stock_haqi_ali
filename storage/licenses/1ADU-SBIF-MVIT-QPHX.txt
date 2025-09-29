@@ -1,0 +1,15 @@
+License Key: 1ADU-SBIF-MVIT-QPHX
+Name: Yasir8
+Email: sb-bajni30868213@business.example.com
+Movie Title: Water flow
+Author: ADMINISTRATOR
+License Type: Single
+License Price: 25.00 GBP
+Payment Gateway: Paypal
+Payment ID: 5BE34469EC287854Y
+Date: September 20, 2024
+
+Terms and Conditions:
+1. This license is non-transferable.
+2. This license is valid for the lifetime of the product.
+3. No refunds or exchanges are allowed.
