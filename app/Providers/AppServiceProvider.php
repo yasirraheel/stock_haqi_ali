@@ -14,10 +14,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $FWDEVPlayer = "FWDEVPlayer2.js";
-
-        // Share the variable with all views
-        View::share('FWDEVPlayer', $FWDEVPlayer);
+        //
     }
 
     /**
@@ -25,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $FWDEVPlayer = "FWDEVPlayer2.js";
+
+        // Share the variable with all views
+        View::share('FWDEVPlayer', $FWDEVPlayer);
     }
 }
