@@ -1,6 +1,6 @@
 /node_modules
 /public/hot
-/public/storage
+# /public/storage
 /storage/*.key
 /vendor
 .env
@@ -17,8 +17,8 @@ yarn-error.log
 /.vscode
 
 # Laravel specific
-bootstrap/cache/*.php
-config/cache.php
+# bootstrap/cache/*.php
+# config/cache.php
 .env.local
 .env.*.local
 
