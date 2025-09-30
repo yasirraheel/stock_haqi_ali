@@ -17,8 +17,8 @@
 /vendor
 
 # Logs
-storage/logs/*.log
-*.log
+# storage/logs/*.log
+# *.log
 
 # Runtime data
 pids

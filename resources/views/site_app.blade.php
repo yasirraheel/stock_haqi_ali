@@ -84,124 +84,165 @@
           background: {{$search_bg}} !important;
       }
 
-      /* Audio Section Styling */
-      .audio-section .single-video {
-          position: relative;
-          margin-bottom: 20px;
-      }
-
-      .audio-section .video-img {
-          position: relative;
+      /* Audio Section Styling - Matching Audio Page Design */
+      .audio-card {
+          background: #2d2d44;
+          border-radius: 8px;
+          padding: 0;
+          margin-bottom: 15px;
+          border: 1px solid #3d3d5c;
+          transition: all 0.3s ease;
           overflow: hidden;
-          border-radius: 8px;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-          transition: transform 0.3s ease;
+          position: relative;
+          height: 80px;
       }
 
-      .audio-section .video-img:hover {
-          transform: translateY(-5px);
+      .audio-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          border-color: #fe0278;
       }
 
-      .audio-section .video-img img {
-          width: 100%;
-          height: 200px;
-          object-fit: cover;
-          border-radius: 8px;
-      }
-
-      .audio-section .audio-placeholder {
-          width: 100%;
-          height: 200px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      .audio-card-content {
           display: flex;
-          flex-direction: column;
+          align-items: center;
+          padding: 12px 15px;
+          height: 100%;
+          position: relative;
+      }
+
+      .audio-play-btn {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(90deg, #ff8508, #fd0575);
+          border-radius: 50%;
+          display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 8px;
-          position: relative;
-          overflow: hidden;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(255, 133, 8, 0.3);
+          flex-shrink: 0;
+          margin-right: 12px;
       }
 
-      .audio-section .audio-waveform {
+      .audio-play-btn:hover {
+          background: #fe0278;
+          transform: scale(1.05);
+          box-shadow: 0 4px 12px rgba(254, 2, 120, 0.4);
+      }
+
+      .audio-play-btn i {
+          color: white;
+          font-size: 14px;
+          margin-left: 1px;
+      }
+
+      .audio-info {
+          flex: 1;
+          min-width: 0;
+          margin-right: 10px;
+      }
+
+      .audio-spectrum {
+          display: flex;
+          align-items: end;
+          gap: 2px;
+          height: 20px;
+          margin-right: 10px;
+          opacity: 0.3;
+          transition: opacity 0.3s ease;
+      }
+
+      .audio-card:hover .audio-spectrum {
+          opacity: 0.7;
+      }
+
+      .audio-card.playing .audio-spectrum {
+          opacity: 1;
+      }
+
+      .spectrum-bar {
+          width: 2px;
+          background: linear-gradient(to top, #ff8508, #fd0575);
+          border-radius: 1px;
+          height: 4px;
+          transition: height 0.05s ease;
+          min-height: 4px;
+      }
+
+      .audio-title {
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 600;
+          margin: 0 0 4px 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+      }
+
+      .audio-genre {
+          background: rgba(254, 2, 120, 0.2);
+          color: #fe0278;
+          font-size: 9px;
+          padding: 2px 8px;
+          border-radius: 10px;
+          margin-right: 8px;
+          display: inline-block;
+      }
+
+      .audio-duration {
+          color: #b0b0b0;
+          font-size: 10px;
+          display: inline-block;
+      }
+
+      .audio-actions {
+          display: flex;
+          gap: 5px;
+          flex-shrink: 0;
+      }
+
+      .action-btn {
+          width: 32px;
+          height: 32px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          text-decoration: none;
+          transition: all 0.3s ease;
+          font-size: 12px;
+      }
+
+      .action-btn:hover {
+          background: rgba(254, 2, 120, 0.2);
+          border-color: #fe0278;
+          color: #fe0278;
+          transform: scale(1.05);
+      }
+
+      .audio-premium-badge {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: linear-gradient(45deg, #ffd700, #ffed4e);
+          color: #000;
+          font-size: 9px;
+          padding: 3px 8px;
+          border-radius: 12px;
+          font-weight: 600;
           display: flex;
           align-items: center;
           gap: 3px;
-          margin-top: 10px;
+          box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
       }
 
-      .audio-section .wave-bar {
-          width: 4px;
-          background: rgba(255,255,255,0.8);
-          border-radius: 2px;
-          animation: wave 1.5s ease-in-out infinite;
-      }
-
-      .audio-section .wave-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
-      .audio-section .wave-bar:nth-child(2) { height: 30px; animation-delay: 0.1s; }
-      .audio-section .wave-bar:nth-child(3) { height: 25px; animation-delay: 0.2s; }
-      .audio-section .wave-bar:nth-child(4) { height: 35px; animation-delay: 0.3s; }
-      .audio-section .wave-bar:nth-child(5) { height: 15px; animation-delay: 0.4s; }
-
-      @keyframes wave {
-          0%, 100% { transform: scaleY(0.5); }
-          50% { transform: scaleY(1); }
-      }
-
-      .audio-section .vid-lab-premium {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          z-index: 2;
-      }
-
-      .audio-section .vid-lab-premium img {
-          width: 30px;
-          height: 30px;
-      }
-
-      .audio-section .video-item-content {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: linear-gradient(transparent, rgba(0,0,0,0.8));
-          color: white;
-          padding: 20px 15px 15px;
-          font-size: 14px;
-          font-weight: 600;
-          text-align: center;
-      }
-
-      .audio-section .vfx-item-section h3 {
-          color: #fff;
-          font-size: 24px;
-          font-weight: 600;
-          margin-bottom: 20px;
-      }
-
-      .audio-section .recently-watched-video-carousel .owl-item {
-          padding: 0 10px;
-      }
-
-      .audio-section .recently-watched-video-carousel .owl-nav {
-          position: absolute;
-          top: -60px;
-          right: 0;
-      }
-
-      .audio-section .recently-watched-video-carousel .owl-nav button {
-          background: rgba(255,255,255,0.1);
-          border: 1px solid rgba(255,255,255,0.2);
-          color: #fff;
-          padding: 8px 12px;
-          margin-left: 5px;
-          border-radius: 4px;
-          transition: all 0.3s ease;
-      }
-
-      .audio-section .recently-watched-video-carousel .owl-nav button:hover {
-          background: rgba(255,255,255,0.2);
-          border-color: rgba(255,255,255,0.3);
+      .audio-premium-badge i {
+          font-size: 8px;
       }
  </style>
 
@@ -367,7 +408,131 @@ $(document).ready(function() {
     {!!stripslashes(getcong('site_footer_code'))!!}
 @endif
 
+<script>
+// Audio Player Management for Home Page
+let currentPlayingAudio = null;
+let audioContext = null;
+let analyser = null;
+let dataArray = null;
+let animationId = null;
 
+// Initialize Audio Context
+function initAudioContext() {
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Web Audio API not supported');
+        }
+    }
+}
+
+// Toggle Audio Play/Pause
+function toggleAudio(audioId) {
+    const audio = document.getElementById('audioPlayer' + audioId);
+    const playIcon = document.getElementById('playIcon' + audioId);
+    const audioCard = audio.closest('.audio-card');
+    
+    if (!audio) return;
+    
+    // Stop any currently playing audio
+    if (currentPlayingAudio && currentPlayingAudio !== audio) {
+        currentPlayingAudio.pause();
+        currentPlayingAudio.currentTime = 0;
+        const currentPlayIcon = document.getElementById('playIcon' + currentPlayingAudio.id.replace('audioPlayer', ''));
+        const currentCard = currentPlayingAudio.closest('.audio-card');
+        if (currentPlayIcon) currentPlayIcon.className = 'fa fa-play';
+        if (currentCard) currentCard.classList.remove('playing');
+    }
+    
+    if (audio.paused) {
+        // Play audio
+        audio.play().then(() => {
+            playIcon.className = 'fa fa-pause';
+            audioCard.classList.add('playing');
+            currentPlayingAudio = audio;
+            startVisualization(audioId);
+        }).catch(e => {
+            console.log('Error playing audio:', e);
+        });
+    } else {
+        // Pause audio
+        audio.pause();
+        playIcon.className = 'fa fa-play';
+        audioCard.classList.remove('playing');
+        currentPlayingAudio = null;
+        stopVisualization();
+    }
+    
+    // Handle audio end
+    audio.onended = function() {
+        playIcon.className = 'fa fa-play';
+        audioCard.classList.remove('playing');
+        currentPlayingAudio = null;
+        stopVisualization();
+    };
+}
+
+// Start audio visualization
+function startVisualization(audioId) {
+    if (!audioContext) return;
+    
+    const audio = document.getElementById('audioPlayer' + audioId);
+    if (!audio) return;
+    
+    const source = audioContext.createMediaElementSource(audio);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    animateSpectrum(audioId);
+}
+
+// Animate spectrum bars
+function animateSpectrum(audioId) {
+    if (!analyser) return;
+    
+    analyser.getByteFrequencyData(dataArray);
+    
+    const spectrum = document.getElementById('spectrum' + audioId);
+    if (!spectrum) return;
+    
+    const bars = spectrum.querySelectorAll('.spectrum-bar');
+    const barCount = bars.length;
+    const dataStep = Math.floor(dataArray.length / barCount);
+    
+    bars.forEach((bar, index) => {
+        const dataIndex = index * dataStep;
+        const value = dataArray[dataIndex] || 0;
+        const height = Math.max(4, (value / 255) * 20);
+        bar.style.height = height + 'px';
+    });
+    
+    if (currentPlayingAudio && !currentPlayingAudio.paused) {
+        animationId = requestAnimationFrame(() => animateSpectrum(audioId));
+    }
+}
+
+// Stop visualization
+function stopVisualization() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    
+    // Reset all spectrum bars
+    document.querySelectorAll('.spectrum-bar').forEach(bar => {
+        bar.style.height = '4px';
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initAudioContext();
+});
+</script>
 
 </body>
 </html>
