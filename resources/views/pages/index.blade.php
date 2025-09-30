@@ -199,7 +199,8 @@
     </div>
 
     <!-- Audio Section -->
-    @if($audio_list->count() > 0)
+    {{-- Debug: Audio count = {{ $audio_list->count() ?? 'undefined' }} --}}
+    @if(isset($audio_list) && $audio_list->count() > 0)
     <div class="video-shows-section vfx-item-ptb audio-section">
         <div class="container-fluid">
             <div class="row">
@@ -251,6 +252,21 @@
                                 </a>
                             </div>
                         @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @else
+    <!-- Debug: No audio section showing -->
+    <div class="video-shows-section vfx-item-ptb">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="vfx-item-section">
+                        <h3>Audio Library (Debug)</h3>
+                        <p>Audio list variable: {{ isset($audio_list) ? 'exists' : 'not set' }}</p>
+                        <p>Audio count: {{ isset($audio_list) ? $audio_list->count() : 'N/A' }}</p>
                     </div>
                 </div>
             </div>
