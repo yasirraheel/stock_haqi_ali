@@ -198,6 +198,66 @@
         </div>
     </div>
 
+    <!-- Audio Section -->
+    @if($audio_list->count() > 0)
+    <div class="video-shows-section vfx-item-ptb audio-section">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="vfx-item-section">
+                        <h3>Audio Library</h3>
+                    </div>
+                    <div class="recently-watched-video-carousel owl-carousel">
+                        @foreach ($audio_list as $audio_data)
+                            <div class="single-video">
+                                @if (Auth::check())
+                                    <a href="{{ URL::to('audio/details/' . $audio_data->id) }}"
+                                        title="{{ $audio_data->title }}">
+                                    @else
+                                        @if ($audio_data->license_price && $audio_data->license_price > 0)
+                                            <a href="{{ URL::to('audio/details/' . $audio_data->id) }}"
+                                                title="{{ $audio_data->title }}" data-toggle="modal"
+                                                data-target="#loginAlertModal">
+                                            @else
+                                                <a href="{{ URL::to('audio/details/' . $audio_data->id) }}"
+                                                    title="{{ $audio_data->title }}">
+                                        @endif
+                                @endif
+                                <div class="video-img">
+                                    @if ($audio_data->license_price && $audio_data->license_price > 0)
+                                        <div class="vid-lab-premium">
+                                            <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="premium"
+                                                title="premium">
+                                        </div>
+                                    @endif
+                                    <div class="audio-placeholder">
+                                        <i class="fa fa-music" style="font-size: 48px; color: #fff; margin-bottom: 10px;"></i>
+                                        <div class="audio-waveform">
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                        </div>
+                                    </div>
+                                    <div style="background:rgba(0,0,0,0.7);color:white;padding:3px;">
+                                        <span>{{ Str::limit(stripslashes($audio_data->title), 20) }}</span>
+                                        <br>
+                                        <strong>Duration:</strong> {{ $audio_data->duration ?? 'Unknown' }}
+                                        <br>
+                                        <strong>Genre:</strong> {{ $audio_data->genre ?? 'Not specified' }}
+                                    </div>
+                                </div>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @foreach ($genres as $genre)
         @php
             $filteredMovies = $movies_list->where('movie_genre_id', $genre->id);

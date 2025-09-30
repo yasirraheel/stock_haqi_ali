@@ -14,6 +14,7 @@ use App\Pages;
 use App\RecentlyWatched;
 use App\LiveTV;
 use App\UsersDeviceHistory;
+use App\Models\Audio;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 
@@ -162,7 +163,13 @@ class IndexController extends Controller
         // user_has_liked
 
 
-        return view('pages.index', compact('movies_info', 'genres', 'slider', 'recently_watched', 'upcoming_movies', 'upcoming_series', 'home_sections', 'movies_list', 'pagination_limit', 'random_movie', 'user_has_liked'));
+        // Fetch audio data for home page
+        $audio_list = Audio::where('is_active', true)
+            ->orderBy('created_at', 'DESC')
+            ->take(12) // Limit to 12 audios for home page
+            ->get();
+
+        return view('pages.index', compact('movies_info', 'genres', 'slider', 'recently_watched', 'upcoming_movies', 'upcoming_series', 'home_sections', 'movies_list', 'pagination_limit', 'random_movie', 'user_has_liked', 'audio_list'));
     }
 
     public function home_collections($slug, $id)
