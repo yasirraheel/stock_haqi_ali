@@ -207,62 +207,64 @@
                     <div class="vfx-item-section">
                         <h3>Audio Library</h3>
                     </div>
-                    <div class="recently-watched-video-carousel owl-carousel">
+                    <div class="row">
                         @foreach ($audio_list as $audio_data)
-                            <div class="single-video audio-card">
-                                <div class="audio-card-content">
-                                    <div class="audio-play-btn" onclick="toggleAudio({{$audio_data->id}})">
-                                        <i class="fa fa-play" id="playIcon{{$audio_data->id}}"></i>
-                                    </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 col-6">
+                                <div class="single-video audio-card">
+                                    <div class="audio-card-content">
+                                        <div class="audio-play-btn" onclick="toggleAudio({{$audio_data->id}})">
+                                            <i class="fa fa-play" id="playIcon{{$audio_data->id}}"></i>
+                                        </div>
 
-                                    <div class="audio-info">
-                                        <h3 class="audio-title">{{Str::limit(stripslashes($audio_data->title),30)}}</h3>
-                                        @if($audio_data->genre)
-                                            <span class="audio-genre">{{$audio_data->genre}}</span>
-                                        @endif
-                                        @if($audio_data->duration)
-                                            <span class="audio-duration">{{$audio_data->duration}}</span>
-                                        @endif
-                                    </div>
+                                        <div class="audio-info">
+                                            <h3 class="audio-title">{{Str::limit(stripslashes($audio_data->title),30)}}</h3>
+                                            @if($audio_data->genre)
+                                                <span class="audio-genre">{{$audio_data->genre}}</span>
+                                            @endif
+                                            @if($audio_data->duration)
+                                                <span class="audio-duration">{{$audio_data->duration}}</span>
+                                            @endif
+                                        </div>
 
-                                    <div class="audio-spectrum" id="spectrum{{$audio_data->id}}">
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                        <div class="spectrum-bar"></div>
-                                    </div>
+                                        <div class="audio-spectrum" id="spectrum{{$audio_data->id}}">
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                            <div class="spectrum-bar"></div>
+                                        </div>
 
-                                    <div class="audio-actions">
-                                        <a href="{{ URL::to('audio/details/'.$audio_data->id) }}" class="action-btn" title="View Details">
-                                            <i class="fa fa-eye"></i>
-                                        </a>
-                                        @if(!$audio_data->license_price || $audio_data->license_price == 0)
-                                            <a href="{{ URL::to('audio/download/'.$audio_data->id) }}" class="action-btn" title="Download">
-                                                <i class="fa fa-download"></i>
+                                        <div class="audio-actions">
+                                            <a href="{{ URL::to('audio/details/'.$audio_data->id) }}" class="action-btn" title="View Details">
+                                                <i class="fa fa-eye"></i>
                                             </a>
+                                            @if(!$audio_data->license_price || $audio_data->license_price == 0)
+                                                <a href="{{ URL::to('audio/download/'.$audio_data->id) }}" class="action-btn" title="Download">
+                                                    <i class="fa fa-download"></i>
+                                                </a>
+                                            @endif
+                                        </div>
+
+                                        @if($audio_data->license_price && $audio_data->license_price > 0)
+                                        <div class="audio-premium-badge">
+                                            <i class="fa fa-crown"></i>
+                                            <span>Premium</span>
+                                        </div>
                                         @endif
                                     </div>
 
-                                    @if($audio_data->license_price && $audio_data->license_price > 0)
-                                    <div class="audio-premium-badge">
-                                        <i class="fa fa-crown"></i>
-                                        <span>Premium</span>
-                                    </div>
-                                    @endif
+                                    <!-- Hidden Audio Player -->
+                                    <audio id="audioPlayer{{$audio_data->id}}" preload="none">
+                                        <source src="{{ asset('storage/' . $audio_data->audio_path) }}" type="audio/{{ $audio_data->format ?: 'mp3' }}">
+                                    </audio>
                                 </div>
-
-                                <!-- Hidden Audio Player -->
-                                <audio id="audioPlayer{{$audio_data->id}}" preload="none">
-                                    <source src="{{ asset('storage/' . $audio_data->audio_path) }}" type="audio/{{ $audio_data->format ?: 'mp3' }}">
-                                </audio>
                             </div>
                         @endforeach
                     </div>

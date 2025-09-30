@@ -433,7 +433,13 @@ function toggleAudio(audioId) {
     const playIcon = document.getElementById('playIcon' + audioId);
     const audioCard = audio.closest('.audio-card');
     
-    if (!audio) return;
+    if (!audio) {
+        console.log('Audio element not found for ID:', audioId);
+        return;
+    }
+    
+    // Initialize audio context if needed
+    initAudioContext();
     
     // Stop any currently playing audio
     if (currentPlayingAudio && currentPlayingAudio !== audio) {
@@ -443,18 +449,35 @@ function toggleAudio(audioId) {
         const currentCard = currentPlayingAudio.closest('.audio-card');
         if (currentPlayIcon) currentPlayIcon.className = 'fa fa-play';
         if (currentCard) currentCard.classList.remove('playing');
+        stopVisualization();
     }
     
     if (audio.paused) {
         // Play audio
-        audio.play().then(() => {
-            playIcon.className = 'fa fa-pause';
-            audioCard.classList.add('playing');
-            currentPlayingAudio = audio;
-            startVisualization(audioId);
-        }).catch(e => {
-            console.log('Error playing audio:', e);
-        });
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                playIcon.className = 'fa fa-pause';
+                audioCard.classList.add('playing');
+                currentPlayingAudio = audio;
+                startVisualization(audioId);
+                console.log('Audio playing successfully');
+            }).catch(e => {
+                console.log('Error playing audio:', e);
+                // Try to resume audio context if it's suspended
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        audio.play().then(() => {
+                            playIcon.className = 'fa fa-pause';
+                            audioCard.classList.add('playing');
+                            currentPlayingAudio = audio;
+                            startVisualization(audioId);
+                        });
+                    });
+                }
+            });
+        }
     } else {
         // Pause audio
         audio.pause();
@@ -531,6 +554,15 @@ function stopVisualization() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initAudioContext();
+    
+    // Add click listeners to all audio play buttons to initialize audio context
+    document.querySelectorAll('.audio-play-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        });
+    });
 });
 </script>
 
