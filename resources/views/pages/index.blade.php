@@ -5,11 +5,65 @@
 @section('head_url', Request::url())
 
 @section('content')
-    <div class="video-shows-section vfx-item-ptb">
+<style>
+@import url('{{ URL::asset('site_assets/css/home-modern.css') }}');
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Hero Section -->
+    <div class="hero-section">
         <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-                    @include('pages.home.slider')
+            <div class="row align-items-center">
+                <div class="col-lg-6 col-md-12">
+                    <div class="hero-content">
+                        <h1 class="hero-title">Welcome to {{ getcong('site_name') }}</h1>
+                        <p class="hero-subtitle">Discover amazing movies, audio content, and stunning photos all in one place</p>
+                        <div class="hero-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ $movies_list->total() }}+</span>
+                                <span class="stat-label">Movies</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ $audio_list->count() }}+</span>
+                                <span class="stat-label">Audio Files</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ $photos_list->count() }}+</span>
+                                <span class="stat-label">Photos</span>
+                            </div>
+                        </div>
+                        <div class="hero-actions">
+                            <a href="{{ URL::to('movies') }}" class="btn btn-primary btn-lg">Explore Movies</a>
+                            @if(!Auth::check())
+                                <a href="{{ URL::to('signup') }}" class="btn btn-outline-light btn-lg ml-3">Join Now</a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-12">
+                    <div class="hero-featured-content">
+                        @if($movies_info)
+                            <div class="featured-movie-card">
+                                <div class="featured-movie-image">
+                                    <img src="{{ URL::to('/' . $movies_info->video_image_thumb) }}" 
+                                         alt="{{ stripslashes($movies_info->video_title) }}" 
+                                         class="img-fluid">
+                                    @if($movies_info->video_access == 'Paid')
+                                        <div class="premium-badge">
+                                            <i class="fas fa-crown"></i> Premium
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="featured-movie-info">
+                                    <h3>{{ stripslashes($movies_info->video_title) }}</h3>
+                                    <p>{{ Str::limit(strip_tags(stripslashes($movies_info->video_description)), 120) }}</p>
+                                    <a href="{{ URL::to('movies/details/' . $movies_info->video_slug . '/' . $movies_info->id) }}" 
+                                       class="btn btn-watch">
+                                        <i class="fas fa-play"></i> Watch Now
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -21,16 +75,76 @@
 
     <!-- Banner -->
     @if (get_web_banner('home_top') != '')
-        <div class="vid-item-ptb banner_ads_item pb-1" style="padding: 15px 0;">
+        <div class="banner-section">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-md-12">
+                    <div class="col-12">
                         {!! stripslashes(get_web_banner('home_top')) !!}
                     </div>
                 </div>
             </div>
         </div>
     @endif
+
+    <!-- Featured Movies Section -->
+    <section class="content-section featured-movies">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="section-header">
+                        <h2 class="section-title">Featured Movies</h2>
+                        <a href="{{ URL::to('movies') }}" class="view-all-btn">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="content-carousel owl-carousel" id="featured-movies-carousel">
+                        @foreach ($movies_list->take(12) as $movies_data)
+                            <div class="content-card movie-card">
+                                <div class="card-image">
+                                    @if (Auth::check())
+                                        <a href="{{ URL::to('movies/details/' . $movies_data->video_slug . '/' . $movies_data->id) }}"
+                                            title="{{ $movies_data->video_title }}">
+                                    @else
+                                        @if ($movies_data->video_access == 'Paid')
+                                            <a href="{{ URL::to('movies/details/' . $movies_data->video_slug . '/' . $movies_data->id) }}"
+                                                title="{{ $movies_data->video_title }}" data-toggle="modal"
+                                                data-target="#loginAlertModal">
+                                        @else
+                                            <a href="{{ URL::to('movies/details/' . $movies_data->video_slug . '/' . $movies_data->id) }}"
+                                                title="{{ $movies_data->video_title }}">
+                                        @endif
+                                    @endif
+                                    <img src="{{ URL::to('/' . $movies_data->video_image_thumb) }}"
+                                        alt="{{ stripslashes($movies_data->video_title) }}"
+                                        title="{{ stripslashes($movies_data->video_title) }}" 
+                                        class="img-fluid">
+                                    @if ($movies_data->video_access == 'Paid')
+                                        <div class="premium-overlay">
+                                            <i class="fas fa-crown"></i>
+                                        </div>
+                                    @endif
+                                    <div class="card-overlay">
+                                        <div class="play-btn">
+                                            <i class="fas fa-play"></i>
+                                        </div>
+                                    </div>
+                                    </a>
+                                </div>
+                                <div class="card-content">
+                                    <h4 class="card-title">{{ Str::limit(stripslashes($movies_data->video_title), 25) }}</h4>
+                                    <p class="card-genre">
+                                        {{ App\Genres::where('id', $movies_data->movie_genre_id)->first()->genre_name ?? 'Not specified' }}
+                                    </p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     @if (Auth::check() && $recently_watched->count() > 0)
         <!-- Start Recently Watched Video Section -->
@@ -198,57 +312,58 @@
         </div>
     </div>
 
-    <!-- Audio Section -->
+    <!-- Audio Library Section -->
     @if(isset($audio_list) && $audio_list->count() > 0)
-    <div class="video-shows-section vfx-item-ptb">
+    <section class="content-section audio-library">
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-12">
-                    <div class="vfx-item-section">
-                        <h3>Audio Library</h3>
-                        <a href="{{ URL::to('audio') }}" class="view-all-btn">View All</a>
+                <div class="col-12">
+                    <div class="section-header">
+                        <h2 class="section-title">Audio Library</h2>
+                        <a href="{{ URL::to('audio') }}" class="view-all-btn">View All <i class="fas fa-arrow-right"></i></a>
                     </div>
-                    <div class="row">
-                        @foreach ($audio_list as $audio_data)
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 col-12">
-                                <div class="single-video audio-card">
-                                    <div class="audio-card-content">
-                                        <div class="audio-play-btn" onclick="toggleAudio({{$audio_data->id}})">
-                                            <i class="fa fa-play" id="playIcon{{$audio_data->id}}"></i>
-                                        </div>
+                </div>
+            </div>
+            <div class="row">
+                @foreach ($audio_list as $audio_data)
+                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 col-12 mb-3">
+                        <div class="content-card audio-card">
+                            <div class="audio-card-body">
+                                <div class="audio-play-section">
+                                    <div class="audio-play-btn" onclick="toggleAudio({{$audio_data->id}})">
+                                        <i class="fa fa-play" id="playIcon{{$audio_data->id}}"></i>
+                                    </div>
+                                    <div class="audio-spectrum" id="spectrum{{$audio_data->id}}">
+                                        <div class="spectrum-bar"></div>
+                                        <div class="spectrum-bar"></div>
+                                        <div class="spectrum-bar"></div>
+                                        <div class="spectrum-bar"></div>
+                                        <div class="spectrum-bar"></div>
+                                        <div class="spectrum-bar"></div>
+                                        <div class="spectrum-bar"></div>
+                                        <div class="spectrum-bar"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="audio-info">
+                                    <h4 class="audio-title">{{Str::limit(stripslashes($audio_data->title),35)}}</h4>
+                                    <div class="audio-meta">
+                                        @if($audio_data->genre)
+                                            <span class="audio-genre">{{$audio_data->genre}}</span>
+                                        @endif
+                                        @if($audio_data->duration)
+                                            <span class="audio-duration">{{$audio_data->duration}}</span>
+                                        @endif
+                                    </div>
+                                </div>
 
-                                        <div class="audio-info">
-                                            <h3 class="audio-title">{{Str::limit(stripslashes($audio_data->title),30)}}</h3>
-                                            @if($audio_data->genre)
-                                                <span class="audio-genre">{{$audio_data->genre}}</span>
-                                            @endif
-                                            @if($audio_data->duration)
-                                                <span class="audio-duration">{{$audio_data->duration}}</span>
-                                            @endif
-                                        </div>
-
-                                        <div class="audio-spectrum" id="spectrum{{$audio_data->id}}">
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                            <div class="spectrum-bar"></div>
-                                        </div>
-
-                                        <div class="audio-actions">
-                                            <a href="{{ URL::to('audio/details/'.$audio_data->id) }}" class="action-btn" title="View Details">
-                                                <i class="fa fa-eye"></i>
-                                            </a>
-                                            @if(!$audio_data->license_price || $audio_data->license_price == 0)
-                                                <a href="{{ URL::to('audio/download/'.$audio_data->id) }}" class="action-btn" title="Download">
-                                                    <i class="fa fa-download"></i>
+                                <div class="audio-actions">
+                                    <a href="{{ URL::to('audio/details/'.$audio_data->id) }}" class="action-btn primary" title="View Details">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    @if(!$audio_data->license_price || $audio_data->license_price == 0)
+                                        <a href="{{ URL::to('audio/download/'.$audio_data->id) }}" class="action-btn secondary" title="Download">
+                                            <i class="fa fa-download"></i>
                                                 </a>
                                             @endif
                                         </div>
