@@ -1,15 +1,16 @@
-/* Modern Professional Home Page Styles */
+/* Professional Dark Theme Home Page Styles - Consistent with Site Theme */
 
-/* Hero Section */
+/* Hero Section - Dark Theme */
 .hero-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0d0620 0%, #22134e 50%, #1a0b2f 100%);
     padding: 80px 0;
     color: white;
-    min-height: 600px;
+    min-height: 500px;
     display: flex;
     align-items: center;
     position: relative;
     overflow: hidden;
+    border-bottom: 1px solid #2d2d44;
 }
 
 .hero-section::before {
@@ -19,8 +20,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    opacity: 0.3;
+    background: radial-gradient(circle at 30% 20%, rgba(254, 2, 120, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(255, 133, 8, 0.1) 0%, transparent 50%);
+    opacity: 0.7;
     pointer-events: none;
 }
 
@@ -30,46 +32,63 @@
 }
 
 .hero-title {
-    font-size: 3.5rem;
+    font-size: 2.8rem;
     font-weight: 700;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     line-height: 1.2;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .hero-subtitle {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
-    opacity: 0.9;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: #b5b5b5;
     line-height: 1.6;
+    font-weight: 400;
 }
 
 .hero-stats {
     display: flex;
-    gap: 2rem;
-    margin-bottom: 2.5rem;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .stat-item {
     text-align: center;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    background: rgba(45, 45, 68, 0.8);
+    border: 1px solid #3d3d5c;
+    border-radius: 12px;
     backdrop-filter: blur(10px);
-    min-width: 100px;
+    min-width: 90px;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: rgba(254, 2, 120, 0.1);
+    border-color: #fe0278;
+    transform: translateY(-2px);
 }
 
 .stat-number {
     display: block;
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 700;
-    color: #ffd700;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-label {
     display: block;
-    font-size: 0.9rem;
-    opacity: 0.8;
-    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #b5b5b5;
+    margin-top: 0.3rem;
+    font-weight: 500;
 }
 
 .hero-actions {
@@ -78,19 +97,60 @@
     flex-wrap: wrap;
 }
 
+.hero-actions .btn {
+    padding: 0.75rem 1.8rem;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.hero-actions .btn-primary {
+    background: linear-gradient(45deg, #ff8508, #fe0278);
+    border: none;
+    color: white;
+}
+
+.hero-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(254, 2, 120, 0.4);
+    color: white;
+}
+
+.hero-actions .btn-outline-light {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.hero-actions .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+}
+
 .hero-featured-content {
     position: relative;
     z-index: 2;
 }
 
 .featured-movie-card {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    background: rgba(45, 45, 68, 0.9);
+    border-radius: 16px;
     padding: 1.5rem;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    max-width: 500px;
+    border: 1px solid #3d3d5c;
+    max-width: 450px;
     margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.featured-movie-card:hover {
+    border-color: #fe0278;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(254, 2, 120, 0.2);
 }
 
 .featured-movie-image {
@@ -108,14 +168,15 @@
 
 .premium-badge {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background: linear-gradient(45deg, #ffd700, #ffed4e);
-    color: #333;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
     font-weight: 600;
+    box-shadow: 0 2px 8px rgba(254, 2, 120, 0.3);
 }
 
 .featured-movie-info h3 {
@@ -131,40 +192,44 @@
 }
 
 .btn-watch {
-    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    background: linear-gradient(45deg, #ff8508, #fe0278);
     color: white;
     border: none;
-    padding: 0.8rem 2rem;
-    border-radius: 30px;
+    padding: 0.75rem 1.8rem;
+    border-radius: 25px;
     font-weight: 600;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     transition: all 0.3s ease;
+    font-size: 0.9rem;
 }
 
 .btn-watch:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(238, 90, 36, 0.3);
+    box-shadow: 0 8px 25px rgba(254, 2, 120, 0.4);
     color: white;
     text-decoration: none;
+    background: linear-gradient(45deg, #fe0278, #ff8508);
 }
 
 /* Banner Section */
 .banner-section {
-    padding: 2rem 0;
-    background: #f8f9fa;
+    padding: 1.5rem 0;
+    background: #0d0620;
+    border-bottom: 1px solid #2d2d44;
 }
 
-/* Content Sections */
+/* Content Sections - Dark Theme */
 .content-section {
-    padding: 4rem 0;
-    background: #fff;
+    padding: 3rem 0;
+    background: #0d0620;
+    border-bottom: 1px solid #1a1a2e;
 }
 
 .content-section:nth-child(even) {
-    background: #f8f9fa;
+    background: #161030;
 }
 
 .section-header {
@@ -176,58 +241,64 @@
 }
 
 .section-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
     margin: 0;
-    color: #2c3e50;
+    color: #ffffff;
     position: relative;
 }
 
 .section-title::after {
     content: '';
     position: absolute;
-    bottom: -10px;
+    bottom: -8px;
     left: 0;
-    width: 50px;
-    height: 4px;
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
     border-radius: 2px;
 }
 
 .view-all-btn {
-    color: #667eea;
+    color: #fe0278;
     text-decoration: none;
     font-weight: 600;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     transition: all 0.3s ease;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    border: 2px solid #667eea;
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    border: 1px solid #3d3d5c;
+    background: rgba(45, 45, 68, 0.5);
+    font-size: 0.9rem;
 }
 
 .view-all-btn:hover {
-    background: #667eea;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
     color: white;
     text-decoration: none;
     transform: translateY(-2px);
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(254, 2, 120, 0.3);
 }
 
-/* Content Cards */
+/* Content Cards - Dark Theme */
 .content-card {
-    background: white;
-    border-radius: 15px;
+    background: #2d2d44;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
     height: 100%;
     position: relative;
+    border: 1px solid #3d3d5c;
 }
 
 .content-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(254, 2, 120, 0.2);
+    border-color: #fe0278;
 }
 
 .card-image {
@@ -237,7 +308,7 @@
 
 .card-image img {
     width: 100%;
-    height: 250px;
+    height: 200px;
     object-fit: cover;
     transition: transform 0.3s ease;
 }
@@ -265,205 +336,270 @@
 }
 
 .play-btn {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(254, 2, 120, 0.3);
 }
 
 .play-btn:hover {
     transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(254, 2, 120, 0.4);
 }
 
 .premium-overlay {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background: linear-gradient(45deg, #ffd700, #ffed4e);
-    color: #333;
-    padding: 0.3rem 0.8rem;
-    border-radius: 15px;
-    font-size: 0.8rem;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
+    color: white;
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
 }
 
 .card-content {
-    padding: 1.5rem;
+    padding: 1.2rem;
 }
 
 .card-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #2c3e50;
+    color: #ffffff;
     line-height: 1.4;
 }
 
 .card-genre {
-    color: #7f8c8d;
-    font-size: 0.9rem;
+    color: #b5b5b5;
+    font-size: 0.85rem;
     margin: 0;
+    font-weight: 400;
 }
 
-/* Audio Card Specific Styles */
+/* Audio Card Specific Styles - Compact Professional Design */
 .audio-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #2d2d44;
     color: white;
+    height: 80px !important;
+    border-radius: 8px;
+    border: 1px solid #3d3d5c;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.audio-card:hover {
+    border-color: #fe0278;
+    box-shadow: 0 4px 15px rgba(254, 2, 120, 0.2);
 }
 
 .audio-card-body {
-    padding: 2rem;
+    padding: 12px 15px;
     height: 100%;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .audio-play-section {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .audio-play-btn {
-    width: 50px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.2);
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, #ff8508, #fe0278);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(254, 2, 120, 0.3);
 }
 
 .audio-play-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(254, 2, 120, 0.4);
+}
+
+.audio-play-btn i {
+    font-size: 14px;
+    margin-left: 1px;
 }
 
 .audio-spectrum {
     display: flex;
-    gap: 3px;
+    gap: 2px;
     align-items: end;
-    height: 30px;
+    height: 20px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.audio-card:hover .audio-spectrum,
+.audio-card.playing .audio-spectrum {
+    opacity: 1;
 }
 
 .spectrum-bar {
-    width: 3px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 2px;
-    animation: spectrum 1.5s ease-in-out infinite;
+    width: 2px;
+    background: linear-gradient(to top, #ff8508, #fe0278);
+    border-radius: 1px;
+    height: 4px;
+    transition: height 0.1s ease;
+    min-height: 4px;
 }
 
 .spectrum-bar:nth-child(odd) {
-    animation-delay: 0.1s;
+    animation: spectrum 1.2s ease-in-out infinite;
 }
 
 .spectrum-bar:nth-child(even) {
-    animation-delay: 0.3s;
+    animation: spectrum 1.5s ease-in-out infinite 0.2s;
 }
 
 @keyframes spectrum {
-    0%, 100% { height: 5px; }
-    50% { height: 25px; }
+    0%, 100% { height: 4px; }
+    50% { height: 18px; }
+}
+
+.audio-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .audio-info h4 {
-    margin-bottom: 1rem;
+    font-size: 14px;
     font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 .audio-meta {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .audio-meta span {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    opacity: 0.9;
+    gap: 4px;
+    font-size: 10px;
+    color: #b5b5b5;
+}
+
+.audio-genre {
+    background: rgba(254, 2, 120, 0.2);
+    color: #fe0278;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.audio-duration {
+    color: #b0b0b0;
 }
 
 .audio-actions {
     display: flex;
-    gap: 1rem;
-    margin-top: auto;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .action-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 11px;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    border: 1px solid #3d3d5c;
 }
 
 .action-btn.primary {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(254, 2, 120, 0.1);
+    color: #fe0278;
+    border-color: rgba(254, 2, 120, 0.3);
 }
 
 .action-btn.primary:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #fe0278;
     color: white;
     text-decoration: none;
+    border-color: #fe0278;
 }
 
 .action-btn.secondary {
-    background: transparent;
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 133, 8, 0.1);
+    color: #ff8508;
+    border-color: rgba(255, 133, 8, 0.3);
 }
 
 .action-btn.secondary:hover {
-    background: white;
-    color: #667eea;
+    background: #ff8508;
+    color: white;
     text-decoration: none;
+    border-color: #ff8508;
 }
 
 /* Photo Card Specific Styles */
 .photo-card .card-image img {
-    height: 200px;
+    height: 180px;
 }
 
 .photo-actions {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .photo-actions .action-btn {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     color: #333;
     border: none;
-    padding: 0.5rem;
+    padding: 0.4rem;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.8rem;
 }
 
 .photo-actions .action-btn:hover {
     background: white;
-    transform: scale(1.1);
+    transform: scale(1.05);
+}
+
+.photo-actions .action-btn.primary:hover {
+    background: #fe0278;
+    color: white;
+}
+
+.photo-actions .action-btn.secondary:hover {
+    background: #ff8508;
+    color: white;
 }
 
 .photo-meta {
@@ -476,9 +612,9 @@
 .photo-meta span {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: #7f8c8d;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: #b5b5b5;
 }
 
 /* Responsive Design */
@@ -617,17 +753,22 @@
 }
 
 .content-carousel.owl-carousel .owl-nav button {
-    background: #667eea !important;
-    color: white !important;
+    background: rgba(45, 45, 68, 0.8) !important;
+    color: #fe0278 !important;
+    border: 1px solid #3d3d5c !important;
     border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
-    margin: 0 10px !important;
-    font-size: 16px !important;
+    width: 35px !important;
+    height: 35px !important;
+    margin: 0 8px !important;
+    font-size: 14px !important;
+    transition: all 0.3s ease !important;
 }
 
 .content-carousel.owl-carousel .owl-nav button:hover {
-    background: #764ba2 !important;
+    background: linear-gradient(45deg, #ff8508, #fe0278) !important;
+    color: white !important;
+    border-color: transparent !important;
+    transform: scale(1.1) !important;
 }
 
 .content-carousel.owl-carousel .owl-dots {
@@ -636,13 +777,92 @@
 }
 
 .content-carousel.owl-carousel .owl-dot {
-    width: 12px !important;
-    height: 12px !important;
+    width: 8px !important;
+    height: 8px !important;
     border-radius: 50% !important;
-    background: #ddd !important;
-    margin: 0 5px !important;
+    background: #3d3d5c !important;
+    margin: 0 4px !important;
+    transition: all 0.3s ease !important;
 }
 
 .content-carousel.owl-carousel .owl-dot.active {
-    background: #667eea !important;
+    background: #fe0278 !important;
+    transform: scale(1.2) !important;
+}
+
+/* Additional Dark Theme Consistency */
+.featured-movies,
+.audio-library,
+.photo-gallery,
+.genre-section {
+    background: #0d0620;
+}
+
+.featured-movies:nth-child(even),
+.audio-library:nth-child(even),
+.photo-gallery:nth-child(even),
+.genre-section:nth-child(even) {
+    background: #161030;
+}
+
+/* Override any light backgrounds */
+.video-shows-section,
+.video-carousel-area {
+    background: transparent !important;
+}
+
+/* Ensure text colors are consistent */
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff;
+}
+
+p {
+    color: #b5b5b5;
+}
+
+/* Mobile optimization for audio cards */
+@media (max-width: 768px) {
+    .audio-card {
+        height: 70px !important;
+    }
+    
+    .audio-card-body {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+    
+    .audio-play-btn {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .audio-info h4 {
+        font-size: 13px;
+    }
+    
+    .audio-meta span {
+        font-size: 9px;
+    }
+    
+    .action-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+}
+
+/* Professional loading states */
+.audio-card.loading {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.audio-card.loading .audio-play-btn {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }

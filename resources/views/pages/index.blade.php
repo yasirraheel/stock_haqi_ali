@@ -270,7 +270,7 @@
             </div>
             <div class="row">
                 @foreach ($audio_list as $audio_data)
-                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 col-12 mb-4">
+                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 col-12 mb-3">
                         <div class="content-card audio-card">
                             <div class="audio-card-body">
                                 <div class="audio-play-section">
@@ -290,13 +290,13 @@
                                 </div>
                                 
                                 <div class="audio-info">
-                                    <h4 class="audio-title">{{Str::limit(stripslashes($audio_data->title),25)}}</h4>
+                                    <h4 class="audio-title">{{Str::limit(stripslashes($audio_data->title),35)}}</h4>
                                     <div class="audio-meta">
                                         @if($audio_data->genre)
-                                            <span class="audio-genre"><i class="fas fa-music"></i> {{$audio_data->genre}}</span>
+                                            <span class="audio-genre">{{$audio_data->genre}}</span>
                                         @endif
                                         @if($audio_data->duration)
-                                            <span class="audio-duration"><i class="fas fa-clock"></i> {{$audio_data->duration}}</span>
+                                            <span class="audio-duration">{{$audio_data->duration}}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -345,7 +345,7 @@
             </div>
             <div class="row">
                 @foreach ($photos_list as $photo_data)
-                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 col-12 mb-4">
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
                         <div class="content-card photo-card">
                             <div class="card-image">
                                 <img src="{{ $photo_data->image_url }}" 
