@@ -244,6 +244,51 @@
       .audio-premium-badge i {
           font-size: 8px;
       }
+
+      /* Mobile Responsive Audio Cards */
+      @media (max-width: 768px) {
+          .audio-card {
+              margin-bottom: 10px;
+          }
+          
+          .audio-card-content {
+              padding: 10px 12px;
+          }
+          
+          .audio-play-btn {
+              width: 35px;
+              height: 35px;
+              margin-right: 10px;
+          }
+          
+          .audio-play-btn i {
+              font-size: 12px;
+          }
+          
+          .audio-title {
+              font-size: 13px;
+          }
+          
+          .audio-genre {
+              font-size: 8px;
+              padding: 1px 6px;
+          }
+          
+          .audio-duration {
+              font-size: 9px;
+          }
+          
+          .action-btn {
+              width: 28px;
+              height: 28px;
+              font-size: 10px;
+          }
+          
+          .audio-premium-badge {
+              font-size: 8px;
+              padding: 2px 6px;
+          }
+      }
  </style>
 
 </head>
@@ -432,15 +477,15 @@ function toggleAudio(audioId) {
     const audio = document.getElementById('audioPlayer' + audioId);
     const playIcon = document.getElementById('playIcon' + audioId);
     const audioCard = audio.closest('.audio-card');
-    
+
     if (!audio) {
         console.log('Audio element not found for ID:', audioId);
         return;
     }
-    
+
     // Initialize audio context if needed
     initAudioContext();
-    
+
     // Stop any currently playing audio
     if (currentPlayingAudio && currentPlayingAudio !== audio) {
         currentPlayingAudio.pause();
@@ -451,11 +496,11 @@ function toggleAudio(audioId) {
         if (currentCard) currentCard.classList.remove('playing');
         stopVisualization();
     }
-    
+
     if (audio.paused) {
         // Play audio
         const playPromise = audio.play();
-        
+
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 playIcon.className = 'fa fa-pause';
@@ -486,7 +531,7 @@ function toggleAudio(audioId) {
         currentPlayingAudio = null;
         stopVisualization();
     }
-    
+
     // Handle audio end
     audio.onended = function() {
         playIcon.className = 'fa fa-play';
@@ -499,16 +544,16 @@ function toggleAudio(audioId) {
 // Start audio visualization
 function startVisualization(audioId) {
     if (!audioContext) return;
-    
+
     const audio = document.getElementById('audioPlayer' + audioId);
     if (!audio) return;
-    
+
     const source = audioContext.createMediaElementSource(audio);
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
     source.connect(analyser);
     analyser.connect(audioContext.destination);
-    
+
     dataArray = new Uint8Array(analyser.frequencyBinCount);
     animateSpectrum(audioId);
 }
@@ -516,23 +561,23 @@ function startVisualization(audioId) {
 // Animate spectrum bars
 function animateSpectrum(audioId) {
     if (!analyser) return;
-    
+
     analyser.getByteFrequencyData(dataArray);
-    
+
     const spectrum = document.getElementById('spectrum' + audioId);
     if (!spectrum) return;
-    
+
     const bars = spectrum.querySelectorAll('.spectrum-bar');
     const barCount = bars.length;
     const dataStep = Math.floor(dataArray.length / barCount);
-    
+
     bars.forEach((bar, index) => {
         const dataIndex = index * dataStep;
         const value = dataArray[dataIndex] || 0;
         const height = Math.max(4, (value / 255) * 20);
         bar.style.height = height + 'px';
     });
-    
+
     if (currentPlayingAudio && !currentPlayingAudio.paused) {
         animationId = requestAnimationFrame(() => animateSpectrum(audioId));
     }
@@ -544,7 +589,7 @@ function stopVisualization() {
         cancelAnimationFrame(animationId);
         animationId = null;
     }
-    
+
     // Reset all spectrum bars
     document.querySelectorAll('.spectrum-bar').forEach(bar => {
         bar.style.height = '4px';
@@ -554,7 +599,7 @@ function stopVisualization() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initAudioContext();
-    
+
     // Add click listeners to all audio play buttons to initialize audio context
     document.querySelectorAll('.audio-play-btn').forEach(btn => {
         btn.addEventListener('click', function() {

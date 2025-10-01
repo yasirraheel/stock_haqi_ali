@@ -209,7 +209,7 @@
                     </div>
                     <div class="row">
                         @foreach ($audio_list as $audio_data)
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 col-6">
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 col-12">
                                 <div class="single-video audio-card">
                                     <div class="audio-card-content">
                                         <div class="audio-play-btn" onclick="toggleAudio({{$audio_data->id}})">
