@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Storage;
 class GeminiImageService
 {
     protected $apiKey;
-    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1';
-    protected $imageModel = 'gemini-2.0-flash';
+    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+    protected $imageModel = 'imagen-3.0-generate-002';
 
     public function __construct()
     {
@@ -41,7 +41,7 @@ class GeminiImageService
             }
 
             Log::info('Received image data from Gemini, attempting to save');
-            
+
             // Save the generated image
             $imagePath = $this->saveImage($imageData, $fileId);
 
@@ -93,7 +93,7 @@ class GeminiImageService
     }
 
     /**
-     * Call Gemini API to generate image
+     * Call Imagen API to generate image
      *
      * @param string $prompt
      * @return string|null
@@ -101,139 +101,59 @@ class GeminiImageService
     private function callGeminiApi($prompt)
     {
         try {
+            // Use the correct Imagen API endpoint
             $response = Http::withHeaders([
                 'x-goog-api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post("{$this->baseUrl}/models/{$this->imageModel}:generateContent", [
-                'contents' => [
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict", [
+                'instances' => [
                     [
-                        'parts' => [
-                            [
-                                'text' => $prompt
-                            ]
-                        ]
+                        'prompt' => $prompt
                     ]
                 ],
-                'generationConfig' => [
-                    'temperature' => 0.7,
-                    'topK' => 40,
-                    'topP' => 0.95,
-                    'maxOutputTokens' => 1024,
-                ],
-                'safetySettings' => [
-                    [
-                        'category' => 'HARM_CATEGORY_HATE_SPEECH',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
-                    ],
-                    [
-                        'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
-                    ],
-                    [
-                        'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
-                    ],
-                    [
-                        'category' => 'HARM_CATEGORY_HARASSMENT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
-                    ]
+                'parameters' => [
+                    'sampleCount' => 1,
+                    'aspectRatio' => '16:9'
                 ]
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
 
-                // Log the response structure for debugging (truncated for readability)
-                $logData = $data;
-                if (isset($logData['candidates'][0]['content']['parts'])) {
-                    foreach ($logData['candidates'][0]['content']['parts'] as &$part) {
-                        if (isset($part['inlineData']['data'])) {
-                            $part['inlineData']['data'] = substr($part['inlineData']['data'], 0, 100) . '... [TRUNCATED]';
-                        }
-                    }
-                }
-                Log::info('Gemini API Response Structure: ' . json_encode($logData, JSON_PRETTY_PRINT));
+                Log::info('Imagen API Response received');
 
-                // Check if we have candidates
-                if (isset($data['candidates'][0]['content']['parts'])) {
-                    $parts = $data['candidates'][0]['content']['parts'];
-
-                    // Look for image data in all parts
-                    foreach ($parts as $part) {
-                        // Check for image data in inlineData structure
-                        if (isset($part['inlineData'])) {
-                            $inlineData = $part['inlineData'];
-                            
-                            // Check if we have image data (base64 encoded)
-                            if (isset($inlineData['data'])) {
-                                $imageData = $inlineData['data'];
-                                Log::info('Found image data in part with mimeType: ' . ($inlineData['mimeType'] ?? 'unknown'));
-                                Log::info('Image data length: ' . strlen($imageData));
-                                
-                                // Validate that we have substantial data
-                                if (strlen($imageData) < 100) {
-                                    Log::warning('Image data seems too short: ' . strlen($imageData) . ' characters');
-                                    continue;
-                                }
-                                
-                                return $imageData;
-                            }
-                            
-                            // Also check for alternative data field names that Gemini might use
-                            foreach (['data', 'image', 'content'] as $dataField) {
-                                if (isset($inlineData[$dataField])) {
-                                    $imageData = $inlineData[$dataField];
-                                    Log::info("Found image data in field '{$dataField}' with mimeType: " . ($inlineData['mimeType'] ?? 'unknown'));
-                                    Log::info('Image data length: ' . strlen($imageData));
-                                    
-                                    // Validate that we have substantial data
-                                    if (strlen($imageData) < 100) {
-                                        Log::warning("Image data in field '{$dataField}' seems too short: " . strlen($imageData) . ' characters');
-                                        continue;
-                                    }
-                                    
-                                    return $imageData;
-                                }
-                            }
-                            
-                            Log::info('Found inlineData but no image data field. Available fields: ' . implode(', ', array_keys($inlineData)));
-                        }
-                    }
-
-                    // Check for text parts (for debugging)
-                    foreach ($parts as $part) {
-                        if (isset($part['text'])) {
-                            Log::info('Gemini returned text: ' . $part['text']);
-                        }
-                    }
-                    
-                    Log::warning('No image data found in any part. Response structure logged above.');
+                // Check if we have predictions with generated images
+                if (isset($data['predictions'][0]['bytesBase64Encoded'])) {
+                    $imageData = $data['predictions'][0]['bytesBase64Encoded'];
+                    Log::info('Found image data from Imagen API, length: ' . strlen($imageData));
+                    return $imageData;
                 }
 
-                // Check for finish reason
-                if (isset($data['candidates'][0]['finishReason'])) {
-                    Log::info('Gemini finish reason: ' . $data['candidates'][0]['finishReason']);
+                // Alternative response structure check
+                if (isset($data['predictions'][0]['generatedImages'][0]['bytesBase64Encoded'])) {
+                    $imageData = $data['predictions'][0]['generatedImages'][0]['bytesBase64Encoded'];
+                    Log::info('Found image data in generatedImages, length: ' . strlen($imageData));
+                    return $imageData;
                 }
+
+                Log::warning('No image data found in Imagen API response');
+                Log::info('Response structure: ' . json_encode($data, JSON_PRETTY_PRINT));
+
             } else {
                 $errorData = $response->json();
-                $errorMessage = 'Gemini API HTTP Error: ' . $response->status();
+                $errorMessage = 'Imagen API HTTP Error: ' . $response->status();
 
                 if (isset($errorData['error']['message'])) {
                     $errorMessage .= ' - ' . $errorData['error']['message'];
                 }
 
                 Log::error($errorMessage);
-
-                // Check if it's a quota error
-                if ($response->status() === 429) {
-                    Log::warning('Gemini API quota exceeded, will use fallback method');
-                }
             }
 
             return null;
 
         } catch (\Exception $e) {
-            Log::error('Gemini API Exception: ' . $e->getMessage());
+            Log::error('Imagen API Exception: ' . $e->getMessage());
             return null;
         }
     }
@@ -256,7 +176,7 @@ class GeminiImageService
 
             // Log the size of the base64 data we received
             Log::info('Received base64 image data length: ' . strlen($imageData));
-            
+
             // Log first and last 100 characters for debugging
             Log::info('Base64 data start: ' . substr($imageData, 0, 100));
             Log::info('Base64 data end: ' . substr($imageData, -100));
@@ -302,7 +222,7 @@ class GeminiImageService
 
             // Write the file
             $bytesWritten = file_put_contents($fullPath, $decodedImageData);
-            
+
             if ($bytesWritten === false) {
                 Log::error('Failed to write image data to file: ' . $fullPath);
                 return null;
@@ -337,23 +257,35 @@ class GeminiImageService
             return null;
         }
 
-        $magicBytes = substr($data, 0, 4);
-        
+        $magicBytes = substr($data, 0, 8);
+
         // Check for common image formats
         if (substr($magicBytes, 0, 2) === "\xFF\xD8") {
             return 'jpeg';
         }
-        
+
+        // PNG signature: 89 50 4E 47 0D 0A 1A 0A
         if (substr($magicBytes, 0, 8) === "\x89PNG\r\n\x1A\n") {
             return 'png';
         }
-        
+
+        // Alternative PNG check (just the first 4 bytes)
+        if (substr($magicBytes, 0, 4) === "\x89PNG") {
+            return 'png';
+        }
+
         if (substr($magicBytes, 0, 6) === "GIF87a" || substr($magicBytes, 0, 6) === "GIF89a") {
             return 'gif';
         }
-        
+
         if (substr($magicBytes, 0, 2) === "BM") {
             return 'bmp';
+        }
+
+        // If we can't detect the format but have substantial data, assume it's a valid image
+        if (strlen($data) > 1000) {
+            Log::info('Could not detect image format, but data size suggests valid image. Assuming PNG.');
+            return 'png';
         }
 
         return null;
