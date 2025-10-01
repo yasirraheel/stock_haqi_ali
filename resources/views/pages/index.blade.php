@@ -55,7 +55,7 @@
                                 </div>
                                 <div class="featured-movie-info">
                                     <h3>{{ stripslashes($movies_info->video_title) }}</h3>
-                                    <p>{{ Str::limit(stripslashes($movies_info->video_description), 120) }}</p>
+                                    <p>{{ Str::limit(strip_tags(stripslashes($movies_info->video_description)), 120) }}</p>
                                     <a href="{{ URL::to('movies/details/' . $movies_info->video_slug . '/' . $movies_info->id) }}" 
                                        class="btn btn-watch">
                                         <i class="fas fa-play"></i> Watch Now
@@ -839,6 +839,7 @@ $(document).ready(function() {
         const audio = document.getElementById('audioPlayer' + audioId);
         const playIcon = document.getElementById('playIcon' + audioId);
         const spectrum = document.getElementById('spectrum' + audioId);
+        const audioCard = audio.closest('.audio-card');
         
         if (audio.paused) {
             // Pause all other audio players
@@ -846,23 +847,43 @@ $(document).ready(function() {
                 if (!otherAudio.paused && otherAudio !== audio) {
                     otherAudio.pause();
                     const otherId = otherAudio.id.replace('audioPlayer', '');
+                    const otherCard = otherAudio.closest('.audio-card');
                     document.getElementById('playIcon' + otherId).className = 'fa fa-play';
                     document.getElementById('spectrum' + otherId).style.opacity = '0.6';
+                    if (otherCard) otherCard.classList.remove('playing');
                 }
             });
             
             audio.play();
             playIcon.className = 'fa fa-pause';
             spectrum.style.opacity = '1';
+            if (audioCard) audioCard.classList.add('playing');
         } else {
             audio.pause();
             playIcon.className = 'fa fa-play';
             spectrum.style.opacity = '0.6';
+            if (audioCard) audioCard.classList.remove('playing');
         }
         
+        // Handle audio end event
         audio.addEventListener('ended', function() {
             playIcon.className = 'fa fa-play';
             spectrum.style.opacity = '0.6';
+            if (audioCard) audioCard.classList.remove('playing');
+        });
+        
+        // Handle pause event (for better sync)
+        audio.addEventListener('pause', function() {
+            playIcon.className = 'fa fa-play';
+            spectrum.style.opacity = '0.6';
+            if (audioCard) audioCard.classList.remove('playing');
+        });
+        
+        // Handle play event (for better sync)
+        audio.addEventListener('play', function() {
+            playIcon.className = 'fa fa-pause';
+            spectrum.style.opacity = '1';
+            if (audioCard) audioCard.classList.add('playing');
         });
     };
 
