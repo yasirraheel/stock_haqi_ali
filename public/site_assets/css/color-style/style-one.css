@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-/*****************************************************************	
+/*****************************************************************
 	Color Style One
 *****************************************************************/
 
@@ -965,7 +965,7 @@ h2.form-title-item::before {
 	color: #ffffff;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Menu Style
 -----------------------------------------*/
 .header-top {
@@ -1561,7 +1561,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	color: #e5e5e5;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	slider style
 -----------------------------------------*/
 .splide-slider-details-area {
@@ -1619,8 +1619,8 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	overflow: hidden;
 	/*border-bottom:3px solid transparent;*/
 }
-/*.splide--draggable > .splide__track > .splide__list > .splide__slide.is-active{	
-	border-bottom:3px solid #e6026d;	
+/*.splide--draggable > .splide__track > .splide__list > .splide__slide.is-active{
+	border-bottom:3px solid #e6026d;
 }*/
 .splide .splide__slide::after {
 	content: "";
@@ -1720,7 +1720,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	object-fit: cover;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Start Video Carousel
 -----------------------------------------*/
 .heading-icon {
@@ -1826,7 +1826,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	opacity: 0;
 	-webkit-transition: all .5s ease-out;
 	-o-transition: all .5s ease-out;
-	transition: all .5s ease-out;  
+	transition: all .5s ease-out;
 }
 .video-shows-section .video-img span.video-item-content {
 	background: linear-gradient(60deg, #ff8508, #fd0575) !important;
@@ -1850,7 +1850,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	opacity: 1;
 	-webkit-transition: all .5s ease-out;
 	-o-transition: all .5s ease-out;
-	transition: all .5s ease-out;  
+	transition: all .5s ease-out;
 }
 .video-shows-section .recently-watched-video-carousel .video-img span.video-item-content {
 	background: linear-gradient(60deg, #ff8508, #fd0575) !important;
@@ -1874,7 +1874,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	opacity: 0;
 	-webkit-transition: all .5s ease-out;
 	-o-transition: all .5s ease-out;
-	transition: all .5s ease-out;  
+	transition: all .5s ease-out;
 }
 .sport-video-block .video-img span.video-item-content, .live-tv-video-block .video-img span.video-item-content {
 	background: linear-gradient(60deg, #ff8508, #fd0575) !important;
@@ -1898,7 +1898,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	opacity: 0;
 	-webkit-transition: all .5s ease-out;
 	-o-transition: all .5s ease-out;
-	transition: all .5s ease-out;  
+	transition: all .5s ease-out;
 }
 .single-video a:hover .video-item-content {
 	opacity: 1;
@@ -2367,7 +2367,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	max-width: 100%;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Dashboard Section
 -----------------------------------------*/
 .profile-section {
@@ -2461,24 +2461,24 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	color: #ffffff;
 	font-weight: 700;
 }
-/*.member-ship-option p {    
-	color: #6a6a6a;    
+/*.member-ship-option p {
+	color: #6a6a6a;
 	margin-bottom: 5px;
 }
 .member-ship-option div a {
-    background: #fe0278;    
-    border: 2px solid transparent;    
-    color: #ffffff;    
-    margin-top: 10px;    
-    margin-bottom: 10px;    
-    margin-right: 5px;    
-    border-radius: 6px;    
-    padding: 5px 12px;    
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);    
+    background: #fe0278;
+    border: 2px solid transparent;
+    color: #ffffff;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-right: 5px;
+    border-radius: 6px;
+    padding: 5px 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     display: inline-block;
 }*/
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Start Call To Action Area
 -----------------------------------------*/
 .call-to-action-area {
@@ -2555,7 +2555,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	color: #252525;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Footer Area
 -----------------------------------------*/
 .footer-area {
@@ -2672,7 +2672,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	transition: all .6s linear 0s;
 }
 .scroll-top .scroll-icon:hover {
-	color: #ffffff;	
+	color: #ffffff;
 }
 .footer-bottom-area {
 	text-align: center;
@@ -2705,7 +2705,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	font-size: 15px;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Single Video Page
 -----------------------------------------*/
 .breadcrumb-section {
@@ -2873,7 +2873,7 @@ ul.nav > li a.active, ul.nav > li:hover > a {
 	color: #fe0278;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Start Video Post
 -----------------------------------------*/
 .video-post-wrapper .posts-image {
@@ -3357,7 +3357,7 @@ box-shadow: 0 0 0 0 rgba(244,68,56,.0);
 	border: 5px solid #242426;
 	display: block;
 	object-fit: cover;
-	margin: 0 auto;	
+	margin: 0 auto;
 }
 .actors-detail-wrapper .actors-info-details {
 	display: inline-block;
@@ -3405,8 +3405,8 @@ box-shadow: 0 0 0 0 rgba(244,68,56,.0);
 	margin: 50px 0;
 }
 
-/*-----------------------------------------	
-	Contact Form 
+/*-----------------------------------------
+	Contact Form
 -----------------------------------------*/
 .contact-form .form-control, .edit-profile-form .form-control, .stripe-payment-form .form-control {
 	font-size: 1rem;
@@ -3550,7 +3550,7 @@ textarea.form-control {
 	padding: 200px 0;
 }
 
-/*-----------------------------------------	
+/*-----------------------------------------
 	Modal Design
 -----------------------------------------*/
 header .modal-content {
@@ -3592,7 +3592,7 @@ header .modal-body .btn.btn-primary {
 	border: none;
 }
 
-/*---------------------------------------	
+/*---------------------------------------
 	Popup Search Block
 -----------------------------------------*/
 .popup-overlay {
@@ -3821,7 +3821,7 @@ header .modal-body .btn.btn-primary {
 }
 .header-section ul li.menu-icon a {
 	background: #39363b;
-}  
+}
 .search .section-padding {
 	margin-top: 20px;
 }
@@ -4007,7 +4007,7 @@ transform: translateY(0);
 }
 }
 
-/*---------------------------------------	
+/*---------------------------------------
 	Tabs Item
 -----------------------------------------*/
 .vfx-tabs-item {
@@ -4135,7 +4135,7 @@ transform: translateY(0);
 }
 .description-detail-item p, .poster-dtl-item p {
 	font-size:15px;
-	line-height: 26px;	
+	line-height: 26px;
 	font-weight: 600;
 	color: #c2c0c0;
 	margin-top: 8px;
@@ -4317,14 +4317,14 @@ transform: translateY(0);
 	content: "Choose File..";
 }
 
-/*---------------------------------------	
-	Pre Loader Section              
+/*---------------------------------------
+	Pre Loader Section
 -----------------------------------------*/
 .preloader {
 	position: fixed;
 	width: 100%;
 	height: 100%;
-	z-index: 99999 !important;	
+	z-index: 99999 !important;
 	/*background: #0d0620;*/
 	background: radial-gradient(closest-corner, #2a1c50 20%, #180d36 60%, #0d0620 100%);
 	top: 0;
@@ -4539,17 +4539,17 @@ header .modal-body .btn.btn-primary {
 }
 .eupopup-closebutton {
 	background: #fe0278 !important;
-}  
+}
 .eupopup-closebutton:hover, .eupopup-closebutton:active {
 	background: #fff !important;
 	color: #fe0278 !important;
 }
 .eupopup-button_1, .eupopup-button_2 {
 	color: #fe0278 !important;
-}  
+}
 .eupopup-button_1:hover, .eupopup-button_2:hover{
 	color: #ffffff !important;
-}  
+}
 
 .youtube_video_wrapper {
 	width:100%;
@@ -4670,8 +4670,8 @@ header .modal-body .btn.btn-primary {
     bottom:0;
 }
 .player_prev_next {
-    background: #e6026d;  
-	color: #ffffff;   
+    background: #e6026d;
+	color: #ffffff;
     min-width: auto;
     height: 34px;
     border-radius: 4px;
@@ -4681,13 +4681,13 @@ header .modal-body .btn.btn-primary {
 	margin-left: 8px;
     font-weight: 600;
     font-size: 13px;
-    line-height: 30px;     
+    line-height: 30px;
     right: 10px;
     z-index: 999;
 }
 .player_prev_next:hover{
 	background:#ff8508;
-	color: #ffffff; 
+	color: #ffffff;
 }
 .player_prev_next:hover a{
 	color: #fff;

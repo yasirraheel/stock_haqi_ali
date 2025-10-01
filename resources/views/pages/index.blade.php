@@ -44,8 +44,8 @@
                         @if($movies_info)
                             <div class="featured-movie-card">
                                 <div class="featured-movie-image">
-                                    <img src="{{ URL::to('/' . $movies_info->video_image_thumb) }}" 
-                                         alt="{{ stripslashes($movies_info->video_title) }}" 
+                                    <img src="{{ URL::to('/' . $movies_info->video_image_thumb) }}"
+                                         alt="{{ stripslashes($movies_info->video_title) }}"
                                          class="img-fluid">
                                     @if($movies_info->video_access == 'Paid')
                                         <div class="premium-badge">
@@ -56,7 +56,7 @@
                                 <div class="featured-movie-info">
                                     <h3>{{ stripslashes($movies_info->video_title) }}</h3>
                                     <p>{{ Str::limit(strip_tags(stripslashes($movies_info->video_description)), 120) }}</p>
-                                    <a href="{{ URL::to('movies/details/' . $movies_info->video_slug . '/' . $movies_info->id) }}" 
+                                    <a href="{{ URL::to('movies/details/' . $movies_info->video_slug . '/' . $movies_info->id) }}"
                                        class="btn btn-watch">
                                         <i class="fas fa-play"></i> Watch Now
                                     </a>
@@ -118,7 +118,7 @@
                                     @endif
                                     <img src="{{ URL::to('/' . $movies_data->video_image_thumb) }}"
                                         alt="{{ stripslashes($movies_data->video_title) }}"
-                                        title="{{ stripslashes($movies_data->video_title) }}" 
+                                        title="{{ stripslashes($movies_data->video_title) }}"
                                         class="img-fluid">
                                     @if ($movies_data->video_access == 'Paid')
                                         <div class="premium-overlay">
@@ -344,7 +344,7 @@
                                         <div class="spectrum-bar"></div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="audio-info">
                                     <h4 class="audio-title">{{Str::limit(stripslashes($audio_data->title),35)}}</h4>
                                     <div class="audio-meta">
@@ -406,11 +406,11 @@
                                 <div class="single-video photo-card">
                                     <div class="photo-card-content">
                                         <div class="photo-image">
-                                            <img src="{{ $photo_data->image_url }}" 
+                                            <img src="{{ $photo_data->image_url }}"
                                                  alt="{{ stripslashes($photo_data->title) }}"
                                                  title="{{ stripslashes($photo_data->title) }}"
                                                  class="img-fluid">
-                                            
+
                                             @if($photo_data->license_price && $photo_data->license_price > 0)
                                             <div class="photo-premium-badge">
                                                 <i class="fa fa-crown"></i>
@@ -431,7 +431,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="photo-info">
                                             <h3 class="photo-title">{{Str::limit(stripslashes($photo_data->title),30)}}</h3>
                                             @if($photo_data->category)
@@ -865,22 +865,22 @@ $(document).ready(function() {
                 // Create audio context
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 const audioContext = new AudioContext();
-                
+
                 // Create analyzer
                 const analyzer = audioContext.createAnalyser();
                 analyzer.fftSize = 256;
                 analyzer.smoothingTimeConstant = 0.8;
-                
+
                 // Create source from audio element
                 const source = audioContext.createMediaElementSource(audioElement);
                 source.connect(analyzer);
                 analyzer.connect(audioContext.destination);
-                
+
                 // Store references
                 this.audioContexts.set(audioId, audioContext);
                 this.analyzers.set(audioId, analyzer);
                 this.sources.set(audioId, source);
-                
+
                 return audioContext;
             } catch (error) {
                 console.warn('Web Audio API not supported or failed to initialize:', error);
@@ -891,7 +891,7 @@ $(document).ready(function() {
         startSpectrumAnalysis(audioId) {
             const analyzer = this.analyzers.get(audioId);
             const audioContext = this.audioContexts.get(audioId);
-            
+
             if (!analyzer || !audioContext) return;
 
             const spectrum = document.getElementById('spectrum' + audioId);
@@ -902,47 +902,47 @@ $(document).ready(function() {
 
             const bufferLength = analyzer.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
-            
+
             const animate = () => {
                 if (this.animationFrames.has(audioId)) {
                     analyzer.getByteFrequencyData(dataArray);
-                    
+
                     // Calculate average frequencies for each bar
                     const barCount = bars.length;
                     const samplesPerBar = Math.floor(bufferLength / barCount);
-                    
+
                     bars.forEach((bar, index) => {
                         let sum = 0;
                         const start = index * samplesPerBar;
                         const end = Math.min(start + samplesPerBar, bufferLength);
-                        
+
                         for (let i = start; i < end; i++) {
                             sum += dataArray[i];
                         }
-                        
+
                         const average = sum / (end - start);
                         const height = Math.max(4, (average / 255) * 20); // Min 4px, max 20px
-                        
+
                         bar.style.height = height + 'px';
-                        
+
                         // Add slight delay for more realistic wave effect
                         const delay = index * 20;
                         setTimeout(() => {
                             bar.style.opacity = average > 10 ? '1' : '0.6';
                         }, delay);
                     });
-                    
+
                     requestAnimationFrame(animate);
                 }
             };
-            
+
             this.animationFrames.set(audioId, true);
             animate();
         }
 
         stopSpectrumAnalysis(audioId) {
             this.animationFrames.delete(audioId);
-            
+
             const spectrum = document.getElementById('spectrum' + audioId);
             if (spectrum) {
                 const bars = spectrum.querySelectorAll('.spectrum-bar');
@@ -974,7 +974,7 @@ $(document).ready(function() {
         const playIcon = document.getElementById('playIcon' + audioId);
         const spectrum = document.getElementById('spectrum' + audioId);
         const audioCard = audio ? audio.closest('.audio-card') : null;
-        
+
         if (!audio) return;
 
         if (audio.paused) {
@@ -984,26 +984,26 @@ $(document).ready(function() {
                     const otherId = otherAudio.id.replace('audioPlayer', '');
                     const otherCard = otherAudio.closest('.audio-card');
                     const otherIcon = document.getElementById('playIcon' + otherId);
-                    
+
                     otherAudio.pause();
                     spectrumAnalyzer.stopSpectrumAnalysis(otherId);
-                    
+
                     if (otherIcon) otherIcon.className = 'fa fa-play';
                     if (otherCard) otherCard.classList.remove('playing');
                 }
             });
-            
+
             // Initialize audio context for this audio if not already done
             await spectrumAnalyzer.initializeAudioContext(audioId);
-            
+
             // Resume audio context if suspended (required by browser policies)
             await spectrumAnalyzer.resumeAudioContext(audioId);
-            
+
             // Play audio and start spectrum analysis
             try {
                 await audio.play();
                 spectrumAnalyzer.startSpectrumAnalysis(audioId);
-                
+
                 if (playIcon) playIcon.className = 'fa fa-pause';
                 if (audioCard) audioCard.classList.add('playing');
             } catch (error) {
@@ -1013,27 +1013,27 @@ $(document).ready(function() {
             // Pause audio and stop spectrum analysis
             audio.pause();
             spectrumAnalyzer.stopSpectrumAnalysis(audioId);
-            
+
             if (playIcon) playIcon.className = 'fa fa-play';
             if (audioCard) audioCard.classList.remove('playing');
         }
-        
+
         // Enhanced event listeners for better sync
         if (!audio.hasAttribute('data-listeners-added')) {
             audio.setAttribute('data-listeners-added', 'true');
-            
+
             audio.addEventListener('ended', function() {
                 spectrumAnalyzer.stopSpectrumAnalysis(audioId);
                 if (playIcon) playIcon.className = 'fa fa-play';
                 if (audioCard) audioCard.classList.remove('playing');
             });
-            
+
             audio.addEventListener('pause', function() {
                 spectrumAnalyzer.stopSpectrumAnalysis(audioId);
                 if (playIcon) playIcon.className = 'fa fa-play';
                 if (audioCard) audioCard.classList.remove('playing');
             });
-            
+
             audio.addEventListener('play', function() {
                 spectrumAnalyzer.startSpectrumAnalysis(audioId);
                 if (playIcon) playIcon.className = 'fa fa-pause';
