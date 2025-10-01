@@ -367,7 +367,7 @@ $("#channel_url_type").change(function(){
 
           $("#selected_movie").prop('required',true);
        }
-       else if(type=="Photos")
+       else if(type=="Shows")
        {
           $("#movie_list_sec").hide();
           $("#shows_list_sec").show();
@@ -766,7 +766,7 @@ $("#notification_type").change(function(){
           $("#sports_list_id").hide();
           $("#live_tv_list_id").hide();
        }
-       else if(type=="Photos")
+       else if(type=="Shows")
        {
           $("#movie_list_id").hide();
           $("#show_list_id").show();
@@ -810,7 +810,7 @@ $("#slider_type").change(function(){
           $("#sports_list_id").hide();
           $("#live_tv_list_id").hide();
        }
-       else if(type=="Photos")
+       else if(type=="Shows")
        {
           $("#movie_list_id").hide();
           $("#show_list_id").show();

@@ -8,9 +8,8 @@ use App\Models\PhotoCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Auth;
 
 class PhotosController extends Controller
 {
@@ -65,8 +64,7 @@ class PhotosController extends Controller
             'category' => 'nullable|string|max:255',
             'tags' => 'nullable|string',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,bmp,tiff,webp|max:20480', // 20MB max
-            'status' => 'required|in:active,inactive',
-            'license_price' => 'nullable|numeric|min:0'
+            'status' => 'required|in:active,inactive'
         ]);
 
         if ($validator->fails()) {
@@ -85,14 +83,6 @@ class PhotosController extends Controller
                 if ($uploadResult['success']) {
                     // Fill basic data
                     $photo->fill($request->except('image'));
-
-                    // Explicitly handle license_price to ensure proper decimal handling
-                    $licensePrice = $request->license_price;
-                    if ($licensePrice !== null && $licensePrice !== '') {
-                        $photo->license_price = round((float)$licensePrice, 2);
-                    } else {
-                        $photo->license_price = null;
-                    }
 
                     // Fill image data
                     $photo->image_name = $uploadResult['image_name'];
@@ -152,8 +142,7 @@ class PhotosController extends Controller
             'category' => 'nullable|string|max:255',
             'tags' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,bmp,tiff,webp|max:20480',
-            'status' => 'required|in:active,inactive',
-            'license_price' => 'nullable|numeric|min:0'
+            'status' => 'required|in:active,inactive'
         ]);
 
         if ($validator->fails()) {
@@ -187,15 +176,6 @@ class PhotosController extends Controller
 
             // Update other fields
             $photo->fill($request->except('image'));
-
-            // Explicitly handle license_price to ensure proper decimal handling
-            $licensePrice = $request->license_price;
-            if ($licensePrice !== null && $licensePrice !== '') {
-                $photo->license_price = round((float)$licensePrice, 2);
-            } else {
-                $photo->license_price = null;
-            }
-
             $photo->save();
 
             return redirect()->route('admin.photos.index')
@@ -327,7 +307,7 @@ class PhotosController extends Controller
                     // Camera information
                     $metadata['camera_make'] = $exif['Make'] ?? null;
                     $metadata['camera_model'] = $exif['Model'] ?? null;
-                    $metadata['lens_model'] = $exif['UndefinedTag:0xA434'] ?? $exif['LensModel'] ?? null;
+                    $metadata['lens_model'] = $exif['UndefinedTag:0xA434'] ?? null;
 
                     // Photo settings
                     if (isset($exif['FocalLength'])) {
@@ -342,64 +322,21 @@ class PhotosController extends Controller
                         $metadata['shutter_speed'] = $this->formatExifFraction($exif['ExposureTime']) . 's';
                     }
 
-                    $metadata['iso'] = $exif['ISOSpeedRatings'] ?? $exif['ISO'] ?? null;
+                    $metadata['iso'] = $exif['ISOSpeedRatings'] ?? null;
+                    $metadata['flash'] = isset($exif['Flash']) ? ($exif['Flash'] ? 'Yes' : 'No') : null;
+                    $metadata['white_balance'] = $exif['WhiteBalance'] ?? null;
 
-                    // Enhanced flash information
-                    if (isset($exif['Flash'])) {
-                        $flashValues = [
-                            0 => 'No Flash',
-                            1 => 'Fired',
-                            5 => 'Fired, Return not detected',
-                            7 => 'Fired, Return detected',
-                            8 => 'On, Did not fire',
-                            9 => 'On, Fired',
-                            13 => 'On, Return not detected',
-                            15 => 'On, Return detected',
-                            16 => 'Off, Did not fire',
-                            24 => 'Off, Did not fire, Return not detected',
-                            25 => 'Auto, Did not fire',
-                            29 => 'Auto, Fired',
-                            31 => 'Auto, Fired, Return not detected',
-                            32 => 'No flash function',
-                            65 => 'On, Fired',
-                            69 => 'On, Fired, Return not detected',
-                            71 => 'On, Fired, Return detected',
-                            73 => 'On, Red-eye reduction',
-                            79 => 'On, Red-eye reduction, Return not detected',
-                            89 => 'On, Red-eye reduction, Return detected',
-                            93 => 'On, Fired, Red-eye reduction',
-                            95 => 'On, Fired, Red-eye reduction, Return not detected'
-                        ];
-                        $metadata['flash'] = $flashValues[$exif['Flash']] ?? 'Unknown';
-                    }
-
-                    // Enhanced white balance
-                    if (isset($exif['WhiteBalance'])) {
-                        $wbValues = [
-                            0 => 'Auto',
-                            1 => 'Manual'
-                        ];
-                        $metadata['white_balance'] = $wbValues[$exif['WhiteBalance']] ?? 'Unknown';
-                    }
-
-                    // Date taken - try multiple fields
+                    // Date taken
                     if (isset($exif['DateTimeOriginal'])) {
                         $metadata['date_taken'] = date('Y-m-d H:i:s', strtotime($exif['DateTimeOriginal']));
                     } elseif (isset($exif['DateTime'])) {
                         $metadata['date_taken'] = date('Y-m-d H:i:s', strtotime($exif['DateTime']));
-                    } elseif (isset($exif['DateTimeDigitized'])) {
-                        $metadata['date_taken'] = date('Y-m-d H:i:s', strtotime($exif['DateTimeDigitized']));
                     }
 
                     // GPS information
                     if (isset($exif['GPSLatitude'], $exif['GPSLongitude'])) {
                         $metadata['gps_latitude'] = $this->formatGPS($exif['GPSLatitude'], $exif['GPSLatitudeRef']);
                         $metadata['gps_longitude'] = $this->formatGPS($exif['GPSLongitude'], $exif['GPSLongitudeRef']);
-
-                        // Try to get GPS altitude
-                        if (isset($exif['GPSAltitude'])) {
-                            $metadata['gps_altitude'] = $this->formatExifFraction($exif['GPSAltitude']) . 'm';
-                        }
                     }
 
                     // Orientation
@@ -420,89 +357,16 @@ class PhotosController extends Controller
                     // Copyright and artist
                     $metadata['copyright'] = $exif['Copyright'] ?? null;
                     $metadata['artist'] = $exif['Artist'] ?? null;
-
-                    // Additional EXIF data
-                    $metadata['software'] = $exif['Software'] ?? null;
-                    $metadata['exposure_mode'] = $this->getExposureMode($exif['ExposureMode'] ?? null);
-                    $metadata['metering_mode'] = $this->getMeteringMode($exif['MeteringMode'] ?? null);
-                    $metadata['scene_capture_type'] = $this->getSceneCaptureType($exif['SceneCaptureType'] ?? null);
-                    $metadata['contrast'] = $this->getContrast($exif['Contrast'] ?? null);
-                    $metadata['saturation'] = $this->getSaturation($exif['Saturation'] ?? null);
-                    $metadata['sharpness'] = $this->getSharpness($exif['Sharpness'] ?? null);
-
-                    // Lens information
-                    $metadata['lens_specification'] = $exif['LensSpecification'] ?? null;
-                    $metadata['lens_serial_number'] = $exif['LensSerialNumber'] ?? null;
-
-                    // Focus information
-                    $metadata['focus_distance'] = $exif['SubjectDistance'] ?? null;
-                    $metadata['focus_mode'] = $this->getFocusMode($exif['FocusMode'] ?? null);
-
-                    // Image quality settings
-                    $metadata['image_quality'] = $exif['ImageQuality'] ?? null;
-                    $metadata['white_balance_mode'] = $exif['WhiteBalanceMode'] ?? null;
-
-                    // Color information
-                    if (isset($exif['ColorSpace'])) {
-                        $colorSpaces = [
-                            1 => 'sRGB',
-                            2 => 'Adobe RGB',
-                            65535 => 'Uncalibrated'
-                        ];
-                        $metadata['color_space'] = $colorSpaces[$exif['ColorSpace']] ?? 'Unknown';
-                    }
-
-                    // Bit depth from EXIF
-                    if (isset($exif['BitsPerSample'])) {
-                        $metadata['bit_depth'] = is_array($exif['BitsPerSample']) ? $exif['BitsPerSample'][0] : $exif['BitsPerSample'];
-                    }
-
-                    // Keywords and subject
-                    $metadata['keywords'] = $exif['Keywords'] ?? null;
-                    $metadata['subject'] = $exif['Subject'] ?? null;
-                    $metadata['subject_distance_range'] = $this->getSubjectDistanceRange($exif['SubjectDistanceRange'] ?? null);
-
-                    // Digital zoom
-                    $metadata['digital_zoom_ratio'] = $exif['DigitalZoomRatio'] ?? null;
-
-                    // Focal length in 35mm film
-                    $metadata['focal_length_35mm'] = $exif['FocalLengthIn35mmFilm'] ?? null;
-
-                    // Scene type
-                    $metadata['scene_type'] = $exif['SceneType'] ?? null;
-
-                    // Custom rendered
-                    $metadata['custom_rendered'] = $this->getCustomRendered($exif['CustomRendered'] ?? null);
-
-                    // Exposure program
-                    $metadata['exposure_program'] = $this->getExposureProgram($exif['ExposureProgram'] ?? null);
-
-                    // Light source
-                    $metadata['light_source'] = $this->getLightSource($exif['LightSource'] ?? null);
-
-                    // Gain control
-                    $metadata['gain_control'] = $this->getGainControl($exif['GainControl'] ?? null);
-
-                    // Contrast, saturation, sharpness
-                    $metadata['contrast'] = $this->getContrast($exif['Contrast'] ?? null);
-                    $metadata['saturation'] = $this->getSaturation($exif['Saturation'] ?? null);
-                    $metadata['sharpness'] = $this->getSharpness($exif['Sharpness'] ?? null);
                 }
             }
 
-            // Color space detection (basic) - only if not set from EXIF
-            if (!isset($metadata['color_space'])) {
-                $metadata['color_space'] = 'RGB'; // Default assumption
-            }
-
-            // Bit depth - only if not set from EXIF
-            if (!isset($metadata['bit_depth'])) {
-                $metadata['bit_depth'] = 8; // Default assumption
-            }
+            // Color space detection (basic)
+            $metadata['color_space'] = 'RGB'; // Default assumption
+            $metadata['bit_depth'] = 8; // Default assumption
 
         } catch (\Exception $e) {
             // Log error but don't fail
-            Log::warning('Failed to extract image metadata: ' . $e->getMessage());
+            \Log::warning('Failed to extract image metadata: ' . $e->getMessage());
         }
 
         return $metadata;
@@ -552,194 +416,5 @@ class PhotosController extends Controller
         if ($imagePath && file_exists(public_path('upload/photos/' . $imagePath))) {
             unlink(public_path('upload/photos/' . $imagePath));
         }
-    }
-
-    /**
-     * Get exposure mode description
-     */
-    private function getExposureMode($mode)
-    {
-        $modes = [
-            0 => 'Auto',
-            1 => 'Manual',
-            2 => 'Auto bracket'
-        ];
-        return $modes[$mode] ?? null;
-    }
-
-    /**
-     * Get metering mode description
-     */
-    private function getMeteringMode($mode)
-    {
-        $modes = [
-            0 => 'Unknown',
-            1 => 'Average',
-            2 => 'Center-weighted average',
-            3 => 'Spot',
-            4 => 'Multi-spot',
-            5 => 'Multi-segment',
-            6 => 'Partial',
-            255 => 'Other'
-        ];
-        return $modes[$mode] ?? null;
-    }
-
-    /**
-     * Get scene capture type description
-     */
-    private function getSceneCaptureType($type)
-    {
-        $types = [
-            0 => 'Standard',
-            1 => 'Landscape',
-            2 => 'Portrait',
-            3 => 'Night scene'
-        ];
-        return $types[$type] ?? null;
-    }
-
-    /**
-     * Get contrast description
-     */
-    private function getContrast($contrast)
-    {
-        $contrasts = [
-            0 => 'Normal',
-            1 => 'Soft',
-            2 => 'Hard'
-        ];
-        return $contrasts[$contrast] ?? null;
-    }
-
-    /**
-     * Get saturation description
-     */
-    private function getSaturation($saturation)
-    {
-        $saturations = [
-            0 => 'Normal',
-            1 => 'Low',
-            2 => 'High'
-        ];
-        return $saturations[$saturation] ?? null;
-    }
-
-    /**
-     * Get sharpness description
-     */
-    private function getSharpness($sharpness)
-    {
-        $sharpnesses = [
-            0 => 'Normal',
-            1 => 'Soft',
-            2 => 'Hard'
-        ];
-        return $sharpnesses[$sharpness] ?? null;
-    }
-
-    /**
-     * Get focus mode description
-     */
-    private function getFocusMode($mode)
-    {
-        $modes = [
-            0 => 'Auto',
-            1 => 'Manual',
-            2 => 'Auto macro',
-            3 => 'Manual macro'
-        ];
-        return $modes[$mode] ?? null;
-    }
-
-    /**
-     * Get subject distance range description
-     */
-    private function getSubjectDistanceRange($range)
-    {
-        $ranges = [
-            0 => 'Unknown',
-            1 => 'Macro',
-            2 => 'Close view',
-            3 => 'Distant view'
-        ];
-        return $ranges[$range] ?? null;
-    }
-
-    /**
-     * Get custom rendered description
-     */
-    private function getCustomRendered($rendered)
-    {
-        $renders = [
-            0 => 'Normal process',
-            1 => 'Custom process'
-        ];
-        return $renders[$rendered] ?? null;
-    }
-
-    /**
-     * Get exposure program description
-     */
-    private function getExposureProgram($program)
-    {
-        $programs = [
-            0 => 'Not defined',
-            1 => 'Manual',
-            2 => 'Program AE',
-            3 => 'Aperture-priority AE',
-            4 => 'Shutter-priority AE',
-            5 => 'Creative program',
-            6 => 'Action program',
-            7 => 'Portrait mode',
-            8 => 'Landscape mode'
-        ];
-        return $programs[$program] ?? null;
-    }
-
-    /**
-     * Get light source description
-     */
-    private function getLightSource($source)
-    {
-        $sources = [
-            0 => 'Unknown',
-            1 => 'Daylight',
-            2 => 'Fluorescent',
-            3 => 'Tungsten',
-            4 => 'Flash',
-            9 => 'Fine weather',
-            10 => 'Cloudy weather',
-            11 => 'Shade',
-            12 => 'Daylight fluorescent',
-            13 => 'Day white fluorescent',
-            14 => 'Cool white fluorescent',
-            15 => 'White fluorescent',
-            17 => 'Standard light A',
-            18 => 'Standard light B',
-            19 => 'Standard light C',
-            20 => 'D55',
-            21 => 'D65',
-            22 => 'D75',
-            23 => 'D50',
-            24 => 'ISO studio tungsten',
-            255 => 'Other'
-        ];
-        return $sources[$source] ?? null;
-    }
-
-    /**
-     * Get gain control description
-     */
-    private function getGainControl($control)
-    {
-        $controls = [
-            0 => 'None',
-            1 => 'Low gain up',
-            2 => 'High gain up',
-            3 => 'Low gain down',
-            4 => 'High gain down'
-        ];
-        return $controls[$control] ?? null;
     }
 }

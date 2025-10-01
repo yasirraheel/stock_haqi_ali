@@ -29,7 +29,6 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     Route::get('movies/edit_movie/{id}', 'MoviesController@editMovie');
      Route::get('movies/extract_audio/{id}', 'MoviesController@extractAudio');
     Route::post('movies/add_edit_movie', 'MoviesController@addnew');
-    Route::post('movies/generate_description', 'MoviesController@generateDescription')->name('admin.movies.generate_description');
     Route::get('movies/delete/{id}', 'MoviesController@delete');
 
     // Photos Routes
@@ -43,18 +42,6 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
         'destroy' => 'admin.photos.destroy'
     ]);
     Route::post('photos/metadata', 'PhotosController@getImageMetadata')->name('admin.photos.metadata');
-
-    // Audio Routes
-    Route::resource('audio', 'AudioController')->names([
-        'index' => 'admin.audio.index',
-        'create' => 'admin.audio.create',
-        'store' => 'admin.audio.store',
-        'show' => 'admin.audio.show',
-        'edit' => 'admin.audio.edit',
-        'update' => 'admin.audio.update',
-        'destroy' => 'admin.audio.destroy'
-    ]);
-    Route::post('audio/metadata', 'AudioController@getAudioMetadata')->name('admin.audio.metadata');
 
     // Photo Categories Routes
     Route::resource('photo-categories', 'PhotoCategoryController')->only(['index', 'store', 'destroy'])->names([
@@ -338,16 +325,6 @@ if (getcong('menu_shows')) {
 
     Route::get('shows/{series_slug}/{episodes_slug}/{id}', 'ShowsController@episodes_details')->name('episodes_single');
 }
-
-// Photos routes
-Route::get('photos', 'PhotosController@index');
-Route::get('photos/details/{id}', 'PhotosController@show');
-Route::get('photos/download/{id}', 'PhotosController@download');
-
-// Audio routes
-Route::get('audio', 'AudioController@index');
-Route::get('audio/details/{id}', 'AudioController@show');
-Route::get('audio/download/{id}', 'AudioController@download');
 
 if (getcong('menu_sports')) {
     Route::get('sports', 'SportsController@sports');

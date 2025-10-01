@@ -2,41 +2,36 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Redirect;
+use Auth;
 use App\User;
 use App\Movies;
 use App\Genres;
 use App\Language;
 use App\RecentlyWatched;
 use App\ActorDirector;
-
 use App\Http\Requests;
 use App\Models\GoogleDriveApi;
 use App\Models\Thumbnail;
-use App\Services\GeminiImageService;
-use App\Services\GeminiTextService;
 use Illuminate\Http\Request;
+use Session;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class MoviesController extends MainAdminController
 {
     public function __construct()
     {
         $this->middleware('auth');
-
         parent::__construct();
         check_verify_purchase();
     }
+
     public function movies_list()
     {
         if (Auth::User()->usertype != "Admin" && Auth::User()->usertype != "Sub_Admin") {
-            Session::flash('flash_message', trans('words.access_denied'));
+            \Session::flash('flash_message', trans('words.access_denied'));
             return redirect('dashboard');
         }
 
@@ -54,17 +49,17 @@ class MoviesController extends MainAdminController
             $keyword = $_GET['s'];
             $query->where("video_title", "LIKE", "%$keyword%");
             $movies_list = $query->orderBy('video_title')->paginate(12);
-            $movies_list->appends(request()->only('s'));
+            $movies_list->appends(\Request::only('s'))->links();
         } else if (isset($_GET['language_id'])) {
             $language_id = $_GET['language_id'];
             $query->where("movie_lang_id", "=", $language_id);
             $movies_list = $query->orderBy('id', 'DESC')->paginate(12);
-            $movies_list->appends(request()->only('language_id'));
+            $movies_list->appends(\Request::only('language_id'))->links();
         } else if (isset($_GET['genres_id'])) {
             $genres_id = $_GET['genres_id'];
             $query->whereRaw("find_in_set('$genres_id',movie_genre_id)");
             $movies_list = $query->orderBy('id', 'DESC')->paginate(12);
-            $movies_list->appends(request()->only('genres_id'));
+            $movies_list->appends(\Request::only('genres_id'))->links();
         } else {
             $movies_list = $query->orderBy('id', 'DESC')->paginate(12);
         }
@@ -74,18 +69,8 @@ class MoviesController extends MainAdminController
 
     public function addMovie()
     {
-        // Check if screen width indicates mobile device
-        // $screenWidth = request()->input('screen_width');
-
-        // if ($screenWidth && $screenWidth <= 768) { // Assuming 768px or less is mobile/tablet
-        //     \Session::flash('flash_message', 'Access denied. For better experience, please use a desktop device.');
-
-        //     return redirect()->back();
-        // }
-
-        // Check user type
         if (Auth::User()->usertype != "Admin" and Auth::User()->usertype != "Sub_Admin") {
-            Session::flash('flash_message', trans('words.access_denied'));
+            \Session::flash('flash_message', trans('words.access_denied'));
             return redirect('dashboard');
         }
 
@@ -100,26 +85,18 @@ class MoviesController extends MainAdminController
 
     public function addnew(Request $request)
     {
-        // Fetch all Google Drive API key from db
         $google_drive_api  = $this->getRandomApiKey();
-
         GoogleDriveApi::where('api_key', $google_drive_api)->increment('calls');
-
         $googleDriveUrl = $request->video_url;
 
-        // Check if URL is already a Google Drive streaming URL
         if (strpos($googleDriveUrl, 'https://www.googleapis.com/drive/v3/files/') !== false) {
             $video_url = $googleDriveUrl;
-            // Extract the file ID directly from the URL
             preg_match("/files\/(.*?)\?/", $googleDriveUrl, $matches);
             $fileId = $matches[1];
         } else {
-            // Extract the file ID from the Google Drive URL
             preg_match("/\/d\/(.*?)\//", $googleDriveUrl, $matches);
-
             if (isset($matches[1])) {
                 $fileId = $matches[1];
-                // Construct the Google Drive streaming URL
                 $video_url = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$google_drive_api}";
             } else {
                 session()->flash('error', 'Invalid Google Drive URL');
@@ -127,44 +104,36 @@ class MoviesController extends MainAdminController
             }
         }
 
-        $data = request()->except(['_token']);
+        $data = \Request::except(['_token']);
         $inputs = $request->all();
 
-        // Set validation rules
         $rule = [
             'genres' => 'required',
             'video_title' => 'required'
         ];
-
-        $validator = Validator::make($data, $rule);
-
-        // Redirect back with errors if validation fails
+        $validator = \Validator::make($data, $rule);
         if ($validator->fails()) {
             return redirect()->back()->withInput()->withErrors($validator->messages());
         }
-        // If updating an existing movie, retrieve it. Otherwise, create a new movie object.
+
         $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
-
-        // Store original values for comparison (for updates)
-        $original_title = $movie_obj->video_title ?? '';
-        $original_description = $movie_obj->video_description ?? '';
-        $original_file_id = $movie_obj->file_id ?? '';
-
         session()->put('movie_obj', $movie_obj);
 
         $video_slug = Str::slug($inputs['video_title'], '-', null);
 
-        // Fill in movie object data
         $movie_obj->funding_url = $inputs['funding_url'];
         $movie_obj->movie_lang_id = 0;
         $movie_obj->movie_genre_id = implode(',', $inputs['genres']);
         $movie_obj->video_title = addslashes($inputs['video_title']);
         $movie_obj->video_slug = $video_slug;
         $movie_obj->video_description = addslashes($inputs['video_description']);
+
+        $title = addslashes($inputs['video_title']);
+        $description = addslashes($inputs['video_description']);
+
         $movie_obj->actor_id = isset($inputs['actors_id']) ? implode(',', $inputs['actors_id']) : null;
         $movie_obj->director_id = isset($inputs['director_id']) ? implode(',', $inputs['director_id']) : null;
 
-        // Handle poster link if provided
         if (isset($inputs['poster_link']) && $inputs['poster_link'] != '') {
             $image_source = $inputs['poster_link'];
             $save_to = public_path('/upload/images/' . $inputs['video_image']);
@@ -172,7 +141,6 @@ class MoviesController extends MainAdminController
             $movie_obj->video_image = 'upload/images/' . $inputs['video_image'];
         }
 
-        // Other fields
         $movie_obj->added_by = Auth::User()->id;
         $movie_obj->license_price = $inputs['license_price'];
         $movie_obj->file_id = $fileId;
@@ -181,21 +149,17 @@ class MoviesController extends MainAdminController
         $movie_obj->video_url = $video_url;
         $movie_obj->video_type = "URL";
 
-        // Optional fields for video quality, downloads, and subtitles
         if (isset($inputs['video_quality'])) {
             $movie_obj->video_quality = $inputs['video_quality'];
         }
-
         if (isset($inputs['download_enable'])) {
             $movie_obj->download_enable = $inputs['download_enable'];
             $movie_obj->download_url = $inputs['download_url'];
         }
-
         if (isset($inputs['subtitle_on_off'])) {
             $movie_obj->subtitle_on_off = $inputs['subtitle_on_off'];
         }
 
-        // Remove from recently watched if status is 0 (inactive)
         if (!empty($inputs['id']) && $inputs['status'] == 0) {
             DB::table("recently_watched")
                 ->where("video_type", "=", "Movies")
@@ -203,235 +167,331 @@ class MoviesController extends MainAdminController
                 ->delete();
         }
 
-        // Save the movie object
         $movie_obj->save();
+        $screenshotResult = $this->store_generateScreenshot($fileId, $title, $description);
 
-        // Determine if we need to generate a new screenshot
-        $needsNewScreenshot = false;
-
-        if (empty($inputs['id'])) {
-            // New movie - always generate screenshot
-            $needsNewScreenshot = true;
-        } else {
-            // Existing movie - check if key fields changed
-            $titleChanged = $original_title !== $movie_obj->video_title;
-            $descriptionChanged = $original_description !== $movie_obj->video_description;
-            $fileIdChanged = $original_file_id !== $fileId;
-
-            // Also check if no existing thumbnail exists
-            $hasExistingThumbnail = !empty($movie_obj->video_image_thumb) && file_exists(public_path($movie_obj->video_image_thumb));
-
-            $needsNewScreenshot = $titleChanged || $descriptionChanged || $fileIdChanged || !$hasExistingThumbnail;
+        if (isset($screenshotResult['error'])) {
+            return redirect()->back()->with('error', $screenshotResult['error']);
         }
 
-        // Generate screenshot only if needed
-        if ($needsNewScreenshot) {
-            $screenshotResult = $this->generateAIScreenshot($movie_obj->video_title, $movie_obj->video_description, $fileId);
-
-            // Handle error if screenshot generation fails
-            if (isset($screenshotResult['error'])) {
-                return redirect()->back()->with('error', $screenshotResult['error']);
-            }
-        }
-        // Flash success message and redirect back
-        Session::flash('flash_message', !empty($inputs['id']) ? trans('words.successfully_updated') : trans('words.added'));
-        return Redirect::back();
+        \Session::flash('flash_message', !empty($inputs['id']) ? trans('words.successfully_updated') : trans('words.added'));
+        return \Redirect::back();
     }
-
 
     public function editMovie($movie_id)
     {
-
         if (Auth::User()->usertype != "Admin" and Auth::User()->usertype != "Sub_Admin") {
-
-            Session::flash('flash_message', trans('words.access_denied'));
-
+            \Session::flash('flash_message', trans('words.access_denied'));
             return redirect('dashboard');
         }
-
         $page_title = trans('words.edit_movie');
-
         $language_list = Language::orderBy('language_name')->get();
         $genre_list = Genres::orderBy('genre_name')->get();
-
         $actor_list = ActorDirector::where('ad_type', 'actor')->orderBy('ad_name')->get();
         $director_list = ActorDirector::where('ad_type', 'director')->orderBy('ad_name')->get();
-
         $movie = Movies::findOrFail($movie_id);
-
         return view('admin.pages.movies.addedit', compact('page_title', 'movie', 'language_list', 'genre_list', 'actor_list', 'director_list'));
     }
 
     public function delete($movie_id)
     {
         if (Auth::User()->usertype == "Admin" or Auth::User()->usertype == "Sub_Admin") {
-
             $recently = RecentlyWatched::where('video_type', 'Movies')->where('video_id', $movie_id)->delete();
-
             $movie = Movies::findOrFail($movie_id);
             $movie->delete();
-
-            Session::flash('flash_message', trans('words.deleted'));
-
+            \Session::flash('flash_message', trans('words.deleted'));
             return redirect()->back();
         } else {
-            Session::flash('flash_message', trans('words.access_denied'));
-
+            \Session::flash('flash_message', trans('words.access_denied'));
             return redirect('admin/dashboard');
         }
     }
+
     /**
-     * Generate AI-powered screenshot using Gemini AI
+     * Generates a beautiful thumbnail with random colors, large text, and optional effects.
      *
-     * @param string $videoTitle
-     * @param string $videoDescription
-     * @param string $fileId
-     * @return array
+     * @param string $fileId The unique ID for the file.
+     * @param string $title The video title from the form.
+     * @param string $description The video description from the form.
+     * @return array Result of the operation.
      */
-    public function generateAIScreenshot($videoTitle, $videoDescription, $fileId)
+    public function store_generateScreenshot($fileId, $title, $description)
     {
         try {
-            $geminiService = new GeminiImageService();
+            // Force a new seed for the random number generator to ensure unique colors
+            mt_srand((float)microtime() * 1000000);
 
-            // Try to generate image using Gemini AI
-            $result = $geminiService->generateImage($videoTitle, $videoDescription, $fileId);
+            // Step 1: Define storage paths
+            $publicImagePath = public_path('screenshots/' . $fileId . '.jpg');
+            $publicScreenshotsDir = public_path('screenshots');
 
-            // If Gemini fails, use fallback method
-            if (isset($result['error'])) {
-                Log::warning('Gemini AI failed, using fallback: ' . $result['error']);
-                $result = $geminiService->generateFallbackImage($videoTitle, $fileId);
-
-                if (!$result) {
-                    return ['error' => 'Failed to generate image using both Gemini AI and fallback method'];
-                }
-
-                // Update result format for fallback
-                $result = ['success' => 'Fallback image generated successfully', 'image_path' => $result];
+            // Step 2: Ensure screenshot directory exists
+            if (!file_exists($publicScreenshotsDir)) {
+                mkdir($publicScreenshotsDir, 0777, true);
             }
 
-            // Save or update the screenshot in the Thumbnail model
+            // Step 3: Delete existing file if present
+            if (file_exists($publicImagePath)) {
+                unlink($publicImagePath);
+            }
+
+            // Step 4: Canvas and Color Setup (improved)
+            $width = 1280;
+            $height = 720;
+
+            // Generate a pleasing color palette: choose a base color and a slightly shifted second color
+            $r1 = mt_rand(20, 235);
+            $g1 = mt_rand(20, 235);
+            $b1 = mt_rand(20, 235);
+            $bgColor1 = "rgb($r1, $g1, $b1)";
+
+            // create canvas
+            $img = Image::canvas($width, $height, $bgColor1);
+
+            // Add a subtle dark overlay in the center area to improve text contrast
+            $overlay = Image::canvas($width, $height, 'rgba(0,0,0,0)');
+            $overlayColor = 'rgba(0,0,0,0.18)';
+            $overlay->rectangle(40, $height * 0.25, $width - 40, $height - ($height * 0.18), function ($draw) use ($overlayColor) {
+                $draw->background($overlayColor);
+            });
+            $img->insert($overlay);
+
+            // Determine contrasting text color based on the initial background luminance
+            $luminance = (0.299 * $r1 + 0.587 * $g1 + 0.114 * $b1) / 255;
+            $textColor = $luminance > 0.55 ? '#000000' : '#FFFFFF';
+
+            // Step 5: Font and Text Setup
+            $fontPathBold = public_path('fonts/Roboto-Bold.ttf');
+            $fontPathRegular = public_path('fonts/Roboto-Regular.ttf');
+
+            if (!file_exists($fontPathBold) || !file_exists($fontPathRegular)) {
+                 return ['error' => 'Font files not found in public/fonts/. Please add Roboto-Bold.ttf and Roboto-Regular.ttf.'];
+            }
+
+            // Compute dynamic font sizes so long titles don't overflow
+            $maxTitleWidth = $width - 160; // leave padding
+            $maxTitleHeight = ($height * 0.5) - 40;
+            $maxDescWidth = $width - 200;
+
+            // Start with recommended sizes and downscale if needed
+            $titleSize = 72;
+            $descSize = 36;
+
+            // Try to wrap with current sizes and measure total height
+            $wrappedTitle = $this->wordwrapText($title, $titleSize, $fontPathBold, $maxTitleWidth);
+            $titleLines = substr_count($wrappedTitle, "\n") + 1;
+            $titleBBox = imagettfbbox($titleSize, 0, $fontPathBold, str_replace("\n", ' ', $wrappedTitle));
+            $titleLineHeight = abs($titleBBox[1] - $titleBBox[7]) + 8;
+            $titleHeight = $titleLines * $titleLineHeight;
+
+            // If title height exceeds allowed, reduce font size proportionally
+            if ($titleHeight > $maxTitleHeight) {
+                $ratio = $maxTitleHeight / $titleHeight;
+                $titleSize = max(32, floor($titleSize * $ratio));
+                $wrappedTitle = $this->wordwrapText($title, $titleSize, $fontPathBold, $maxTitleWidth);
+                $titleLines = substr_count($wrappedTitle, "\n") + 1;
+                $titleBBox = imagettfbbox($titleSize, 0, $fontPathBold, str_replace("\n", ' ', $wrappedTitle));
+                $titleLineHeight = abs($titleBBox[1] - $titleBBox[7]) + 6;
+                $titleHeight = $titleLines * $titleLineHeight;
+            }
+
+            // Wrap description with computed desc size and limit to 3 lines
+            $wrappedDesc = $this->wordwrapText($description, $descSize, $fontPathRegular, $maxDescWidth);
+            $descLines = explode("\n", $wrappedDesc);
+            if (count($descLines) > 3) {
+                $descLines = array_slice($descLines, 0, 3);
+                $wrappedDesc = implode("\n", $descLines) . '...';
+            }
+
+            // Vertical placement: place title a bit above center and description below
+            $centerY = $height / 2;
+            $titleY = $centerY - ($titleHeight / 2) - 20;
+            $descY = $centerY + ($titleHeight / 2) + 10;
+
+            // Draw subtle shadow by drawing the text slightly offset in semi-transparent black
+            $shadowOffset = 2;
+
+            // Draw Title shadow
+            $img->text($wrappedTitle, $width / 2 + $shadowOffset, $titleY + $shadowOffset, function($font) use ($fontPathBold) {
+                $font->file($fontPathBold);
+                $font->size($titleSize);
+                $font->color('rgba(0,0,0,0.45)');
+                $font->align('center');
+                $font->valign('top');
+            });
+
+            // Draw Title main
+            $img->text($wrappedTitle, $width / 2, $titleY, function($font) use ($fontPathBold, $textColor, $titleSize) {
+                $font->file($fontPathBold);
+                $font->size($titleSize);
+                $font->color($textColor);
+                $font->align('center');
+                $font->valign('top');
+            });
+
+            // Draw Description shadow
+            $img->text($wrappedDesc, $width / 2 + $shadowOffset, $descY + $shadowOffset, function($font) use ($fontPathRegular, $descSize) {
+                $font->file($fontPathRegular);
+                $font->size($descSize);
+                $font->color('rgba(0,0,0,0.35)');
+                $font->align('center');
+                $font->valign('top');
+            });
+
+            // Draw Description main
+            $img->text($wrappedDesc, $width / 2, $descY, function($font) use ($fontPathRegular, $textColor, $descSize) {
+                $font->file($fontPathRegular);
+                $font->size($descSize);
+                $font->color($textColor);
+                $font->align('center');
+                $font->valign('top');
+            });
+
+            // Step 6: Save the generated image
+            $img->save($publicImagePath, 90, 'jpg');
+
+            // Step 7: Update the database
             Thumbnail::updateOrCreate(
                 ['file_id' => $fileId],
-                ['video_image_thumb' => $result['image_path']]
+                ['video_image_thumb' => 'screenshots/' . $fileId . '.jpg']
             );
 
-            // Update the movie object with the generated image
+            // Step 8: Update the movie object from the session and then forget it
             $movies = session()->get('movie_obj');
             if ($movies) {
-                $movies->video_image_thumb = $result['image_path'];
-                $movies->video_image = $result['image_path'];
+                $movies->video_image_thumb = 'screenshots/' . $fileId . '.jpg';
+                $movies->video_image = 'screenshots/' . $fileId . '.jpg';
                 $movies->save();
                 session()->forget('movie_obj');
             }
 
-            return $result;
+            return ['success' => 'Screenshot generated successfully.'];
 
         } catch (\Exception $e) {
-            Log::error('AI Screenshot Generation Error: ' . $e->getMessage());
-            return ['error' => 'Error generating AI screenshot: ' . $e->getMessage()];
+            return ['error' => 'Exception while generating image: ' . $e->getMessage()];
         }
     }
 
-    /**
-     * Manually regenerate screenshot for a specific movie
-     *
-     * @param int $movie_id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function regenerateScreenshot($movie_id)
+    public function extractAudio($id)
     {
-        if (Auth::User()->usertype != "Admin" and Auth::User()->usertype != "Sub_Admin") {
-            Session::flash('flash_message', trans('words.access_denied'));
-            return redirect('dashboard');
+        $movie = Movies::find($id);
+        if (!$movie) {
+            return response()->json(['error' => 'Movie not found'], 404);
         }
+        $videoUrl = $movie->video_url;
+        return $this->downloadVideoAndExtractAudio($videoUrl, $id);
+    }
 
+    public function downloadVideoAndExtractAudio($videoUrl, $id)
+    {
+        if (!filter_var($videoUrl, FILTER_VALIDATE_URL)) {
+            return response()->json(['error' => 'Invalid URL format'], 400);
+        }
+        $videoDir = public_path('videos');
+        if (!file_exists($videoDir)) {
+            mkdir($videoDir, 0777, true);
+        }
+        $videoPath = $videoDir . '/temp_video.mp4';
         try {
-            $movie = Movies::findOrFail($movie_id);
+            $videoContent = Http::get($videoUrl)->body();
+            if (empty($videoContent)) {
+                return response()->json(['error' => 'Failed to download video'], 500);
+            }
+            file_put_contents($videoPath, $videoContent);
+            return $this->extractAudioFromVideo($videoPath, $id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while downloading the video: ' . $e->getMessage()], 500);
+        }
+    }
 
-            // Generate new screenshot
-            $screenshotResult = $this->generateAIScreenshot($movie->video_title, $movie->video_description, $movie->file_id);
-
-            if (isset($screenshotResult['error'])) {
-                Session::flash('flash_message', 'Error regenerating screenshot: ' . $screenshotResult['error']);
+    public function extractAudioFromVideo($videoPath, $id)
+    {
+        $audioOutputPath = public_path('extracted_audios/') . $id . '.mp3';
+        $audioDir = public_path('extracted_audios');
+        if (!file_exists($audioDir)) {
+            mkdir($audioDir, 0777, true);
+        }
+        $operatingSystem = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        $ffmpegPath = $operatingSystem ? storage_path('ffmpeg_win/bin/ffmpeg.exe') : storage_path('ffmpeg_linux/ffmpeg');
+        $command = "\"$ffmpegPath\" -i \"$videoPath\" -vn -acodec libmp3lame -ar 44100 -ac 2 -ab 192k -f mp3 \"$audioOutputPath\" 2>&1";
+        \Log::debug("FFmpeg Command: " . $command);
+        $descriptors = [
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ];
+        $process = proc_open($command, $descriptors, $pipes);
+        if (is_resource($process)) {
+            $output = stream_get_contents($pipes[1]);
+            $errorOutput = stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            \Log::debug("FFmpeg Output: " . $output);
+            \Log::debug("FFmpeg Error: " . $errorOutput);
+            $returnVar = proc_close($process);
+            if ($returnVar === 0 && file_exists($audioOutputPath)) {
+                unlink($videoPath);
+                session()->flash('flash_message', 'Audio extracted successfully!');
+                return redirect()->back();
+            } else {
+                session()->flash('error', 'Error in generating audio from Url.');
                 return redirect()->back();
             }
-
-            Session::flash('flash_message', 'Screenshot regenerated successfully!');
-            return redirect()->back();
-
-        } catch (\Exception $e) {
-            Log::error('Screenshot regeneration error: ' . $e->getMessage());
-            Session::flash('flash_message', 'Error regenerating screenshot: ' . $e->getMessage());
-            return redirect()->back();
-        }
-    }
-
-    /**
-     * Generate movie description using Gemini AI
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function generateDescription(Request $request)
-    {
-        try {
-            $movieTitle = $request->input('title', '');
-            $genres = $request->input('genres', '');
-            $actors = $request->input('actors', '');
-            $directors = $request->input('directors', '');
-
-            if (empty($movieTitle)) {
-                return response()->json(['error' => 'Movie title is required'], 400);
-            }
-
-            $geminiService = new GeminiTextService();
-            $result = $geminiService->generateMovieDescription($movieTitle, $genres, $actors, $directors);
-
-            if (isset($result['error'])) {
-                return response()->json(['error' => $result['error']], 500);
-            }
-
-            return response()->json([
-                'success' => true,
-                'description' => $result['description']
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Description Generation Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Error generating description: ' . $e->getMessage()], 500);
+        } else {
+            return response()->json(['error' => 'Failed to start FFmpeg process.'], 500);
         }
     }
 
     public function getRandomApiKey()
     {
-        // Get all available Google Drive API keys
         $google_drive_apis = GoogleDriveApi::all();
-
         if ($google_drive_apis->isEmpty()) {
             session()->flash('error', 'No API keys available.');
-
         }
-
-        // Retrieve the last used API key (from session or cache)
         $lastUsedApiKey = session()->get('last_used_api_key', null);
-
-        // Filter out the last used API key from the list
         $availableApiKeys = $google_drive_apis->filter(function ($api) use ($lastUsedApiKey) {
             return $api->api_key !== $lastUsedApiKey;
         });
-
-        // If only one key is available, we can't alternate
         if ($availableApiKeys->isEmpty()) {
             session()->flash('error', 'Only one API key available, cannot alternate.');
+        }
+        $newApiKey = $availableApiKeys->random()->api_key;
+        session()->put('last_used_api_key', $newApiKey);
+        return $newApiKey;
+    }
 
+    /**
+     * Helper function to wrap text based on a max width for a given font and size.
+     *
+     * @param string $text The text to wrap.
+     * @param int $fontSize The font size.
+     * @param string $fontFile The path to the TTF font file.
+     * @param int $maxWidth The maximum width in pixels.
+     * @return string The wrapped text with newlines.
+     */
+    private function wordwrapText($text, $fontSize, $fontFile, $maxWidth)
+    {
+        if (!function_exists('imagettfbbox')) {
+            return wordwrap($text, 50);
         }
 
-        // Randomly select a new API key that hasn't been used last
-        $newApiKey = $availableApiKeys->random()->api_key;
+        $words = explode(' ', $text);
+        $lines = [];
+        $currentLine = '';
 
-        // Store the new API key in session to prevent it from being reused next time
-        session()->put('last_used_api_key', $newApiKey);
+        foreach ($words as $word) {
+            $testLine = $currentLine . ($currentLine ? ' ' : '') . $word;
+            $dimensions = imagettfbbox($fontSize, 0, $fontFile, $testLine);
+            $lineWidth = $dimensions[2] - $dimensions[0];
 
-        return $newApiKey;
+            if ($lineWidth > $maxWidth && $currentLine !== '') {
+                $lines[] = $currentLine;
+                $currentLine = $word;
+            } else {
+                $currentLine = $testLine;
+            }
+        }
+        $lines[] = $currentLine;
+
+        return implode("\n", $lines);
     }
 }

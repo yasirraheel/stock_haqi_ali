@@ -83,11 +83,6 @@
                                                 @if($photo->width && $photo->height)
                                                     <small class="text-muted"><i class="fa fa-image"></i> {{ $photo->width }}x{{ $photo->height }}</small><br>
                                                 @endif
-                                                @if($photo->license_price && $photo->license_price > 0)
-                                                    <small class="text-warning"><i class="fa fa-crown"></i> Premium: {{getcong('currency_symbol')}}{{number_format($photo->license_price, 2)}}</small><br>
-                                                @else
-                                                    <small class="text-success"><i class="fa fa-gift"></i> Free</small><br>
-                                                @endif
                                                 <small class="text-muted"><i class="fa fa-download"></i> {{ $photo->download_count }} | <i class="fa fa-eye"></i> {{ $photo->view_count }}</small>
                                             </div>
 

@@ -12,19 +12,13 @@ class Photos extends Model
 
     protected $fillable = [
         'title', 'description', 'image_name', 'image_path',
-        'tags', 'category', 'status', 'price', 'license_price',
+        'tags', 'category', 'status',
         'file_name', 'file_size', 'file_type', 'mime_type', 'width', 'height',
         'resolution', 'color_space', 'bit_depth', 'has_transparency',
         'camera_make', 'camera_model', 'lens_model', 'focal_length', 'aperture',
         'shutter_speed', 'iso', 'flash', 'white_balance', 'date_taken',
-        'gps_latitude', 'gps_longitude', 'gps_location', 'gps_altitude', 'orientation',
-        'copyright', 'artist', 'keywords', 'subject', 'software',
-        'exposure_mode', 'metering_mode', 'scene_capture_type', 'contrast', 'saturation', 'sharpness',
-        'lens_specification', 'lens_serial_number', 'focus_distance', 'focus_mode',
-        'image_quality', 'white_balance_mode', 'subject_distance_range',
-        'digital_zoom_ratio', 'focal_length_35mm', 'scene_type', 'custom_rendered',
-        'exposure_program', 'light_source', 'gain_control',
-        'download_count', 'view_count', 'added_by'
+        'gps_latitude', 'gps_longitude', 'gps_location', 'orientation',
+        'copyright', 'artist', 'keywords', 'download_count', 'view_count', 'added_by'
     ];
 
     protected $casts = [
@@ -32,7 +26,6 @@ class Photos extends Model
         'has_transparency' => 'boolean',
         'download_count' => 'integer',
         'view_count' => 'integer',
-        'license_price' => 'decimal:2',
     ];
 
     /**

@@ -54,19 +54,6 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('audio') }}">
-                            <i class="fa fa-music"></i>
-                            <span>Audio</span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <ul class="list-unstyled">
-                            <li class="{{ classActivePath('audio') }}"><a href="{{ route('admin.audio.index') }}"
-                                    class="{{ classActivePath('audio') }}"><i
-                                        class="fa fa-music"></i><span>All Audio</span></a></li>
-                        </ul>
-                    </li>
-
-                    <li class="has_sub">
                         <a href="javascript:void(0);" class="waves-effect">
                             <i class="fa fa-users"></i>
                             <span>{{ trans('words.users') }}</span>

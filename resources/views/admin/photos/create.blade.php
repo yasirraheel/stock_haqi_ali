@@ -75,19 +75,6 @@
                             </div>
 
                             <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">License Price</label>
-                                <div class="col-sm-4">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">{{getcong('currency_symbol')}}</span>
-                                        </div>
-                                        <input type="number" name="license_price" id="license_price" value="{{ old('license_price') }}" placeholder="0.00" step="0.01" min="0" class="form-control" pattern="[0-9]+([.][0-9]{1,2})?">
-                                    </div>
-                                    <small class="form-text text-muted">License price for commercial use (leave empty for free photos)</small>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
                                 <label class="col-sm-3 col-form-label">Image <span class="text-danger">*</span></label>
                                 <div class="col-sm-8">
                                     <input type="file" name="image" id="image" accept="image/*" required class="form-control" onchange="handleImageUpload(this)">
@@ -229,15 +216,5 @@ function formatFileSize(bytes) {
     }
     return Math.round(bytes * 100) / 100 + ' ' + sizes[i];
 }
-
-// Ensure license price is properly formatted
-$(document).ready(function() {
-    $('#license_price').on('blur', function() {
-        var value = $(this).val();
-        if (value && !isNaN(value)) {
-            $(this).val(parseFloat(value).toFixed(2));
-        }
-    });
-});
 </script>
 @endsection
