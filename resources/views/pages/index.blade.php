@@ -6,7 +6,7 @@
 
 @section('content')
 <style>
-@import url('{{ URL::asset('site_assets/css/home-modern.css') }}');
+@import url('{{ URL::asset('site_assets/css/home-modern.css') }}?v={{ time() }}');
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Hero Section -->
@@ -843,63 +843,241 @@
 @section('javascript')
 <script>
 $(document).ready(function() {
-    // Audio functionality with proper spectrum control
-    window.toggleAudio = function(audioId) {
+    // Real-time Audio Spectrum Analyzer
+    class AudioSpectrumAnalyzer {
+        constructor() {
+            this.audioContexts = new Map();
+            this.analyzers = new Map();
+            this.animationFrames = new Map();
+            this.sources = new Map();
+            this.isInitialized = false;
+        }
+
+        async initializeAudioContext(audioId) {
+            try {
+                if (this.audioContexts.has(audioId)) {
+                    return this.audioContexts.get(audioId);
+                }
+
+                const audioElement = document.getElementById('audioPlayer' + audioId);
+                if (!audioElement) return null;
+
+                // Create audio context
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioContext = new AudioContext();
+                
+                // Create analyzer
+                const analyzer = audioContext.createAnalyser();
+                analyzer.fftSize = 256;
+                analyzer.smoothingTimeConstant = 0.8;
+                
+                // Create source from audio element
+                const source = audioContext.createMediaElementSource(audioElement);
+                source.connect(analyzer);
+                analyzer.connect(audioContext.destination);
+                
+                // Store references
+                this.audioContexts.set(audioId, audioContext);
+                this.analyzers.set(audioId, analyzer);
+                this.sources.set(audioId, source);
+                
+                return audioContext;
+            } catch (error) {
+                console.warn('Web Audio API not supported or failed to initialize:', error);
+                return null;
+            }
+        }
+
+        startSpectrumAnalysis(audioId) {
+            const analyzer = this.analyzers.get(audioId);
+            const audioContext = this.audioContexts.get(audioId);
+            
+            if (!analyzer || !audioContext) return;
+
+            const spectrum = document.getElementById('spectrum' + audioId);
+            if (!spectrum) return;
+
+            const bars = spectrum.querySelectorAll('.spectrum-bar');
+            if (bars.length === 0) return;
+
+            const bufferLength = analyzer.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            const animate = () => {
+                if (this.animationFrames.has(audioId)) {
+                    analyzer.getByteFrequencyData(dataArray);
+                    
+                    // Calculate average frequencies for each bar
+                    const barCount = bars.length;
+                    const samplesPerBar = Math.floor(bufferLength / barCount);
+                    
+                    bars.forEach((bar, index) => {
+                        let sum = 0;
+                        const start = index * samplesPerBar;
+                        const end = Math.min(start + samplesPerBar, bufferLength);
+                        
+                        for (let i = start; i < end; i++) {
+                            sum += dataArray[i];
+                        }
+                        
+                        const average = sum / (end - start);
+                        const height = Math.max(4, (average / 255) * 20); // Min 4px, max 20px
+                        
+                        bar.style.height = height + 'px';
+                        
+                        // Add slight delay for more realistic wave effect
+                        const delay = index * 20;
+                        setTimeout(() => {
+                            bar.style.opacity = average > 10 ? '1' : '0.6';
+                        }, delay);
+                    });
+                    
+                    requestAnimationFrame(animate);
+                }
+            };
+            
+            this.animationFrames.set(audioId, true);
+            animate();
+        }
+
+        stopSpectrumAnalysis(audioId) {
+            this.animationFrames.delete(audioId);
+            
+            const spectrum = document.getElementById('spectrum' + audioId);
+            if (spectrum) {
+                const bars = spectrum.querySelectorAll('.spectrum-bar');
+                bars.forEach(bar => {
+                    bar.style.height = '4px';
+                    bar.style.opacity = '0.6';
+                });
+            }
+        }
+
+        async resumeAudioContext(audioId) {
+            const audioContext = this.audioContexts.get(audioId);
+            if (audioContext && audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                } catch (error) {
+                    console.warn('Failed to resume audio context:', error);
+                }
+            }
+        }
+    }
+
+    // Initialize spectrum analyzer
+    const spectrumAnalyzer = new AudioSpectrumAnalyzer();
+
+    // Enhanced audio functionality with real-time spectrum analysis
+    window.toggleAudio = async function(audioId) {
         const audio = document.getElementById('audioPlayer' + audioId);
         const playIcon = document.getElementById('playIcon' + audioId);
         const spectrum = document.getElementById('spectrum' + audioId);
         const audioCard = audio ? audio.closest('.audio-card') : null;
         
-        if (audio && audio.paused) {
-            // Pause all other audio players
+        if (!audio) return;
+
+        if (audio.paused) {
+            // Pause all other audio players and stop their spectrum analysis
             document.querySelectorAll('audio').forEach(function(otherAudio) {
                 if (!otherAudio.paused && otherAudio !== audio) {
-                    otherAudio.pause();
                     const otherId = otherAudio.id.replace('audioPlayer', '');
                     const otherCard = otherAudio.closest('.audio-card');
                     const otherIcon = document.getElementById('playIcon' + otherId);
-                    const otherSpectrum = document.getElementById('spectrum' + otherId);
+                    
+                    otherAudio.pause();
+                    spectrumAnalyzer.stopSpectrumAnalysis(otherId);
                     
                     if (otherIcon) otherIcon.className = 'fa fa-play';
-                    if (otherSpectrum) otherSpectrum.style.opacity = '0.6';
                     if (otherCard) otherCard.classList.remove('playing');
                 }
             });
             
-            audio.play();
-            if (playIcon) playIcon.className = 'fa fa-pause';
-            if (spectrum) spectrum.style.opacity = '1';
-            if (audioCard) audioCard.classList.add('playing');
-        } else if (audio) {
+            // Initialize audio context for this audio if not already done
+            await spectrumAnalyzer.initializeAudioContext(audioId);
+            
+            // Resume audio context if suspended (required by browser policies)
+            await spectrumAnalyzer.resumeAudioContext(audioId);
+            
+            // Play audio and start spectrum analysis
+            try {
+                await audio.play();
+                spectrumAnalyzer.startSpectrumAnalysis(audioId);
+                
+                if (playIcon) playIcon.className = 'fa fa-pause';
+                if (audioCard) audioCard.classList.add('playing');
+            } catch (error) {
+                console.warn('Failed to play audio:', error);
+            }
+        } else {
+            // Pause audio and stop spectrum analysis
             audio.pause();
+            spectrumAnalyzer.stopSpectrumAnalysis(audioId);
+            
             if (playIcon) playIcon.className = 'fa fa-play';
-            if (spectrum) spectrum.style.opacity = '0.6';
             if (audioCard) audioCard.classList.remove('playing');
         }
         
-        if (audio) {
-            // Handle audio end event
+        // Enhanced event listeners for better sync
+        if (!audio.hasAttribute('data-listeners-added')) {
+            audio.setAttribute('data-listeners-added', 'true');
+            
             audio.addEventListener('ended', function() {
+                spectrumAnalyzer.stopSpectrumAnalysis(audioId);
                 if (playIcon) playIcon.className = 'fa fa-play';
-                if (spectrum) spectrum.style.opacity = '0.6';
                 if (audioCard) audioCard.classList.remove('playing');
             });
             
-            // Handle pause event (for better sync)
             audio.addEventListener('pause', function() {
+                spectrumAnalyzer.stopSpectrumAnalysis(audioId);
                 if (playIcon) playIcon.className = 'fa fa-play';
-                if (spectrum) spectrum.style.opacity = '0.6';
                 if (audioCard) audioCard.classList.remove('playing');
             });
             
-            // Handle play event (for better sync)
             audio.addEventListener('play', function() {
+                spectrumAnalyzer.startSpectrumAnalysis(audioId);
                 if (playIcon) playIcon.className = 'fa fa-pause';
-                if (spectrum) spectrum.style.opacity = '1';
                 if (audioCard) audioCard.classList.add('playing');
+            });
+
+            // Handle loading states
+            audio.addEventListener('loadstart', function() {
+                if (audioCard) audioCard.classList.add('loading');
+            });
+
+            audio.addEventListener('canplay', function() {
+                if (audioCard) audioCard.classList.remove('loading');
+            });
+
+            audio.addEventListener('error', function(e) {
+                console.warn('Audio loading error:', e);
+                spectrumAnalyzer.stopSpectrumAnalysis(audioId);
+                if (playIcon) playIcon.className = 'fa fa-play';
+                if (audioCard) {
+                    audioCard.classList.remove('playing', 'loading');
+                }
             });
         }
     };
+
+    // Initialize spectrum bars for all audio cards
+    document.querySelectorAll('.audio-spectrum').forEach(spectrum => {
+        const bars = spectrum.querySelectorAll('.spectrum-bar');
+        bars.forEach((bar, index) => {
+            // Set random initial heights for better visual appeal
+            const randomHeight = Math.random() * 8 + 4;
+            bar.style.height = randomHeight + 'px';
+            bar.style.transitionDelay = (index * 50) + 'ms';
+        });
+    });
+
+    // Handle user interaction requirement for Web Audio API
+    document.addEventListener('click', function() {
+        // This helps ensure audio contexts can be created when needed
+        if (!spectrumAnalyzer.isInitialized) {
+            spectrumAnalyzer.isInitialized = true;
+        }
+    }, { once: true });
 });
 </script>
 @endsection

@@ -4713,8 +4713,10 @@ header .modal-body .btn.btn-primary {
     background: linear-gradient(to top, #ff8508, #fe0278);
     border-radius: 1px;
     height: 4px;
-    transition: height 0.1s ease;
+    transition: height 0.05s ease-out, opacity 0.1s ease;
     min-height: 4px;
+    max-height: 20px;
+    transform-origin: bottom;
 }
 
 /* Spectrum bars only animate when playing */
