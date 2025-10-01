@@ -287,6 +287,119 @@
           box-shadow: 0 0 0 3px rgba(253, 5, 120, 0.3);
       }
 
+      /* Photo Section Styling */
+      .photo-card {
+          background: #2d2d44;
+          border-radius: 8px;
+          padding: 0;
+          margin-bottom: 15px;
+          border: 1px solid #3d3d5c;
+          transition: all 0.3s ease;
+          overflow: hidden;
+          position: relative;
+      }
+
+      .photo-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          border-color: #fe0278;
+      }
+
+      .photo-card-content {
+          position: relative;
+      }
+
+      .photo-image {
+          position: relative;
+          overflow: hidden;
+          height: 200px;
+      }
+
+      .photo-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+      }
+
+      .photo-card:hover .photo-image img {
+          transform: scale(1.05);
+      }
+
+      .photo-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+      }
+
+      .photo-card:hover .photo-overlay {
+          opacity: 1;
+      }
+
+      .photo-actions {
+          display: flex;
+          gap: 10px;
+      }
+
+      .photo-info {
+          padding: 15px;
+      }
+
+      .photo-title {
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 600;
+          margin: 0 0 8px 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+      }
+
+      .photo-category {
+          background: rgba(254, 2, 120, 0.2);
+          color: #fe0278;
+          font-size: 9px;
+          padding: 2px 8px;
+          border-radius: 10px;
+          margin-right: 8px;
+          display: inline-block;
+      }
+
+      .photo-dimensions {
+          color: #b0b0b0;
+          font-size: 10px;
+          display: inline-block;
+      }
+
+      .photo-premium-badge {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: linear-gradient(45deg, #ffd700, #ffed4e);
+          color: #000;
+          font-size: 9px;
+          padding: 3px 8px;
+          border-radius: 12px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+          z-index: 2;
+      }
+
+      .photo-premium-badge i {
+          font-size: 8px;
+      }
+
       /* Mobile Responsive Audio Cards */
       @media (max-width: 768px) {
           .vfx-item-section {
@@ -342,6 +455,33 @@
           }
           
           .audio-premium-badge {
+              font-size: 8px;
+              padding: 2px 6px;
+          }
+
+          /* Mobile Photo Cards */
+          .photo-image {
+              height: 150px;
+          }
+
+          .photo-info {
+              padding: 10px;
+          }
+
+          .photo-title {
+              font-size: 13px;
+          }
+
+          .photo-category {
+              font-size: 8px;
+              padding: 1px 6px;
+          }
+
+          .photo-dimensions {
+              font-size: 9px;
+          }
+
+          .photo-premium-badge {
               font-size: 8px;
               padding: 2px 6px;
           }

@@ -15,6 +15,7 @@ use App\RecentlyWatched;
 use App\LiveTV;
 use App\UsersDeviceHistory;
 use App\Models\Audio;
+use App\Models\Photos;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 
@@ -169,7 +170,13 @@ class IndexController extends Controller
             ->take(12) // Limit to 12 audios for home page
             ->get();
 
-        return view('pages.index', compact('movies_info', 'genres', 'slider', 'recently_watched', 'upcoming_movies', 'upcoming_series', 'home_sections', 'movies_list', 'pagination_limit', 'random_movie', 'user_has_liked', 'audio_list'));
+        // Fetch photos data for home page
+        $photos_list = Photos::where('status', 'active')
+            ->orderBy('created_at', 'DESC')
+            ->take(12) // Limit to 12 photos for home page
+            ->get();
+
+        return view('pages.index', compact('movies_info', 'genres', 'slider', 'recently_watched', 'upcoming_movies', 'upcoming_series', 'home_sections', 'movies_list', 'pagination_limit', 'random_movie', 'user_has_liked', 'audio_list', 'photos_list'));
     }
 
     public function home_collections($slug, $id)

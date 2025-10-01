@@ -275,6 +275,68 @@
     </div>
     @endif
 
+    <!-- Photos Section -->
+    @if(isset($photos_list) && $photos_list->count() > 0)
+    <div class="video-shows-section vfx-item-ptb">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="vfx-item-section">
+                        <h3>Photo Gallery</h3>
+                        <a href="{{ URL::to('photos') }}" class="view-all-btn">View All</a>
+                    </div>
+                    <div class="row">
+                        @foreach ($photos_list as $photo_data)
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 col-12">
+                                <div class="single-video photo-card">
+                                    <div class="photo-card-content">
+                                        <div class="photo-image">
+                                            <img src="{{ $photo_data->image_url }}" 
+                                                 alt="{{ stripslashes($photo_data->title) }}"
+                                                 title="{{ stripslashes($photo_data->title) }}"
+                                                 class="img-fluid">
+                                            
+                                            @if($photo_data->license_price && $photo_data->license_price > 0)
+                                            <div class="photo-premium-badge">
+                                                <i class="fa fa-crown"></i>
+                                                <span>Premium</span>
+                                            </div>
+                                            @endif
+
+                                            <div class="photo-overlay">
+                                                <div class="photo-actions">
+                                                    <a href="{{ URL::to('photos/details/'.$photo_data->id) }}" class="action-btn" title="View Details">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                    @if(!$photo_data->license_price || $photo_data->license_price == 0)
+                                                        <a href="{{ URL::to('photos/download/'.$photo_data->id) }}" class="action-btn" title="Download">
+                                                            <i class="fa fa-download"></i>
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="photo-info">
+                                            <h3 class="photo-title">{{Str::limit(stripslashes($photo_data->title),30)}}</h3>
+                                            @if($photo_data->category)
+                                                <span class="photo-category">{{$photo_data->category}}</span>
+                                            @endif
+                                            @if($photo_data->dimensions)
+                                                <span class="photo-dimensions">{{$photo_data->dimensions}}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @foreach ($genres as $genre)
         @php
             $filteredMovies = $movies_list->where('movie_genre_id', $genre->id);
