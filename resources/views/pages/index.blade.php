@@ -724,3 +724,67 @@
 
 
 @endsection
+
+@section('javascript')
+<script>
+$(document).ready(function() {
+    // Audio functionality with proper spectrum control
+    window.toggleAudio = function(audioId) {
+        const audio = document.getElementById('audioPlayer' + audioId);
+        const playIcon = document.getElementById('playIcon' + audioId);
+        const spectrum = document.getElementById('spectrum' + audioId);
+        const audioCard = audio ? audio.closest('.audio-card') : null;
+        
+        if (audio && audio.paused) {
+            // Pause all other audio players
+            document.querySelectorAll('audio').forEach(function(otherAudio) {
+                if (!otherAudio.paused && otherAudio !== audio) {
+                    otherAudio.pause();
+                    const otherId = otherAudio.id.replace('audioPlayer', '');
+                    const otherCard = otherAudio.closest('.audio-card');
+                    const otherIcon = document.getElementById('playIcon' + otherId);
+                    const otherSpectrum = document.getElementById('spectrum' + otherId);
+                    
+                    if (otherIcon) otherIcon.className = 'fa fa-play';
+                    if (otherSpectrum) otherSpectrum.style.opacity = '0.6';
+                    if (otherCard) otherCard.classList.remove('playing');
+                }
+            });
+            
+            audio.play();
+            if (playIcon) playIcon.className = 'fa fa-pause';
+            if (spectrum) spectrum.style.opacity = '1';
+            if (audioCard) audioCard.classList.add('playing');
+        } else if (audio) {
+            audio.pause();
+            if (playIcon) playIcon.className = 'fa fa-play';
+            if (spectrum) spectrum.style.opacity = '0.6';
+            if (audioCard) audioCard.classList.remove('playing');
+        }
+        
+        if (audio) {
+            // Handle audio end event
+            audio.addEventListener('ended', function() {
+                if (playIcon) playIcon.className = 'fa fa-play';
+                if (spectrum) spectrum.style.opacity = '0.6';
+                if (audioCard) audioCard.classList.remove('playing');
+            });
+            
+            // Handle pause event (for better sync)
+            audio.addEventListener('pause', function() {
+                if (playIcon) playIcon.className = 'fa fa-play';
+                if (spectrum) spectrum.style.opacity = '0.6';
+                if (audioCard) audioCard.classList.remove('playing');
+            });
+            
+            // Handle play event (for better sync)
+            audio.addEventListener('play', function() {
+                if (playIcon) playIcon.className = 'fa fa-pause';
+                if (spectrum) spectrum.style.opacity = '1';
+                if (audioCard) audioCard.classList.add('playing');
+            });
+        }
+    };
+});
+</script>
+@endsection
