@@ -245,8 +245,65 @@
           font-size: 8px;
       }
 
+      /* View All Button Styling */
+      .vfx-item-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+      }
+
+      .vfx-item-section h3 {
+          margin: 0;
+          color: #fff;
+          font-size: 24px;
+          font-weight: 600;
+      }
+
+      .view-all-btn {
+          background: linear-gradient(45deg, #ff8508, #fd0575);
+          color: #fff;
+          padding: 8px 20px;
+          border-radius: 25px;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          border: none;
+          cursor: pointer;
+          display: inline-block;
+      }
+
+      .view-all-btn:hover {
+          background: linear-gradient(45deg, #fd0575, #ff8508);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(253, 5, 120, 0.4);
+          color: #fff;
+          text-decoration: none;
+      }
+
+      .view-all-btn:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(253, 5, 120, 0.3);
+      }
+
       /* Mobile Responsive Audio Cards */
       @media (max-width: 768px) {
+          .vfx-item-section {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 15px;
+          }
+
+          .vfx-item-section h3 {
+              font-size: 20px;
+          }
+
+          .view-all-btn {
+              padding: 6px 16px;
+              font-size: 12px;
+          }
+
           .audio-card {
               margin-bottom: 10px;
           }

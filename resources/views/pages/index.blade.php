@@ -206,6 +206,7 @@
                 <div class="col-md-12">
                     <div class="vfx-item-section">
                         <h3>Audio Library</h3>
+                        <a href="{{ URL::to('audio') }}" class="view-all-btn">View All</a>
                     </div>
                     <div class="row">
                         @foreach ($audio_list as $audio_data)
