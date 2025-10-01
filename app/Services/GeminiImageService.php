@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Storage;
 class GeminiImageService
 {
     protected $apiKey;
-    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    protected $imageModel = 'gemini-2.5-flash-image-preview';
+    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1';
+    protected $imageModel = 'gemini-2.0-flash';
 
     public function __construct()
     {
@@ -32,18 +32,25 @@ class GeminiImageService
             $prompt = $this->createImagePrompt($videoTitle, $videoDescription);
 
             // Generate image using Gemini
+            Log::info('Starting Gemini image generation', ['title' => $videoTitle, 'file_id' => $fileId]);
             $imageData = $this->callGeminiApi($prompt);
 
             if (!$imageData) {
+                Log::warning('No image data returned from Gemini API');
                 return ['error' => 'Failed to generate image from Gemini API'];
             }
 
+            Log::info('Received image data from Gemini, attempting to save');
+            
             // Save the generated image
             $imagePath = $this->saveImage($imageData, $fileId);
 
             if (!$imagePath) {
+                Log::error('Failed to save generated image to disk');
                 return ['error' => 'Failed to save generated image'];
             }
+
+            Log::info('Successfully generated and saved image', ['path' => $imagePath]);
 
             return [
                 'success' => 'Image generated successfully',
@@ -136,8 +143,16 @@ class GeminiImageService
             if ($response->successful()) {
                 $data = $response->json();
 
-                // Log the response structure for debugging
-                Log::info('Gemini API Response Structure: ' . json_encode($data, JSON_PRETTY_PRINT));
+                // Log the response structure for debugging (truncated for readability)
+                $logData = $data;
+                if (isset($logData['candidates'][0]['content']['parts'])) {
+                    foreach ($logData['candidates'][0]['content']['parts'] as &$part) {
+                        if (isset($part['inlineData']['data'])) {
+                            $part['inlineData']['data'] = substr($part['inlineData']['data'], 0, 100) . '... [TRUNCATED]';
+                        }
+                    }
+                }
+                Log::info('Gemini API Response Structure: ' . json_encode($logData, JSON_PRETTY_PRINT));
 
                 // Check if we have candidates
                 if (isset($data['candidates'][0]['content']['parts'])) {
@@ -145,9 +160,43 @@ class GeminiImageService
 
                     // Look for image data in all parts
                     foreach ($parts as $part) {
-                        if (isset($part['inlineData']['data'])) {
-                            Log::info('Found image data in part');
-                            return $part['inlineData']['data'];
+                        // Check for image data in inlineData structure
+                        if (isset($part['inlineData'])) {
+                            $inlineData = $part['inlineData'];
+                            
+                            // Check if we have image data (base64 encoded)
+                            if (isset($inlineData['data'])) {
+                                $imageData = $inlineData['data'];
+                                Log::info('Found image data in part with mimeType: ' . ($inlineData['mimeType'] ?? 'unknown'));
+                                Log::info('Image data length: ' . strlen($imageData));
+                                
+                                // Validate that we have substantial data
+                                if (strlen($imageData) < 100) {
+                                    Log::warning('Image data seems too short: ' . strlen($imageData) . ' characters');
+                                    continue;
+                                }
+                                
+                                return $imageData;
+                            }
+                            
+                            // Also check for alternative data field names that Gemini might use
+                            foreach (['data', 'image', 'content'] as $dataField) {
+                                if (isset($inlineData[$dataField])) {
+                                    $imageData = $inlineData[$dataField];
+                                    Log::info("Found image data in field '{$dataField}' with mimeType: " . ($inlineData['mimeType'] ?? 'unknown'));
+                                    Log::info('Image data length: ' . strlen($imageData));
+                                    
+                                    // Validate that we have substantial data
+                                    if (strlen($imageData) < 100) {
+                                        Log::warning("Image data in field '{$dataField}' seems too short: " . strlen($imageData) . ' characters');
+                                        continue;
+                                    }
+                                    
+                                    return $imageData;
+                                }
+                            }
+                            
+                            Log::info('Found inlineData but no image data field. Available fields: ' . implode(', ', array_keys($inlineData)));
                         }
                     }
 
@@ -157,6 +206,8 @@ class GeminiImageService
                             Log::info('Gemini returned text: ' . $part['text']);
                         }
                     }
+                    
+                    Log::warning('No image data found in any part. Response structure logged above.');
                 }
 
                 // Check for finish reason
@@ -203,27 +254,155 @@ class GeminiImageService
                 mkdir($publicScreenshotsDir, 0777, true);
             }
 
-            // Decode base64 image data
-            $imageData = base64_decode($imageData);
+            // Log the size of the base64 data we received
+            Log::info('Received base64 image data length: ' . strlen($imageData));
+            
+            // Log first and last 100 characters for debugging
+            Log::info('Base64 data start: ' . substr($imageData, 0, 100));
+            Log::info('Base64 data end: ' . substr($imageData, -100));
 
-            if (!$imageData) {
+            // Clean the base64 data (remove any whitespace or newlines)
+            $cleanImageData = preg_replace('/\s+/', '', $imageData);
+            Log::info('Cleaned base64 data length: ' . strlen($cleanImageData));
+
+            // Validate base64 data
+            if (!preg_match('/^[a-zA-Z0-9+\/]*={0,2}$/', $cleanImageData)) {
+                Log::error('Invalid base64 data format detected');
                 return null;
             }
 
-            // Save image to public directory
-            $imagePath = "screenshots/{$fileId}.jpg";
-            $fullPath = public_path($imagePath);
+            // Decode base64 image data
+            $decodedImageData = base64_decode($cleanImageData, true);
 
-            if (file_put_contents($fullPath, $imageData)) {
-                return $imagePath;
+            if ($decodedImageData === false) {
+                Log::error('Failed to decode base64 image data - invalid base64 format');
+                return null;
             }
 
-            return null;
+            if (empty($decodedImageData)) {
+                Log::error('Decoded image data is empty');
+                return null;
+            }
+
+            Log::info('Decoded image data size: ' . strlen($decodedImageData) . ' bytes');
+
+            // Validate that we have actual image data by checking magic bytes
+            $imageType = $this->getImageTypeFromData($decodedImageData);
+            if (!$imageType) {
+                Log::error('Decoded data does not appear to be a valid image');
+                return null;
+            }
+
+            Log::info('Detected image type: ' . $imageType);
+
+            // Save image to public directory with appropriate extension
+            $extension = $imageType === 'png' ? 'png' : 'jpg';
+            $imagePath = "screenshots/{$fileId}.{$extension}";
+            $fullPath = public_path($imagePath);
+
+            // Write the file
+            $bytesWritten = file_put_contents($fullPath, $decodedImageData);
+            
+            if ($bytesWritten === false) {
+                Log::error('Failed to write image data to file: ' . $fullPath);
+                return null;
+            }
+
+            Log::info("Successfully saved image to: {$fullPath} ({$bytesWritten} bytes written)");
+
+            // Verify the file was created and has content
+            if (!file_exists($fullPath) || filesize($fullPath) === 0) {
+                Log::error('Image file was not created or is empty');
+                return null;
+            }
+
+            return $imagePath;
 
         } catch (\Exception $e) {
             Log::error('Image Save Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return null;
         }
+    }
+
+    /**
+     * Detect image type from binary data
+     *
+     * @param string $data
+     * @return string|null
+     */
+    private function getImageTypeFromData($data)
+    {
+        if (strlen($data) < 4) {
+            return null;
+        }
+
+        $magicBytes = substr($data, 0, 4);
+        
+        // Check for common image formats
+        if (substr($magicBytes, 0, 2) === "\xFF\xD8") {
+            return 'jpeg';
+        }
+        
+        if (substr($magicBytes, 0, 8) === "\x89PNG\r\n\x1A\n") {
+            return 'png';
+        }
+        
+        if (substr($magicBytes, 0, 6) === "GIF87a" || substr($magicBytes, 0, 6) === "GIF89a") {
+            return 'gif';
+        }
+        
+        if (substr($magicBytes, 0, 2) === "BM") {
+            return 'bmp';
+        }
+
+        return null;
+    }
+
+    /**
+     * Test method to debug base64 data issues
+     *
+     * @param string $base64Data
+     * @return array
+     */
+    public function testBase64Data($base64Data)
+    {
+        $result = [
+            'original_length' => strlen($base64Data),
+            'is_valid_base64' => false,
+            'decoded_length' => 0,
+            'is_valid_image' => false,
+            'image_type' => null,
+            'errors' => []
+        ];
+
+        try {
+            // Clean the data
+            $cleanData = preg_replace('/\s+/', '', $base64Data);
+            $result['cleaned_length'] = strlen($cleanData);
+
+            // Validate base64
+            if (preg_match('/^[a-zA-Z0-9+\/]*={0,2}$/', $cleanData)) {
+                $result['is_valid_base64'] = true;
+
+                // Decode
+                $decoded = base64_decode($cleanData, true);
+                if ($decoded !== false) {
+                    $result['decoded_length'] = strlen($decoded);
+                    $result['is_valid_image'] = true;
+                    $result['image_type'] = $this->getImageTypeFromData($decoded);
+                } else {
+                    $result['errors'][] = 'Failed to decode base64 data';
+                }
+            } else {
+                $result['errors'][] = 'Invalid base64 format';
+            }
+
+        } catch (\Exception $e) {
+            $result['errors'][] = $e->getMessage();
+        }
+
+        return $result;
     }
 
     /**
