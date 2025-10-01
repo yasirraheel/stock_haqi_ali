@@ -1,1 +1,0 @@
-<footer class="footer text-right"> <?php echo e(trans('words.copyright')); ?> © <?php echo e(date('Y')); ?> <a href="https://cineworm.online" target="_blank">cineworm.online</a>. <?php echo e(trans('words.all_rights')); ?>. </footer><?php /**PATH C:\xampp\htdocs\stock_new\resources\views/admin/copyright.blade.php ENDPATH**/ ?>

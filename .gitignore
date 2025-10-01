@@ -18,7 +18,17 @@
 
 # Logs
 storage/logs/*.log
-# *.log
+*.log
+
+# Laravel Framework
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/views/.gitignore
+!storage/framework/testing/.gitignore
 
 # Runtime data
 pids
@@ -82,3 +92,58 @@ Thumbs.db
 # public/paytm/
 # public/cashfree/
 # public/device-detector/ - now included
+
+# Laravel specific
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# Database
+*.sqlite
+*.sqlite3
+
+# Composer
+composer.phar
+composer.lock
+
+# Laravel Mix
+/public/hot
+/public/storage
+!/public/storage/.gitignore
+!/public/storage/index.php
+!/public/storage/.htaccess
+
+# User uploads (if any)
+/public/uploads/*
+!/public/uploads/.gitignore
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Laravel Telescope (if used)
+/storage/telescope
+
+# Laravel Horizon (if used)
+/storage/horizon
+
+# Laravel Dusk (if used)
+/tests/Browser/screenshots
+/tests/Browser/console
