@@ -293,71 +293,35 @@ class MoviesController extends MainAdminController
         try {
             $geminiService = new GeminiImageService();
 
-            Log::info("Starting AI screenshot generation for: {$videoTitle} (File ID: {$fileId})");
-
             // Try to generate image using Gemini AI
             $result = $geminiService->generateImage($videoTitle, $videoDescription, $fileId);
 
             // If Gemini fails, use fallback method
             if (isset($result['error'])) {
                 Log::warning('Gemini AI failed, using fallback: ' . $result['error']);
-                
-                $fallbackPath = $geminiService->generateFallbackImage($videoTitle, $fileId);
+                $result = $geminiService->generateFallbackImage($videoTitle, $fileId);
 
-                if (!$fallbackPath) {
-                    Log::error('Both Gemini AI and fallback method failed');
+                if (!$result) {
                     return ['error' => 'Failed to generate image using both Gemini AI and fallback method'];
                 }
 
                 // Update result format for fallback
-                $result = [
-                    'success' => 'Fallback image generated successfully', 
-                    'image_path' => $fallbackPath,
-                    'is_fallback' => true
-                ];
-                
-                Log::info("Fallback image generated: {$fallbackPath}");
-            } else {
-                Log::info("AI image generated successfully: " . $result['image_path']);
-                $result['is_fallback'] = false;
-            }
-
-            // Verify the generated image actually exists
-            $imagePath = $result['image_path'];
-            $fullPath = public_path($imagePath);
-            
-            if (!file_exists($fullPath)) {
-                Log::error("Generated image file does not exist: {$fullPath}");
-                return ['error' => 'Generated image file not found'];
+                $result = ['success' => 'Fallback image generated successfully', 'image_path' => $result];
             }
 
             // Save or update the screenshot in the Thumbnail model
             Thumbnail::updateOrCreate(
                 ['file_id' => $fileId],
-                ['video_image_thumb' => $imagePath]
+                ['video_image_thumb' => $result['image_path']]
             );
-            
-            Log::info("Thumbnail record updated for file ID: {$fileId}");
 
             // Update the movie object with the generated image
-            $movie_obj = session()->get('movie_obj');
-            if ($movie_obj) {
-                $movie_obj->video_image_thumb = $imagePath;
-                $movie_obj->video_image = $imagePath;
-                $movie_obj->save();
+            $movies = session()->get('movie_obj');
+            if ($movies) {
+                $movies->video_image_thumb = $result['image_path'];
+                $movies->video_image = $result['image_path'];
+                $movies->save();
                 session()->forget('movie_obj');
-                
-                Log::info("Movie object updated with new image path: {$imagePath}");
-            } else {
-                // If no session object, try to find and update the movie directly
-                $movie = Movies::where('file_id', $fileId)->first();
-                if ($movie) {
-                    $movie->video_image_thumb = $imagePath;
-                    $movie->video_image = $imagePath;
-                    $movie->save();
-                    
-                    Log::info("Movie record updated directly with new image path: {$imagePath}");
-                }
             }
 
             return $result;

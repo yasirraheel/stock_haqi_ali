@@ -10,8 +10,7 @@ class GeminiImageService
 {
     protected $apiKey;
     protected $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    protected $imageModel = 'imagen-3.0-generate-001';
-    protected $fallbackImageModel = 'gemini-1.5-flash';
+    protected $imageModel = 'gemini-2.5-flash-image-preview';
 
     public function __construct()
     {
@@ -36,34 +35,18 @@ class GeminiImageService
             $imageData = $this->callGeminiApi($prompt);
 
             if (!$imageData) {
-                Log::warning('No image data returned from Gemini API, using fallback');
                 return ['error' => 'Failed to generate image from Gemini API'];
-            }
-
-            // Validate the image data
-            $decoded = base64_decode($imageData, true);
-            if ($decoded === false) {
-                Log::error('Invalid base64 image data from Gemini');
-                return ['error' => 'Invalid image data from Gemini API'];
-            }
-
-            // Check if it's valid image data
-            if (!$this->isValidImageData($decoded)) {
-                Log::error('Gemini returned invalid image format');
-                return ['error' => 'Invalid image format from Gemini API'];
             }
 
             // Save the generated image
             $imagePath = $this->saveImage($imageData, $fileId);
 
             if (!$imagePath) {
-                Log::error('Failed to save Gemini generated image to disk');
                 return ['error' => 'Failed to save generated image'];
             }
 
-            Log::info("Successfully generated and saved AI image: {$imagePath}");
             return [
-                'success' => 'AI image generated successfully using Gemini',
+                'success' => 'Image generated successfully',
                 'image_path' => $imagePath
             ];
 
@@ -74,7 +57,7 @@ class GeminiImageService
     }
 
     /**
-     * Create a detailed prompt for image generation optimized for Imagen API
+     * Create a detailed prompt for image generation
      *
      * @param string $videoTitle
      * @param string $videoDescription
@@ -86,24 +69,24 @@ class GeminiImageService
         $title = trim($videoTitle);
         $description = trim($videoDescription);
 
-        // Create a concise but detailed prompt optimized for Imagen
-        $prompt = "Movie poster for '{$title}'";
+        // Create a comprehensive prompt for movie poster/thumbnail generation
+        $prompt = "Create a high-quality movie poster/thumbnail image for a video titled '{$title}'. ";
 
         if (!empty($description)) {
-            // Extract key themes from description
-            $prompt .= ", " . trim($description);
+            $prompt .= "Description: {$description}. ";
         }
 
-        $prompt .= ". Cinematic, professional movie poster design with dramatic lighting";
-        $prompt .= ", vibrant colors, high-quality digital art style";
-        $prompt .= ", perfect for video thumbnail, engaging and eye-catching";
-        $prompt .= ", modern entertainment industry aesthetic";
+        $prompt .= "The image should be cinematic, professional, and visually appealing. ";
+        $prompt .= "Include relevant visual elements that represent the content. ";
+        $prompt .= "Use a 16:9 aspect ratio suitable for video thumbnails. ";
+        $prompt .= "Make it engaging and eye-catching for viewers. ";
+        $prompt .= "Style: modern, high-quality, professional movie poster design.";
 
         return $prompt;
     }
 
     /**
-     * Call Imagen API to generate image using official Google AI approach
+     * Call Gemini API to generate image
      *
      * @param string $prompt
      * @return string|null
@@ -111,67 +94,10 @@ class GeminiImageService
     private function callGeminiApi($prompt)
     {
         try {
-            // Use the official Imagen API endpoint structure based on Google AI documentation
             $response = Http::withHeaders([
                 'x-goog-api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post("{$this->baseUrl}/models/{$this->imageModel}:generateImages", [
-                'prompt' => $prompt,
-                'config' => [
-                    'numberOfImages' => 1,
-                    'aspectRatio' => '16:9', // Perfect for video thumbnails
-                    'safetyFilterLevel' => 'block_some',
-                    'personGeneration' => 'allow_adult'
-                ]
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                
-                Log::info('Imagen API Response Structure: ' . json_encode($data, JSON_PRETTY_PRINT));
-
-                // Based on official documentation: response.generatedImages[0].image.imageBytes
-                if (isset($data['generatedImages'][0]['image']['imageBytes'])) {
-                    $imageData = $data['generatedImages'][0]['image']['imageBytes'];
-                    
-                    Log::info('Successfully extracted image from Imagen API (' . strlen($imageData) . ' chars)');
-                    return $imageData;
-                }
-
-                Log::warning('No generatedImages found in Imagen response');
-            } else {
-                $errorData = $response->json();
-                Log::error('Imagen API Error: ' . $response->status() . ' - ' . json_encode($errorData));
-                
-                // If Imagen fails, try the previous approach that was working
-                return $this->callGeminiTextToImage($prompt);
-            }
-
-            return null;
-
-        } catch (\Exception $e) {
-            Log::error('Imagen API Exception: ' . $e->getMessage());
-            // Fallback to the previous approach if Imagen API fails
-            return $this->callGeminiTextToImage($prompt);
-        }
-    }
-
-    /**
-     * Fallback approach using Gemini text model (based on working logs)
-     *
-     * @param string $prompt
-     * @return string|null
-     */
-    private function callGeminiTextToImage($prompt)
-    {
-        try {
-            Log::info('Using fallback Gemini text-to-image approach');
-            
-            // Use the fallback model that was working in your logs
-            $response = Http::withHeaders([
-                'x-goog-api-key' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->post("{$this->baseUrl}/models/{$this->fallbackImageModel}:generateContent", [
+            ])->post("{$this->baseUrl}/models/{$this->imageModel}:generateContent", [
                 'contents' => [
                     [
                         'parts' => [
@@ -183,8 +109,9 @@ class GeminiImageService
                 ],
                 'generationConfig' => [
                     'temperature' => 0.7,
+                    'topK' => 40,
                     'topP' => 0.95,
-                    'maxOutputTokens' => 2048,
+                    'maxOutputTokens' => 1024,
                 ],
                 'safetySettings' => [
                     [
@@ -209,64 +136,55 @@ class GeminiImageService
             if ($response->successful()) {
                 $data = $response->json();
 
-                // Based on your logs showing inlineData structure
+                // Log the response structure for debugging
+                Log::info('Gemini API Response Structure: ' . json_encode($data, JSON_PRETTY_PRINT));
+
+                // Check if we have candidates
                 if (isset($data['candidates'][0]['content']['parts'])) {
                     $parts = $data['candidates'][0]['content']['parts'];
 
+                    // Look for image data in all parts
                     foreach ($parts as $part) {
                         if (isset($part['inlineData']['data'])) {
-                            $imageData = $part['inlineData']['data'];
-                            
-                            Log::info('Found fallback image data (' . strlen($imageData) . ' chars)');
-                            
-                            if (strlen($imageData) > 100) {
-                                $decoded = base64_decode($imageData, true);
-                                if ($decoded !== false) {
-                                    Log::info('Valid fallback image data found');
-                                    return $imageData;
-                                }
-                            }
+                            Log::info('Found image data in part');
+                            return $part['inlineData']['data'];
+                        }
+                    }
+
+                    // Check for text parts (for debugging)
+                    foreach ($parts as $part) {
+                        if (isset($part['text'])) {
+                            Log::info('Gemini returned text: ' . $part['text']);
                         }
                     }
                 }
-                
-                Log::warning('No valid image data in fallback response');
+
+                // Check for finish reason
+                if (isset($data['candidates'][0]['finishReason'])) {
+                    Log::info('Gemini finish reason: ' . $data['candidates'][0]['finishReason']);
+                }
             } else {
-                Log::error('Fallback API request failed: ' . $response->status());
+                $errorData = $response->json();
+                $errorMessage = 'Gemini API HTTP Error: ' . $response->status();
+
+                if (isset($errorData['error']['message'])) {
+                    $errorMessage .= ' - ' . $errorData['error']['message'];
+                }
+
+                Log::error($errorMessage);
+
+                // Check if it's a quota error
+                if ($response->status() === 429) {
+                    Log::warning('Gemini API quota exceeded, will use fallback method');
+                }
             }
 
             return null;
 
         } catch (\Exception $e) {
-            Log::error('Gemini Fallback Exception: ' . $e->getMessage());
+            Log::error('Gemini API Exception: ' . $e->getMessage());
             return null;
         }
-    }
-
-    /**
-     * Validate if the data is valid image data
-     *
-     * @param string $data
-     * @return bool
-     */
-    private function isValidImageData($data)
-    {
-        // Check for common image headers
-        $headers = [
-            "\xFF\xD8\xFF", // JPEG
-            "\x89PNG\r\n\x1a\n", // PNG
-            "GIF87a", // GIF87a
-            "GIF89a", // GIF89a
-            "RIFF" // WebP
-        ];
-
-        foreach ($headers as $header) {
-            if (strpos($data, $header) === 0) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
