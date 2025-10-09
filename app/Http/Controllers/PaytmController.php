@@ -17,7 +17,7 @@ use Intervention\Image\Facades\Image;
 
 use Session;
 
-require(base_path() . '/public/paytm/PaytmChecksum.php');
+require_once(base_path() . '/public/paytm/PaytmChecksum.php');
  
    
 class PaytmController extends Controller

@@ -49,7 +49,7 @@ use Razorpay\Api\Errors\SignatureVerificationError;
 
 require(base_path() . '/public/stripe-php/init.php'); 
 
-require(base_path() . '/public/paytm/PaytmChecksum.php');
+require_once(base_path() . '/public/paytm/PaytmChecksum.php');
 
 require(base_path() . '/public/coingate/vendor/autoload.php');
 
