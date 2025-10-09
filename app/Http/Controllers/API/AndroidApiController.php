@@ -2595,7 +2595,12 @@ class AndroidApiController extends MainAPIController
 
     public function random_videos()
     {
-        $get_data = checkSignSalt($_POST['data']);
+        // Check if data parameter exists, if not use default values
+        if (!isset($_POST['data']) || empty($_POST['data'])) {
+            $get_data = array(); // Default empty array
+        } else {
+            $get_data = checkSignSalt($_POST['data']);
+        }
         
         // Get the number of videos to return (default 10, max 50)
         $limit = isset($get_data['limit']) ? min(50, max(1, intval($get_data['limit']))) : 10;
