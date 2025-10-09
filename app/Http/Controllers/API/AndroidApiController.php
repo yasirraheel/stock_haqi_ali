@@ -2593,6 +2593,81 @@ class AndroidApiController extends MainAPIController
         ));
     }
 
+    public function random_videos()
+    {
+        $get_data = checkSignSalt($_POST['data']);
+        
+        // Get the number of videos to return (default 10, max 50)
+        $limit = isset($get_data['limit']) ? min(50, max(1, intval($get_data['limit']))) : 10;
+        
+        // Get random videos
+        $movies_list = Movies::where('status', 1)
+                            ->where('upcoming', 0)
+                            ->inRandomOrder()
+                            ->limit($limit)
+                            ->get();
+        
+        $total_records = Movies::where('status', 1)->where('upcoming', 0)->count();
+        
+        $response = array();
+        
+        if($movies_list->count()) 
+        {
+            foreach($movies_list as $movie_data)
+            {   
+                $movie_id = $movie_data->id;
+                $movie_title = stripslashes($movie_data->video_title); 
+                $movie_poster = URL::to('/'.$movie_data->video_image_thumb);
+                $movie_duration = $movie_data->duration;
+                $movie_access = $movie_data->video_access;
+                $content_rating = $movie_data->content_rating ? $movie_data->content_rating : '';
+                $video_description = stripslashes($movie_data->video_description);
+                $release_date = $movie_data->release_date;
+                $imdb_rating = $movie_data->imdb_rating;
+                $views = $movie_data->views;
+                
+                // Get genre information
+                $genres = array();
+                if($movie_data->movie_genre_id) {
+                    foreach(explode(',', $movie_data->movie_genre_id) as $genre_id) {
+                        $genre_name = Genres::getGenresInfo($genre_id, 'genre_name');
+                        if($genre_name) {
+                            $genres[] = array('genre_id' => $genre_id, 'genre_name' => $genre_name);
+                        }
+                    }
+                }
+                
+                // Get language information
+                $language_name = '';
+                if($movie_data->movie_lang_id) {
+                    $language_name = Language::getLanguageInfo($movie_data->movie_lang_id, 'language_name');
+                }
+                
+                $response['random_videos'][] = array(
+                    "movie_id" => $movie_id,
+                    "movie_title" => $movie_title,
+                    "movie_poster" => $movie_poster,
+                    "movie_duration" => $movie_duration,
+                    "movie_access" => $movie_access,
+                    "content_rating" => $content_rating,
+                    "video_description" => $video_description,
+                    "release_date" => $release_date,
+                    "imdb_rating" => $imdb_rating,
+                    "views" => $views,
+                    "genres" => $genres,
+                    "language_name" => $language_name
+                );
+            }
+        }
+        
+        return \Response::json(array(            
+            'VIDEO_STREAMING_APP' => $response,
+            'total_records' => $total_records,
+            'returned_records' => $movies_list->count(),
+            'status_code' => 200
+        ));
+    }
+
     public function sports_category()
     {   
         $get_data=checkSignSalt($_POST['data']);

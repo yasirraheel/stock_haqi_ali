@@ -61,7 +61,8 @@ Route::group(['prefix' => 'v1','namespace' => 'API'], function(){
     Route::post('movies', 'AndroidApiController@movies');  
     Route::post('movies_by_language', 'AndroidApiController@movies_by_language');  
     Route::post('movies_by_genre', 'AndroidApiController@movies_by_genre');  
-    Route::post('movies_details', 'AndroidApiController@movies_details');  
+    Route::post('movies_details', 'AndroidApiController@movies_details');
+    Route::post('random_videos', 'AndroidApiController@random_videos');  
 
     Route::post('sports_category', 'AndroidApiController@sports_category');
     Route::post('sports', 'AndroidApiController@sports');  
