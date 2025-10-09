@@ -2626,6 +2626,7 @@ class AndroidApiController extends MainAPIController
             $views = $movie_data->views;
             
             // Video URLs
+            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
             $video_url_480 = $movie_data->video_url_480 ? $movie_data->video_url_480 : '';
             $video_url_720 = $movie_data->video_url_720 ? $movie_data->video_url_720 : '';
             $video_url_1080 = $movie_data->video_url_1080 ? $movie_data->video_url_1080 : '';
@@ -2719,6 +2720,7 @@ class AndroidApiController extends MainAPIController
                 "release_date" => $release_date,
                 "imdb_rating" => $imdb_rating,
                 "views" => $views,
+                "video_url" => $video_url,
                 "video_url_480" => $video_url_480,
                 "video_url_720" => $video_url_720,
                 "video_url_1080" => $video_url_1080,
