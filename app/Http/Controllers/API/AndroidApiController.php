@@ -2614,13 +2614,42 @@ class AndroidApiController extends MainAPIController
             $get_data = checkSignSalt($_POST['data']);
         }
 
-        // Get only 1 random video per request
+        // Smart randomization - avoid repeating videos
+        $total_records = Movies::where('status', 1)->where('upcoming', 0)->count();
+        
+        // Get or create session key for tracking shown videos
+        $session_key = 'random_videos_shown_' . $api_key;
+        $shown_videos = session($session_key, []);
+        
+        // If all videos have been shown, reset the tracking
+        if (count($shown_videos) >= $total_records) {
+            $shown_videos = [];
+            session([$session_key => []]);
+        }
+        
+        // Get a random video that hasn't been shown yet
         $movie_data = Movies::where('status', 1)
                             ->where('upcoming', 0)
+                            ->whereNotIn('id', $shown_videos)
                             ->inRandomOrder()
                             ->first();
-
-        $total_records = Movies::where('status', 1)->where('upcoming', 0)->count();
+        
+        // If somehow no video is found (edge case), get any random video
+        if (!$movie_data) {
+            $movie_data = Movies::where('status', 1)
+                                ->where('upcoming', 0)
+                                ->inRandomOrder()
+                                ->first();
+            // Reset the session if this happens
+            session([$session_key => []]);
+            $shown_videos = [];
+        }
+        
+        // Add current video to shown list
+        if ($movie_data) {
+            $shown_videos[] = $movie_data->id;
+            session([$session_key => $shown_videos]);
+        }
 
         $response = array();
 
@@ -2760,6 +2789,11 @@ class AndroidApiController extends MainAPIController
             'VIDEO_STREAMING_APP' => $response,
             'total_records' => $total_records,
             'returned_records' => $movie_data ? 1 : 0,
+            'randomization_info' => array(
+                'videos_shown_in_cycle' => count($shown_videos),
+                'total_available_videos' => $total_records,
+                'cycle_progress' => round((count($shown_videos) / max($total_records, 1)) * 100, 2) . '%'
+            ),
             'status_code' => 200
         ));
     }
