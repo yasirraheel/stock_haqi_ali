@@ -8,7 +8,7 @@ class Movies extends Model
 {
     protected $table = 'movie_videos';
 
-    protected $fillable = ['video_title','video_image','added_by','license_price','author','file_id','video_quality','download_enable','download_url','subtitle_on_off'];
+    protected $fillable = ['video_title','video_image','added_by','license_price','author','file_id'];
 
 
 	public $timestamps = false;
