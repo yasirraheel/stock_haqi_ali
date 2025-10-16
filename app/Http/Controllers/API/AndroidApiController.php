@@ -2668,11 +2668,11 @@ class AndroidApiController extends MainAPIController
             $imdb_rating = $movie_data->imdb_rating;
             $views = $movie_data->views;
 
-            // Video URLs - Build proper URLs
-            $video_url = $movie_data->video_url ? (filter_var($movie_data->video_url, FILTER_VALIDATE_URL) ? $movie_data->video_url : URL::to('/'.$movie_data->video_url)) : '';
-            $video_url_480 = $movie_data->video_url_480 ? (filter_var($movie_data->video_url_480, FILTER_VALIDATE_URL) ? $movie_data->video_url_480 : URL::to('/'.$movie_data->video_url_480)) : '';
-            $video_url_720 = $movie_data->video_url_720 ? (filter_var($movie_data->video_url_720, FILTER_VALIDATE_URL) ? $movie_data->video_url_720 : URL::to('/'.$movie_data->video_url_720)) : '';
-            $video_url_1080 = $movie_data->video_url_1080 ? (filter_var($movie_data->video_url_1080, FILTER_VALIDATE_URL) ? $movie_data->video_url_1080 : URL::to('/'.$movie_data->video_url_1080)) : '';
+            // Video URLs
+            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
+            $video_url_480 = $movie_data->video_url_480 ? $movie_data->video_url_480 : '';
+            $video_url_720 = $movie_data->video_url_720 ? $movie_data->video_url_720 : '';
+            $video_url_1080 = $movie_data->video_url_1080 ? $movie_data->video_url_1080 : '';
 
             // Subtitle information
             $subtitle_language1 = $movie_data->subtitle_language1 ? $movie_data->subtitle_language1 : '';
@@ -5049,7 +5049,7 @@ class AndroidApiController extends MainAPIController
                 "audio_id" => $audio_data->id,
                 "title" => $audio_data->title,
                 "description" => $audio_data->description,
-                "audio_url" => asset('storage/' . $audio_data->audio_path),
+                "audio_url" => url('storage/' . $audio_data->audio_path),
                 "duration" => $audio_data->duration,
                 "file_size" => $audio_data->file_size,
                 "format" => $audio_data->format,
@@ -5225,7 +5225,7 @@ class AndroidApiController extends MainAPIController
             $release_date = $movie_data->release_date;
             $imdb_rating = $movie_data->imdb_rating;
             $views = $movie_data->views;
-            $video_url = $movie_data->video_url ? (filter_var($movie_data->video_url, FILTER_VALIDATE_URL) ? $movie_data->video_url : URL::to('/'.$movie_data->video_url)) : '';
+            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
             $video_image = $movie_data->video_image ? URL::to('/'.$movie_data->video_image) : '';
             $video_slug = $movie_data->video_slug ? $movie_data->video_slug : '';
 
@@ -5275,7 +5275,7 @@ class AndroidApiController extends MainAPIController
                 "audio_id" => $audio_data->id,
                 "title" => $audio_data->title,
                 "description" => $audio_data->description,
-                "audio_url" => asset('storage/' . $audio_data->audio_path),
+                "audio_url" => url('storage/' . $audio_data->audio_path),
                 "duration" => $audio_data->duration,
                 "file_size" => $audio_data->file_size,
                 "format" => $audio_data->format,
@@ -5381,7 +5381,7 @@ class AndroidApiController extends MainAPIController
             $release_date = $movie_data->release_date;
             $imdb_rating = $movie_data->imdb_rating;
             $views = $movie_data->views;
-            $video_url = $movie_data->video_url ? (filter_var($movie_data->video_url, FILTER_VALIDATE_URL) ? $movie_data->video_url : URL::to('/'.$movie_data->video_url)) : '';
+            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
             $video_image = $movie_data->video_image ? URL::to('/'.$movie_data->video_image) : '';
             $video_slug = $movie_data->video_slug ? $movie_data->video_slug : '';
 
@@ -5477,7 +5477,7 @@ class AndroidApiController extends MainAPIController
                 "audio_id" => $audio_data->id,
                 "title" => $audio_data->title,
                 "description" => $audio_data->description,
-                "audio_url" => asset('storage/' . $audio_data->audio_path),
+                "audio_url" => url('storage/' . $audio_data->audio_path),
                 "duration" => $audio_data->duration,
                 "file_size" => $audio_data->file_size,
                 "format" => $audio_data->format,
