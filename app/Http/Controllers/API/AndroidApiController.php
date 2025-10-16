@@ -2783,7 +2783,9 @@ class AndroidApiController extends MainAPIController
                 "genres" => $genres,
                 "language_name" => $language_name,
                 "actors" => $actors,
-                "directors" => $directors
+                "directors" => $directors,
+                "license_price" => $movie_data->license_price ? $movie_data->license_price : null,
+                "is_premium" => $movie_data->license_price && $movie_data->license_price > 0 ? true : false
             );
         }
 
@@ -5359,7 +5361,9 @@ class AndroidApiController extends MainAPIController
                 "views" => $views,
                 "video_url" => $video_url,
                 "genres" => $genres,
-                "language_name" => $language_name
+                "language_name" => $language_name,
+                "license_price" => $movie_data->license_price ? $movie_data->license_price : null,
+                "is_premium" => $movie_data->license_price && $movie_data->license_price > 0 ? true : false
             );
         }
 
