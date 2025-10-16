@@ -36,11 +36,18 @@ class Audio extends Model
         'sample_rate' => 'integer'
     ];
 
-    // Accessor for audio URL - returns the path directly
+    // Accessor to generate the audio URL dynamically (same as web version)
     public function getAudioUrlAttribute()
     {
-        // Return the audio_path directly as stored in database
-        return $this->audio_path;
+        if ($this->audio_path) {
+            // If audio_path is already an absolute URL, return as is
+            if (filter_var($this->audio_path, FILTER_VALIDATE_URL)) {
+                return $this->audio_path;
+            }
+            // Use the same URL building method as the web version
+            return asset('storage/' . $this->audio_path);
+        }
+        return null;
     }
 
     // Scope for active audios
