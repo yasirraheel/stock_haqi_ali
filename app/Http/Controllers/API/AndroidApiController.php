@@ -4987,107 +4987,37 @@ class AndroidApiController extends MainAPIController
 
     public function random_audios()
     {
-        try {
-            // API Key validation for public access
-            $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-            $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-            if (!$api_key || $api_key !== $valid_api_key) {
-                return \Response::json(array(
-                    'error' => 'Invalid or missing API key',
-                    'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                    'status_code' => 401
-                ), 401);
-            }
-
-            // Check if data parameter exists, if not use default values
-            if (!isset($_POST['data']) || empty($_POST['data'])) {
-                $get_data = array(); // Default empty array
-            } else {
-                try {
-                    $get_data = checkSignSalt($_POST['data']);
-                } catch (Exception $e) {
-                    $get_data = array(); // Use default if checkSignSalt fails
-                }
-            }
-
-        // Smart randomization - avoid repeating audios
-        $total_records = Audio::where('is_active', true)->count();
-
-        // Get or create session key for tracking shown audios
-        $session_key = 'random_audios_shown_' . $api_key;
-        $shown_audios = session($session_key, []);
-
-        // If all audios have been shown, reset the tracking
-        if (count($shown_audios) >= $total_records) {
-            $shown_audios = [];
-            session([$session_key => []]);
-        }
-
-        // Get a random audio that hasn't been shown yet
-        $audio_data = Audio::where('is_active', true)
-                            ->whereNotIn('id', $shown_audios)
-                            ->inRandomOrder()
-                            ->first();
-
-        // If somehow no audio is found (edge case), get any random audio
-        if (!$audio_data) {
-            $audio_data = Audio::where('is_active', true)
-                                ->inRandomOrder()
-                                ->first();
-            // Reset the session if this happens
-            session([$session_key => []]);
-            $shown_audios = [];
-        }
-
-        // Add current audio to shown list
-        if ($audio_data) {
-            $shown_audios[] = $audio_data->id;
-            session([$session_key => $shown_audios]);
-        }
-
-        $response = array();
-
-        if($audio_data)
-        {
-            $response['random_audio'] = array(
-                "audio_id" => $audio_data->id,
-                "title" => $audio_data->title,
-                "description" => $audio_data->description,
-                "audio_url" => 'https://stock.cineworm.org/storage/' . $audio_data->audio_path,
-                "duration" => $audio_data->duration,
-                "file_size" => $audio_data->file_size,
-                "format" => $audio_data->format,
-                "bitrate" => $audio_data->bitrate,
-                "sample_rate" => $audio_data->sample_rate,
-                "genre" => $audio_data->genre,
-                "mood" => $audio_data->mood,
-                "tags" => $audio_data->tags,
-                "license_price" => $audio_data->license_price,
-                "downloads_count" => $audio_data->downloads_count,
-                "views_count" => $audio_data->views_count,
-                "is_premium" => $audio_data->license_price > 0 ? 'true' : 'false'
-            );
-        }
-
-            return \Response::json(array(
-                'AUDIO_STREAMING_APP' => $response,
-                'total_records' => $total_records,
-                'returned_records' => $audio_data ? 1 : 0,
-                'randomization_info' => array(
-                    'audios_shown_in_cycle' => count($shown_audios),
-                    'total_available_audios' => $total_records,
-                    'cycle_progress' => round((count($shown_audios) / max($total_records, 1)) * 100, 2) . '%'
-                ),
-                'status_code' => 200
-            ));
-        } catch (Exception $e) {
-            return \Response::json(array(
-                'error' => 'Server error',
-                'message' => 'An error occurred while processing the request',
-                'status_code' => 500
-            ), 500);
-        }
+        // Simple test response first
+        return \Response::json(array(
+            'AUDIO_STREAMING_APP' => array(
+                'random_audio' => array(
+                    "audio_id" => 1,
+                    "title" => "Test Audio",
+                    "description" => "Test Description",
+                    "audio_url" => "https://stock.cineworm.org/storage/audio/test.mp3",
+                    "duration" => "3:30",
+                    "file_size" => "5MB",
+                    "format" => "mp3",
+                    "bitrate" => 320,
+                    "sample_rate" => 44100,
+                    "genre" => "Test",
+                    "mood" => "Happy",
+                    "tags" => "test,audio",
+                    "license_price" => 0,
+                    "downloads_count" => 0,
+                    "views_count" => 0,
+                    "is_premium" => "false"
+                )
+            ),
+            'total_records' => 1,
+            'returned_records' => 1,
+            'randomization_info' => array(
+                'audios_shown_in_cycle' => 1,
+                'total_available_audios' => 1,
+                'cycle_progress' => '100%'
+            ),
+            'status_code' => 200
+        ));
     }
 
     public function random_photos()
