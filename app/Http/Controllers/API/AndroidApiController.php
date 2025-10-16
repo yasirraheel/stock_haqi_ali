@@ -4987,24 +4987,29 @@ class AndroidApiController extends MainAPIController
 
     public function random_audios()
     {
-        // API Key validation for public access
-        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+        try {
+            // API Key validation for public access
+            $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+            $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
 
-        if (!$api_key || $api_key !== $valid_api_key) {
-            return \Response::json(array(
-                'error' => 'Invalid or missing API key',
-                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                'status_code' => 401
-            ), 401);
-        }
+            if (!$api_key || $api_key !== $valid_api_key) {
+                return \Response::json(array(
+                    'error' => 'Invalid or missing API key',
+                    'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
+                    'status_code' => 401
+                ), 401);
+            }
 
-        // Check if data parameter exists, if not use default values
-        if (!isset($_POST['data']) || empty($_POST['data'])) {
-            $get_data = array(); // Default empty array
-        } else {
-            $get_data = checkSignSalt($_POST['data']);
-        }
+            // Check if data parameter exists, if not use default values
+            if (!isset($_POST['data']) || empty($_POST['data'])) {
+                $get_data = array(); // Default empty array
+            } else {
+                try {
+                    $get_data = checkSignSalt($_POST['data']);
+                } catch (Exception $e) {
+                    $get_data = array(); // Use default if checkSignSalt fails
+                }
+            }
 
         // Smart randomization - avoid repeating audios
         $total_records = Audio::where('is_active', true)->count();
@@ -5065,17 +5070,24 @@ class AndroidApiController extends MainAPIController
             );
         }
 
-        return \Response::json(array(
-            'AUDIO_STREAMING_APP' => $response,
-            'total_records' => $total_records,
-            'returned_records' => $audio_data ? 1 : 0,
-            'randomization_info' => array(
-                'audios_shown_in_cycle' => count($shown_audios),
-                'total_available_audios' => $total_records,
-                'cycle_progress' => round((count($shown_audios) / max($total_records, 1)) * 100, 2) . '%'
-            ),
-            'status_code' => 200
-        ));
+            return \Response::json(array(
+                'AUDIO_STREAMING_APP' => $response,
+                'total_records' => $total_records,
+                'returned_records' => $audio_data ? 1 : 0,
+                'randomization_info' => array(
+                    'audios_shown_in_cycle' => count($shown_audios),
+                    'total_available_audios' => $total_records,
+                    'cycle_progress' => round((count($shown_audios) / max($total_records, 1)) * 100, 2) . '%'
+                ),
+                'status_code' => 200
+            ));
+        } catch (Exception $e) {
+            return \Response::json(array(
+                'error' => 'Server error',
+                'message' => 'An error occurred while processing the request',
+                'status_code' => 500
+            ), 500);
+        }
     }
 
     public function random_photos()
