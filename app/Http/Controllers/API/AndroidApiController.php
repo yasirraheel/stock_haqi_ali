@@ -5332,5 +5332,256 @@ class AndroidApiController extends MainAPIController
         ));
     }
 
+    public function videos_list()
+    {
+        // API Key validation for public access
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+        
+        if (!$api_key || $api_key !== $valid_api_key) {
+            return \Response::json(array(
+                'error' => 'Invalid or missing API key',
+                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
+                'status_code' => 401
+            ), 401);
+        }
+        
+        // Check if data parameter exists, if not use default values
+        if (!isset($_POST['data']) || empty($_POST['data'])) {
+            $get_data = array(); // Default empty array
+        } else {
+            $get_data = checkSignSalt($_POST['data']);
+        }
+
+        // Get pagination parameters
+        $page = isset($get_data['page']) ? (int)$get_data['page'] : 1;
+        $per_page = isset($get_data['per_page']) ? (int)$get_data['per_page'] : 10;
+        $offset = ($page - 1) * $per_page;
+
+        // Get videos with pagination
+        $videos = Movies::where('status', 1)
+                        ->where('upcoming', 0)
+                        ->orderBy('id', 'desc')
+                        ->offset($offset)
+                        ->limit($per_page)
+                        ->get();
+
+        $total_videos = Movies::where('status', 1)->where('upcoming', 0)->count();
+        $total_pages = ceil($total_videos / $per_page);
+
+        $response = array();
+        foreach($videos as $movie_data) {
+            $movie_id = $movie_data->id;
+            $movie_title = stripslashes($movie_data->video_title);
+            $movie_poster = URL::to('/'.$movie_data->video_image_thumb);
+            $movie_duration = $movie_data->duration;
+            $movie_access = $movie_data->video_access;
+            $content_rating = $movie_data->content_rating ? $movie_data->content_rating : '';
+            $video_description = stripslashes($movie_data->video_description);
+            $release_date = $movie_data->release_date;
+            $imdb_rating = $movie_data->imdb_rating;
+            $views = $movie_data->views;
+            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
+            $video_image = $movie_data->video_image ? URL::to('/'.$movie_data->video_image) : '';
+            $video_slug = $movie_data->video_slug ? $movie_data->video_slug : '';
+
+            // Get genre information
+            $genres = array();
+            if($movie_data->movie_genre_id) {
+                foreach(explode(',', $movie_data->movie_genre_id) as $genre_id) {
+                    $genre_name = Genres::getGenresInfo($genre_id, 'genre_name');
+                    if($genre_name) {
+                        $genres[] = array('genre_id' => $genre_id, 'genre_name' => $genre_name);
+                    }
+                }
+            }
+
+            // Get language information
+            $language_name = '';
+            if($movie_data->movie_lang_id) {
+                $language_name = Language::getLanguageInfo($movie_data->movie_lang_id, 'language_name');
+            }
+
+            $response[] = array(
+                "movie_id" => $movie_id,
+                "movie_title" => $movie_title,
+                "video_slug" => $video_slug,
+                "movie_poster" => $movie_poster,
+                "video_image" => $video_image,
+                "movie_duration" => $movie_duration,
+                "movie_access" => $movie_access,
+                "content_rating" => $content_rating,
+                "video_description" => $video_description,
+                "release_date" => $release_date,
+                "imdb_rating" => $imdb_rating,
+                "views" => $views,
+                "video_url" => $video_url,
+                "genres" => $genres,
+                "language_name" => $language_name
+            );
+        }
+
+        return \Response::json(array(
+            'VIDEOS_LIST' => $response,
+            'pagination' => array(
+                'current_page' => $page,
+                'per_page' => $per_page,
+                'total_videos' => $total_videos,
+                'total_pages' => $total_pages,
+                'has_next_page' => $page < $total_pages,
+                'has_prev_page' => $page > 1
+            ),
+            'status_code' => 200
+        ));
+    }
+
+    public function audios_list()
+    {
+        // API Key validation for public access
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+        
+        if (!$api_key || $api_key !== $valid_api_key) {
+            return \Response::json(array(
+                'error' => 'Invalid or missing API key',
+                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
+                'status_code' => 401
+            ), 401);
+        }
+        
+        // Check if data parameter exists, if not use default values
+        if (!isset($_POST['data']) || empty($_POST['data'])) {
+            $get_data = array(); // Default empty array
+        } else {
+            $get_data = checkSignSalt($_POST['data']);
+        }
+
+        // Get pagination parameters
+        $page = isset($get_data['page']) ? (int)$get_data['page'] : 1;
+        $per_page = isset($get_data['per_page']) ? (int)$get_data['per_page'] : 10;
+        $offset = ($page - 1) * $per_page;
+
+        // Get audios with pagination
+        $audios = Audio::where('is_active', true)
+                       ->orderBy('id', 'desc')
+                       ->offset($offset)
+                       ->limit($per_page)
+                       ->get();
+
+        $total_audios = Audio::where('is_active', true)->count();
+        $total_pages = ceil($total_audios / $per_page);
+
+        $response = array();
+        foreach($audios as $audio_data) {
+            $response[] = array(
+                "audio_id" => $audio_data->id,
+                "title" => $audio_data->title,
+                "description" => $audio_data->description,
+                "audio_url" => $audio_data->audio_url,
+                "duration" => $audio_data->duration,
+                "file_size" => $audio_data->file_size,
+                "format" => $audio_data->format,
+                "bitrate" => $audio_data->bitrate,
+                "sample_rate" => $audio_data->sample_rate,
+                "genre" => $audio_data->genre,
+                "mood" => $audio_data->mood,
+                "tags" => $audio_data->tags,
+                "license_price" => $audio_data->license_price,
+                "downloads_count" => $audio_data->downloads_count,
+                "views_count" => $audio_data->views_count,
+                "is_premium" => $audio_data->license_price > 0 ? 'true' : 'false'
+            );
+        }
+
+        return \Response::json(array(
+            'AUDIOS_LIST' => $response,
+            'pagination' => array(
+                'current_page' => $page,
+                'per_page' => $per_page,
+                'total_audios' => $total_audios,
+                'total_pages' => $total_pages,
+                'has_next_page' => $page < $total_pages,
+                'has_prev_page' => $page > 1
+            ),
+            'status_code' => 200
+        ));
+    }
+
+    public function photos_list()
+    {
+        // API Key validation for public access
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+        
+        if (!$api_key || $api_key !== $valid_api_key) {
+            return \Response::json(array(
+                'error' => 'Invalid or missing API key',
+                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
+                'status_code' => 401
+            ), 401);
+        }
+        
+        // Check if data parameter exists, if not use default values
+        if (!isset($_POST['data']) || empty($_POST['data'])) {
+            $get_data = array(); // Default empty array
+        } else {
+            $get_data = checkSignSalt($_POST['data']);
+        }
+
+        // Get pagination parameters
+        $page = isset($get_data['page']) ? (int)$get_data['page'] : 1;
+        $per_page = isset($get_data['per_page']) ? (int)$get_data['per_page'] : 10;
+        $offset = ($page - 1) * $per_page;
+
+        // Get photos with pagination
+        $photos = Photos::where('status', 'active')
+                        ->orderBy('id', 'desc')
+                        ->offset($offset)
+                        ->limit($per_page)
+                        ->get();
+
+        $total_photos = Photos::where('status', 'active')->count();
+        $total_pages = ceil($total_photos / $per_page);
+
+        $response = array();
+        foreach($photos as $photo_data) {
+            $response[] = array(
+                "photo_id" => $photo_data->id,
+                "title" => $photo_data->title,
+                "description" => $photo_data->description,
+                "image_url" => $photo_data->image_url,
+                "image_name" => $photo_data->image_name,
+                "category" => $photo_data->category,
+                "tags" => $photo_data->tags,
+                "keywords" => $photo_data->keywords,
+                "width" => $photo_data->width,
+                "height" => $photo_data->height,
+                "resolution" => $photo_data->resolution,
+                "file_size" => $photo_data->file_size,
+                "formatted_file_size" => $photo_data->formatted_file_size,
+                "dimensions" => $photo_data->dimensions,
+                "file_type" => $photo_data->file_type,
+                "mime_type" => $photo_data->mime_type,
+                "license_price" => $photo_data->license_price,
+                "download_count" => $photo_data->download_count,
+                "view_count" => $photo_data->view_count,
+                "is_premium" => $photo_data->license_price > 0 ? 'true' : 'false'
+            );
+        }
+
+        return \Response::json(array(
+            'PHOTOS_LIST' => $response,
+            'pagination' => array(
+                'current_page' => $page,
+                'per_page' => $per_page,
+                'total_photos' => $total_photos,
+                'total_pages' => $total_pages,
+                'has_next_page' => $page < $total_pages,
+                'has_prev_page' => $page > 1
+            ),
+            'status_code' => 200
+        ));
+    }
+
 
 }
