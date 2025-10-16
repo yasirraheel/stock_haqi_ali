@@ -21,6 +21,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Public API routes with API key authentication
 Route::group(['prefix' => 'public', 'namespace' => 'API'], function(){
     Route::post('random_videos', 'AndroidApiController@random_videos');
+    Route::post('random_audios', 'AndroidApiController@random_audios');
+    Route::post('random_photos', 'AndroidApiController@random_photos');
+    Route::post('all_content', 'AndroidApiController@all_content');
 });
 
 Route::group(['prefix' => 'v1','namespace' => 'API'], function(){

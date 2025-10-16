@@ -30,6 +30,8 @@ use App\PaymentGateway;
 use App\AppAds;
 use App\PasswordReset;
 use App\UsersDeviceHistory;
+use App\Models\Audio;
+use App\Models\Photos;
 
 use Illuminate\Http\Request;
 use App\Http\Requests;
@@ -2598,7 +2600,7 @@ class AndroidApiController extends MainAPIController
         // API Key validation for public access
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
+
         if (!$api_key || $api_key !== $valid_api_key) {
             return \Response::json(array(
                 'error' => 'Invalid or missing API key',
@@ -2606,7 +2608,7 @@ class AndroidApiController extends MainAPIController
                 'status_code' => 401
             ), 401);
         }
-        
+
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
             $get_data = array(); // Default empty array
@@ -2616,24 +2618,24 @@ class AndroidApiController extends MainAPIController
 
         // Smart randomization - avoid repeating videos
         $total_records = Movies::where('status', 1)->where('upcoming', 0)->count();
-        
+
         // Get or create session key for tracking shown videos
         $session_key = 'random_videos_shown_' . $api_key;
         $shown_videos = session($session_key, []);
-        
+
         // If all videos have been shown, reset the tracking
         if (count($shown_videos) >= $total_records) {
             $shown_videos = [];
             session([$session_key => []]);
         }
-        
+
         // Get a random video that hasn't been shown yet
         $movie_data = Movies::where('status', 1)
                             ->where('upcoming', 0)
                             ->whereNotIn('id', $shown_videos)
                             ->inRandomOrder()
                             ->first();
-        
+
         // If somehow no video is found (edge case), get any random video
         if (!$movie_data) {
             $movie_data = Movies::where('status', 1)
@@ -2644,7 +2646,7 @@ class AndroidApiController extends MainAPIController
             session([$session_key => []]);
             $shown_videos = [];
         }
-        
+
         // Add current video to shown list
         if ($movie_data) {
             $shown_videos[] = $movie_data->id;
@@ -4981,6 +4983,353 @@ class AndroidApiController extends MainAPIController
         }
 
 
+    }
+
+    public function random_audios()
+    {
+        // API Key validation for public access
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+
+        if (!$api_key || $api_key !== $valid_api_key) {
+            return \Response::json(array(
+                'error' => 'Invalid or missing API key',
+                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
+                'status_code' => 401
+            ), 401);
+        }
+
+        // Check if data parameter exists, if not use default values
+        if (!isset($_POST['data']) || empty($_POST['data'])) {
+            $get_data = array(); // Default empty array
+        } else {
+            $get_data = checkSignSalt($_POST['data']);
+        }
+
+        // Smart randomization - avoid repeating audios
+        $total_records = Audio::where('is_active', true)->count();
+
+        // Get or create session key for tracking shown audios
+        $session_key = 'random_audios_shown_' . $api_key;
+        $shown_audios = session($session_key, []);
+
+        // If all audios have been shown, reset the tracking
+        if (count($shown_audios) >= $total_records) {
+            $shown_audios = [];
+            session([$session_key => []]);
+        }
+
+        // Get a random audio that hasn't been shown yet
+        $audio_data = Audio::where('is_active', true)
+                            ->whereNotIn('id', $shown_audios)
+                            ->inRandomOrder()
+                            ->first();
+
+        // If somehow no audio is found (edge case), get any random audio
+        if (!$audio_data) {
+            $audio_data = Audio::where('is_active', true)
+                                ->inRandomOrder()
+                                ->first();
+            // Reset the session if this happens
+            session([$session_key => []]);
+            $shown_audios = [];
+        }
+
+        // Add current audio to shown list
+        if ($audio_data) {
+            $shown_audios[] = $audio_data->id;
+            session([$session_key => $shown_audios]);
+        }
+
+        $response = array();
+
+        if($audio_data)
+        {
+            $response['random_audio'] = array(
+                "audio_id" => $audio_data->id,
+                "title" => $audio_data->title,
+                "description" => $audio_data->description,
+                "audio_url" => $audio_data->audio_url,
+                "duration" => $audio_data->duration,
+                "file_size" => $audio_data->file_size,
+                "format" => $audio_data->format,
+                "bitrate" => $audio_data->bitrate,
+                "sample_rate" => $audio_data->sample_rate,
+                "genre" => $audio_data->genre,
+                "mood" => $audio_data->mood,
+                "tags" => $audio_data->tags,
+                "license_price" => $audio_data->license_price,
+                "downloads_count" => $audio_data->downloads_count,
+                "views_count" => $audio_data->views_count,
+                "is_premium" => $audio_data->license_price > 0 ? 'true' : 'false'
+            );
+        }
+
+        return \Response::json(array(
+            'AUDIO_STREAMING_APP' => $response,
+            'total_records' => $total_records,
+            'returned_records' => $audio_data ? 1 : 0,
+            'randomization_info' => array(
+                'audios_shown_in_cycle' => count($shown_audios),
+                'total_available_audios' => $total_records,
+                'cycle_progress' => round((count($shown_audios) / max($total_records, 1)) * 100, 2) . '%'
+            ),
+            'status_code' => 200
+        ));
+    }
+
+    public function random_photos()
+    {
+        // API Key validation for public access
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+
+        if (!$api_key || $api_key !== $valid_api_key) {
+            return \Response::json(array(
+                'error' => 'Invalid or missing API key',
+                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
+                'status_code' => 401
+            ), 401);
+        }
+
+        // Check if data parameter exists, if not use default values
+        if (!isset($_POST['data']) || empty($_POST['data'])) {
+            $get_data = array(); // Default empty array
+        } else {
+            $get_data = checkSignSalt($_POST['data']);
+        }
+
+        // Smart randomization - avoid repeating photos
+        $total_records = Photos::where('status', 'active')->count();
+
+        // Get or create session key for tracking shown photos
+        $session_key = 'random_photos_shown_' . $api_key;
+        $shown_photos = session($session_key, []);
+
+        // If all photos have been shown, reset the tracking
+        if (count($shown_photos) >= $total_records) {
+            $shown_photos = [];
+            session([$session_key => []]);
+        }
+
+        // Get a random photo that hasn't been shown yet
+        $photo_data = Photos::where('status', 'active')
+                            ->whereNotIn('id', $shown_photos)
+                            ->inRandomOrder()
+                            ->first();
+
+        // If somehow no photo is found (edge case), get any random photo
+        if (!$photo_data) {
+            $photo_data = Photos::where('status', 'active')
+                                ->inRandomOrder()
+                                ->first();
+            // Reset the session if this happens
+            session([$session_key => []]);
+            $shown_photos = [];
+        }
+
+        // Add current photo to shown list
+        if ($photo_data) {
+            $shown_photos[] = $photo_data->id;
+            session([$session_key => $shown_photos]);
+        }
+
+        $response = array();
+
+        if($photo_data)
+        {
+            $response['random_photo'] = array(
+                "photo_id" => $photo_data->id,
+                "title" => $photo_data->title,
+                "description" => $photo_data->description,
+                "image_url" => $photo_data->image_url,
+                "image_name" => $photo_data->image_name,
+                "category" => $photo_data->category,
+                "tags" => $photo_data->tags,
+                "keywords" => $photo_data->keywords,
+                "width" => $photo_data->width,
+                "height" => $photo_data->height,
+                "resolution" => $photo_data->resolution,
+                "file_size" => $photo_data->file_size,
+                "formatted_file_size" => $photo_data->formatted_file_size,
+                "dimensions" => $photo_data->dimensions,
+                "file_type" => $photo_data->file_type,
+                "mime_type" => $photo_data->mime_type,
+                "license_price" => $photo_data->license_price,
+                "download_count" => $photo_data->download_count,
+                "view_count" => $photo_data->view_count,
+                "is_premium" => $photo_data->license_price > 0 ? 'true' : 'false',
+                "camera_info" => array(
+                    "camera_make" => $photo_data->camera_make,
+                    "camera_model" => $photo_data->camera_model,
+                    "lens_model" => $photo_data->lens_model,
+                    "focal_length" => $photo_data->focal_length,
+                    "aperture" => $photo_data->aperture,
+                    "shutter_speed" => $photo_data->shutter_speed,
+                    "iso" => $photo_data->iso,
+                    "date_taken" => $photo_data->date_taken
+                )
+            );
+        }
+
+        return \Response::json(array(
+            'PHOTO_STREAMING_APP' => $response,
+            'total_records' => $total_records,
+            'returned_records' => $photo_data ? 1 : 0,
+            'randomization_info' => array(
+                'photos_shown_in_cycle' => count($shown_photos),
+                'total_available_photos' => $total_records,
+                'cycle_progress' => round((count($shown_photos) / max($total_records, 1)) * 100, 2) . '%'
+            ),
+            'status_code' => 200
+        ));
+    }
+
+    public function all_content()
+    {
+        // API Key validation for public access
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+
+        if (!$api_key || $api_key !== $valid_api_key) {
+            return \Response::json(array(
+                'error' => 'Invalid or missing API key',
+                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
+                'status_code' => 401
+            ), 401);
+        }
+
+        // Check if data parameter exists, if not use default values
+        if (!isset($_POST['data']) || empty($_POST['data'])) {
+            $get_data = array(); // Default empty array
+        } else {
+            $get_data = checkSignSalt($_POST['data']);
+        }
+
+        $response = array();
+
+        // Get random video
+        $movie_data = Movies::where('status', 1)
+                            ->where('upcoming', 0)
+                            ->inRandomOrder()
+                            ->first();
+
+        if($movie_data) {
+            $movie_id = $movie_data->id;
+            $movie_title = stripslashes($movie_data->video_title);
+            $movie_poster = URL::to('/'.$movie_data->video_image_thumb);
+            $movie_duration = $movie_data->duration;
+            $movie_access = $movie_data->video_access;
+            $content_rating = $movie_data->content_rating ? $movie_data->content_rating : '';
+            $video_description = stripslashes($movie_data->video_description);
+            $release_date = $movie_data->release_date;
+            $imdb_rating = $movie_data->imdb_rating;
+            $views = $movie_data->views;
+            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
+            $video_image = $movie_data->video_image ? URL::to('/'.$movie_data->video_image) : '';
+            $video_slug = $movie_data->video_slug ? $movie_data->video_slug : '';
+
+            // Get genre information
+            $genres = array();
+            if($movie_data->movie_genre_id) {
+                foreach(explode(',', $movie_data->movie_genre_id) as $genre_id) {
+                    $genre_name = Genres::getGenresInfo($genre_id, 'genre_name');
+                    if($genre_name) {
+                        $genres[] = array('genre_id' => $genre_id, 'genre_name' => $genre_name);
+                    }
+                }
+            }
+
+            // Get language information
+            $language_name = '';
+            if($movie_data->movie_lang_id) {
+                $language_name = Language::getLanguageInfo($movie_data->movie_lang_id, 'language_name');
+            }
+
+            $response['random_video'] = array(
+                "movie_id" => $movie_id,
+                "movie_title" => $movie_title,
+                "video_slug" => $video_slug,
+                "movie_poster" => $movie_poster,
+                "video_image" => $video_image,
+                "movie_duration" => $movie_duration,
+                "movie_access" => $movie_access,
+                "content_rating" => $content_rating,
+                "video_description" => $video_description,
+                "release_date" => $release_date,
+                "imdb_rating" => $imdb_rating,
+                "views" => $views,
+                "video_url" => $video_url,
+                "genres" => $genres,
+                "language_name" => $language_name
+            );
+        }
+
+        // Get random audio
+        $audio_data = Audio::where('is_active', true)
+                            ->inRandomOrder()
+                            ->first();
+
+        if($audio_data) {
+            $response['random_audio'] = array(
+                "audio_id" => $audio_data->id,
+                "title" => $audio_data->title,
+                "description" => $audio_data->description,
+                "audio_url" => $audio_data->audio_url,
+                "duration" => $audio_data->duration,
+                "file_size" => $audio_data->file_size,
+                "format" => $audio_data->format,
+                "bitrate" => $audio_data->bitrate,
+                "sample_rate" => $audio_data->sample_rate,
+                "genre" => $audio_data->genre,
+                "mood" => $audio_data->mood,
+                "tags" => $audio_data->tags,
+                "license_price" => $audio_data->license_price,
+                "downloads_count" => $audio_data->downloads_count,
+                "views_count" => $audio_data->views_count,
+                "is_premium" => $audio_data->license_price > 0 ? 'true' : 'false'
+            );
+        }
+
+        // Get random photo
+        $photo_data = Photos::where('status', 'active')
+                            ->inRandomOrder()
+                            ->first();
+
+        if($photo_data) {
+            $response['random_photo'] = array(
+                "photo_id" => $photo_data->id,
+                "title" => $photo_data->title,
+                "description" => $photo_data->description,
+                "image_url" => $photo_data->image_url,
+                "image_name" => $photo_data->image_name,
+                "category" => $photo_data->category,
+                "tags" => $photo_data->tags,
+                "keywords" => $photo_data->keywords,
+                "width" => $photo_data->width,
+                "height" => $photo_data->height,
+                "resolution" => $photo_data->resolution,
+                "file_size" => $photo_data->file_size,
+                "formatted_file_size" => $photo_data->formatted_file_size,
+                "dimensions" => $photo_data->dimensions,
+                "file_type" => $photo_data->file_type,
+                "mime_type" => $photo_data->mime_type,
+                "license_price" => $photo_data->license_price,
+                "download_count" => $photo_data->download_count,
+                "view_count" => $photo_data->view_count,
+                "is_premium" => $photo_data->license_price > 0 ? 'true' : 'false'
+            );
+        }
+
+        return \Response::json(array(
+            'ALL_CONTENT_APP' => $response,
+            'content_summary' => array(
+                'videos_available' => Movies::where('status', 1)->where('upcoming', 0)->count(),
+                'audios_available' => Audio::where('is_active', true)->count(),
+                'photos_available' => Photos::where('status', 'active')->count()
+            ),
+            'status_code' => 200
+        ));
     }
 
 
