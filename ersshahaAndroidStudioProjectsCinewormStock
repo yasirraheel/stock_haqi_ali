@@ -1,0 +1,21 @@
+[33mcommit 9f2dbab193430241e359e7888e6fddd52964dfe9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Muhammad Asif Shabbir <islammujahid921@gmail.com>
+Date:   Thu Oct 16 11:11:14 2025 +0500
+
+    Fix audio and video URL format issues in API responses
+    
+    - Fixed Audio model getAudioUrlAttribute() to properly build URLs from relative paths
+    - Updated random_videos API to build proper video URLs using URL::to()
+    - Updated all_content API to build proper video URLs
+    - Updated videos_list API to build proper video URLs
+    - Added URL validation to check if paths are already absolute URLs
+    - Fixed audio URL format validation for Android app compatibility
+    - Ensures all media URLs are properly formatted for streaming
+
+app/Http/Controllers/API/AndroidApiController.php
+app/Http/Controllers/PaytmController.php
+app/Models/Audio.php
+public/storage/.gitignore
+public/storage/.htaccess
+public/storage/index.php
+storage/logs/laravel.log

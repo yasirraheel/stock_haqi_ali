@@ -5337,7 +5337,7 @@ class AndroidApiController extends MainAPIController
         // API Key validation for public access
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
+
         if (!$api_key || $api_key !== $valid_api_key) {
             return \Response::json(array(
                 'error' => 'Invalid or missing API key',
@@ -5345,7 +5345,7 @@ class AndroidApiController extends MainAPIController
                 'status_code' => 401
             ), 401);
         }
-        
+
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
             $get_data = array(); // Default empty array
@@ -5440,7 +5440,7 @@ class AndroidApiController extends MainAPIController
         // API Key validation for public access
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
+
         if (!$api_key || $api_key !== $valid_api_key) {
             return \Response::json(array(
                 'error' => 'Invalid or missing API key',
@@ -5448,7 +5448,7 @@ class AndroidApiController extends MainAPIController
                 'status_code' => 401
             ), 401);
         }
-        
+
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
             $get_data = array(); // Default empty array
@@ -5512,7 +5512,7 @@ class AndroidApiController extends MainAPIController
         // API Key validation for public access
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
+
         if (!$api_key || $api_key !== $valid_api_key) {
             return \Response::json(array(
                 'error' => 'Invalid or missing API key',
@@ -5520,7 +5520,7 @@ class AndroidApiController extends MainAPIController
                 'status_code' => 401
             ), 401);
         }
-        
+
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
             $get_data = array(); // Default empty array
