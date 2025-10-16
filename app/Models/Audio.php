@@ -36,7 +36,11 @@ class Audio extends Model
         'sample_rate' => 'integer'
     ];
 
+<<<<<<< HEAD
     // Accessor to generate the audio URL dynamically
+=======
+    // Accessor to generate the audio URL dynamically (same as web version)
+>>>>>>> feature/paginated-endpoints
     public function getAudioUrlAttribute()
     {
         if ($this->audio_path) {
@@ -44,8 +48,13 @@ class Audio extends Model
             if (filter_var($this->audio_path, FILTER_VALIDATE_URL)) {
                 return $this->audio_path;
             }
+<<<<<<< HEAD
             // Otherwise, generate URL from relative path
             return url('upload/audios/' . $this->audio_path);
+=======
+            // Use the same URL building method as the web version
+            return asset('storage/' . $this->audio_path);
+>>>>>>> feature/paginated-endpoints
         }
         return null;
     }
