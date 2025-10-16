@@ -183,6 +183,50 @@
 
                                     </div>
 
+                                    <div class="form-group row">
+                                        <label class="col-sm-3 col-form-label">Video Quality</label>
+                                        <div class="col-sm-8">
+                                            <select class="form-control" name="video_quality" id="video_quality">
+                                                <option value="">Select Quality</option>
+                                                <option value="HD" @if (isset($movie->video_quality) && $movie->video_quality == 'HD') selected @endif>HD (720p)</option>
+                                                <option value="FHD" @if (isset($movie->video_quality) && $movie->video_quality == 'FHD') selected @endif>Full HD (1080p)</option>
+                                                <option value="4K" @if (isset($movie->video_quality) && $movie->video_quality == '4K') selected @endif>4K (2160p)</option>
+                                                <option value="SD" @if (isset($movie->video_quality) && $movie->video_quality == 'SD') selected @endif>SD (480p)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class="col-sm-3 col-form-label">Download Options</label>
+                                        <div class="col-sm-8">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="download_enable" id="download_enable" value="1" 
+                                                    @if (isset($movie->download_enable) && $movie->download_enable == 1) checked @endif>
+                                                <label class="form-check-label" for="download_enable">
+                                                    Enable Download
+                                                </label>
+                                            </div>
+                                            <div id="download_url_field" style="margin-top: 10px; {{ isset($movie->download_enable) && $movie->download_enable == 1 ? '' : 'display: none;' }}">
+                                                <input type="text" name="download_url" id="download_url" 
+                                                    value="{{ isset($movie->download_url) ? stripslashes($movie->download_url) : old('download_url') }}"
+                                                    class="form-control" placeholder="Download URL">
+                                                <small class="form-text text-muted">Enter the download URL for the movie file</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class="col-sm-3 col-form-label">Subtitles</label>
+                                        <div class="col-sm-8">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="subtitle_on_off" id="subtitle_on_off" value="1" 
+                                                    @if (isset($movie->subtitle_on_off) && $movie->subtitle_on_off == 1) checked @endif>
+                                                <label class="form-check-label" for="subtitle_on_off">
+                                                    Enable Subtitles
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     @if (auth()->user()->usertype != 'Admin')
                                         <div class="form-group row">
@@ -425,5 +469,15 @@
             });
         });
         }, 1000); // End of setTimeout
+        
+        // Handle download enable/disable toggle
+        $('#download_enable').change(function() {
+            if ($(this).is(':checked')) {
+                $('#download_url_field').show();
+            } else {
+                $('#download_url_field').hide();
+                $('#download_url').val(''); // Clear the URL when disabled
+            }
+        });
     </script>
 @endsection
