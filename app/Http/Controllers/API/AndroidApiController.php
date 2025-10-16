@@ -2668,11 +2668,11 @@ class AndroidApiController extends MainAPIController
             $imdb_rating = $movie_data->imdb_rating;
             $views = $movie_data->views;
 
-            // Video URLs
-            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
-            $video_url_480 = $movie_data->video_url_480 ? $movie_data->video_url_480 : '';
-            $video_url_720 = $movie_data->video_url_720 ? $movie_data->video_url_720 : '';
-            $video_url_1080 = $movie_data->video_url_1080 ? $movie_data->video_url_1080 : '';
+            // Video URLs - Build proper URLs
+            $video_url = $movie_data->video_url ? (filter_var($movie_data->video_url, FILTER_VALIDATE_URL) ? $movie_data->video_url : URL::to('/'.$movie_data->video_url)) : '';
+            $video_url_480 = $movie_data->video_url_480 ? (filter_var($movie_data->video_url_480, FILTER_VALIDATE_URL) ? $movie_data->video_url_480 : URL::to('/'.$movie_data->video_url_480)) : '';
+            $video_url_720 = $movie_data->video_url_720 ? (filter_var($movie_data->video_url_720, FILTER_VALIDATE_URL) ? $movie_data->video_url_720 : URL::to('/'.$movie_data->video_url_720)) : '';
+            $video_url_1080 = $movie_data->video_url_1080 ? (filter_var($movie_data->video_url_1080, FILTER_VALIDATE_URL) ? $movie_data->video_url_1080 : URL::to('/'.$movie_data->video_url_1080)) : '';
 
             // Subtitle information
             $subtitle_language1 = $movie_data->subtitle_language1 ? $movie_data->subtitle_language1 : '';
@@ -5225,7 +5225,7 @@ class AndroidApiController extends MainAPIController
             $release_date = $movie_data->release_date;
             $imdb_rating = $movie_data->imdb_rating;
             $views = $movie_data->views;
-            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
+            $video_url = $movie_data->video_url ? (filter_var($movie_data->video_url, FILTER_VALIDATE_URL) ? $movie_data->video_url : URL::to('/'.$movie_data->video_url)) : '';
             $video_image = $movie_data->video_image ? URL::to('/'.$movie_data->video_image) : '';
             $video_slug = $movie_data->video_slug ? $movie_data->video_slug : '';
 
@@ -5337,7 +5337,7 @@ class AndroidApiController extends MainAPIController
         // API Key validation for public access
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
+
         if (!$api_key || $api_key !== $valid_api_key) {
             return \Response::json(array(
                 'error' => 'Invalid or missing API key',
@@ -5345,7 +5345,7 @@ class AndroidApiController extends MainAPIController
                 'status_code' => 401
             ), 401);
         }
-        
+
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
             $get_data = array(); // Default empty array
@@ -5381,7 +5381,7 @@ class AndroidApiController extends MainAPIController
             $release_date = $movie_data->release_date;
             $imdb_rating = $movie_data->imdb_rating;
             $views = $movie_data->views;
-            $video_url = $movie_data->video_url ? $movie_data->video_url : '';
+            $video_url = $movie_data->video_url ? (filter_var($movie_data->video_url, FILTER_VALIDATE_URL) ? $movie_data->video_url : URL::to('/'.$movie_data->video_url)) : '';
             $video_image = $movie_data->video_image ? URL::to('/'.$movie_data->video_image) : '';
             $video_slug = $movie_data->video_slug ? $movie_data->video_slug : '';
 
@@ -5440,7 +5440,7 @@ class AndroidApiController extends MainAPIController
         // API Key validation for public access
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
+
         if (!$api_key || $api_key !== $valid_api_key) {
             return \Response::json(array(
                 'error' => 'Invalid or missing API key',
@@ -5448,7 +5448,7 @@ class AndroidApiController extends MainAPIController
                 'status_code' => 401
             ), 401);
         }
-        
+
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
             $get_data = array(); // Default empty array
@@ -5512,7 +5512,7 @@ class AndroidApiController extends MainAPIController
         // API Key validation for public access
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
+
         if (!$api_key || $api_key !== $valid_api_key) {
             return \Response::json(array(
                 'error' => 'Invalid or missing API key',
@@ -5520,7 +5520,7 @@ class AndroidApiController extends MainAPIController
                 'status_code' => 401
             ), 401);
         }
-        
+
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
             $get_data = array(); // Default empty array
