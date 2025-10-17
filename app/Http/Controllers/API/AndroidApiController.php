@@ -1092,143 +1092,89 @@ class AndroidApiController extends MainAPIController
     }
     public function addnew(Request $request)
     {
-        // Fetch all Google Drive API key from db
-        $google_drive_api  = $this->getRandomApiKey();
-
-        GoogleDriveApi::where('api_key', $google_drive_api)->increment('calls');
-
-        $googleDriveUrl = $request->video_url;
-
-        // Check if URL is already a Google Drive streaming URL
-        if (strpos($googleDriveUrl, 'https://www.googleapis.com/drive/v3/files/') !== false) {
-            $video_url = $googleDriveUrl;
-            // Extract the file ID directly from the URL
-            preg_match("/files\/(.*?)\?/", $googleDriveUrl, $matches);
-            $fileId = $matches[1];
-        } else {
-            // Extract the file ID from the Google Drive URL
-            preg_match("/\/d\/(.*?)\//", $googleDriveUrl, $matches);
-
-            if (isset($matches[1])) {
+        try {
+            $google_drive_api = $this->getRandomApiKey();
+            GoogleDriveApi::where('api_key', $google_drive_api)->increment('calls');
+    
+            $googleDriveUrl = $request->video_url;
+    
+            // Extract file ID safely
+            if (preg_match("/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/", $googleDriveUrl, $matches)) {
                 $fileId = $matches[1];
-                // Construct the Google Drive streaming URL
-                $video_url = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$google_drive_api}";
             } else {
-                session()->flash('error', 'Invalid Google Drive URL');
-                return back();
+                return response()->json(['status' => false, 'message' => 'Invalid Google Drive URL'], 400);
             }
-        }
-
-        $data = request()->except(['_token']);
-        $inputs = $request->all();
-
-        // Set validation rules
-        $rule = [
-            'genres' => 'required',
-            'video_title' => 'required'
-        ];
-
-        $validator = Validator::make($data, $rule);
-
-        // Redirect back with errors if validation fails
-        if ($validator->fails()) {
-            return redirect()->back()->withInput()->withErrors($validator->messages());
-        }
-        // If updating an existing movie, retrieve it. Otherwise, create a new movie object.
-        $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
-
-        // Store original values for comparison (for updates)
-        $original_title = $movie_obj->video_title ?? '';
-        $original_description = $movie_obj->video_description ?? '';
-        $original_file_id = $movie_obj->file_id ?? '';
-
-        session()->put('movie_obj', $movie_obj);
-
-        $video_slug = Str::slug($inputs['video_title'], '-', null);
-
-        // Fill in movie object data
-        $movie_obj->funding_url = $inputs['funding_url'];
-        $movie_obj->movie_lang_id = 0;
-        $movie_obj->movie_genre_id = implode(',', $inputs['genres']);
-        $movie_obj->video_title = addslashes($inputs['video_title']);
-        $movie_obj->video_slug = $video_slug;
-        $movie_obj->video_description = addslashes($inputs['video_description']);
-        $movie_obj->actor_id = isset($inputs['actors_id']) ? implode(',', $inputs['actors_id']) : null;
-        $movie_obj->director_id = isset($inputs['director_id']) ? implode(',', $inputs['director_id']) : null;
-
-        // Handle poster link if provided
-        if (isset($inputs['poster_link']) && $inputs['poster_link'] != '') {
-            $image_source = $inputs['poster_link'];
-            $save_to = public_path('/upload/images/' . $inputs['video_image']);
-            grab_image($image_source, $save_to);
-            $movie_obj->video_image = 'upload/images/' . $inputs['video_image'];
-        }
-
-        // Other fields
-        $movie_obj->added_by = Auth::User()->id;
-        $movie_obj->license_price = $inputs['license_price'];
-        $movie_obj->file_id = $fileId;
-        $movie_obj->webpage_url = $inputs['webpage_url'];
-        $movie_obj->status = auth()->user()->usertype == 'Admin' ? $inputs['status'] : 0;
-        $movie_obj->video_url = $video_url;
-        $movie_obj->video_type = "URL";
-
-        // Optional fields for video quality, downloads, and subtitles
-        if (isset($inputs['video_quality'])) {
-            $movie_obj->video_quality = $inputs['video_quality'];
-        }
-
-        if (isset($inputs['download_enable'])) {
-            $movie_obj->download_enable = $inputs['download_enable'];
-            $movie_obj->download_url = $inputs['download_url'];
-        }
-
-        if (isset($inputs['subtitle_on_off'])) {
-            $movie_obj->subtitle_on_off = $inputs['subtitle_on_off'];
-        }
-
-        // Remove from recently watched if status is 0 (inactive)
-        if (!empty($inputs['id']) && $inputs['status'] == 0) {
-            DB::table("recently_watched")
-                ->where("video_type", "=", "Movies")
-                ->where("video_id", "=", $inputs['id'])
-                ->delete();
-        }
-
-        // Save the movie object
-        $movie_obj->save();
-
-        // Determine if we need to generate a new screenshot
-        $needsNewScreenshot = false;
-
-        if (empty($inputs['id'])) {
-            // New movie - always generate screenshot
-            $needsNewScreenshot = true;
-        } else {
-            // Existing movie - check if key fields changed
-            $titleChanged = $original_title !== $movie_obj->video_title;
-            $descriptionChanged = $original_description !== $movie_obj->video_description;
-            $fileIdChanged = $original_file_id !== $fileId;
-
-            // Also check if no existing thumbnail exists
-            $hasExistingThumbnail = !empty($movie_obj->video_image_thumb) && file_exists(public_path($movie_obj->video_image_thumb));
-
-            $needsNewScreenshot = $titleChanged || $descriptionChanged || $fileIdChanged || !$hasExistingThumbnail;
-        }
-
-        // Generate screenshot only if needed
-        if ($needsNewScreenshot) {
-            $screenshotResult = $this->generateAIScreenshot($movie_obj->video_title, $movie_obj->video_description, $fileId);
-
-            // Handle error if screenshot generation fails
-            if (isset($screenshotResult['error'])) {
-                return redirect()->back()->with('error', $screenshotResult['error']);
+    
+            $video_url = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$google_drive_api}";
+    
+            // Validate input
+            $request->validate([
+                'genres' => 'required|array',
+                'video_title' => 'required|string|max:255',
+            ]);
+    
+            $inputs = $request->all();
+    
+            // Create or update movie
+            $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
+            $original_file_id = $movie_obj->file_id ?? '';
+    
+            $movie_obj->fill([
+                'funding_url' => $inputs['funding_url'] ?? null,
+                'movie_lang_id' => 0,
+                'movie_genre_id' => implode(',', $inputs['genres']),
+                'video_title' => addslashes($inputs['video_title']),
+                'video_slug' => Str::slug($inputs['video_title']),
+                'video_description' => addslashes($inputs['video_description'] ?? ''),
+                'actor_id' => isset($inputs['actors_id']) ? implode(',', $inputs['actors_id']) : null,
+                'director_id' => isset($inputs['director_id']) ? implode(',', $inputs['director_id']) : null,
+                'added_by' => Auth::id(),
+                'license_price' => $inputs['license_price'] ?? 0,
+                'file_id' => $fileId,
+                'webpage_url' => $inputs['webpage_url'] ?? null,
+                'status' => auth()->user()->usertype == 'Admin' ? ($inputs['status'] ?? 0) : 0,
+                'video_url' => $video_url,
+                'video_type' => 'URL'
+            ]);
+    
+            // Optional fields
+            $movie_obj->video_quality = $inputs['video_quality'] ?? $movie_obj->video_quality;
+            $movie_obj->download_enable = $inputs['download_enable'] ?? $movie_obj->download_enable;
+            $movie_obj->download_url = $inputs['download_url'] ?? $movie_obj->download_url;
+            $movie_obj->subtitle_on_off = $inputs['subtitle_on_off'] ?? $movie_obj->subtitle_on_off;
+    
+            // Poster download
+            if (!empty($inputs['poster_link'])) {
+                try {
+                    $save_to = public_path('/upload/images/' . $inputs['video_image']);
+                    grab_image($inputs['poster_link'], $save_to);
+                    $movie_obj->video_image = 'upload/images/' . $inputs['video_image'];
+                } catch (\Exception $e) {
+                    return response()->json(['status' => false, 'message' => 'Poster download failed'], 500);
+                }
             }
+    
+            $movie_obj->save();
+    
+            // Generate screenshot if needed
+            if (empty($inputs['id']) || $original_file_id !== $fileId) {
+                $screenshotResult = $this->generateAIScreenshot($movie_obj->video_title, $movie_obj->video_description, $fileId);
+                if (isset($screenshotResult['error'])) {
+                    return response()->json(['status' => false, 'message' => $screenshotResult['error']], 500);
+                }
+            }
+    
+            return response()->json([
+                'status' => true,
+                'message' => !empty($inputs['id']) ? 'Movie successfully updated.' : 'Movie successfully added.',
+                'data' => $movie_obj
+            ], 200);
+    
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
-        // Flash success message and redirect back
-        Session::flash('flash_message', !empty($inputs['id']) ? trans('words.successfully_updated') : trans('words.added'));
-        return Redirect::back();
     }
+    
     public function getRandomApiKey()
     {
         // Get all available Google Drive API keys
