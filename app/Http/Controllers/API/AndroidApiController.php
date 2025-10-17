@@ -1333,6 +1333,9 @@ class AndroidApiController extends MainAPIController
 
     public function get_genres()
     {
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+
         try {
             // Get all active genres
             $genres = \App\Genres::where('status', 1)
