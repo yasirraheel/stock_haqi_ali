@@ -781,7 +781,6 @@ class AndroidApiController extends MainAPIController
 
         $user = User::findOrFail($user_id);
 
-
         if($user->user_image!='')
         {
             $user_image=\URL::asset('upload/'.$user->user_image);
@@ -794,8 +793,36 @@ class AndroidApiController extends MainAPIController
         $phone=$user->phone?$user->phone:'';
         $user_address=$user->user_address?$user->user_address:'';
 
-        $response[] = array('user_id' => $user_id,'name' => $user->name,'email' => $user->email,'phone' => $phone,'user_address' => $user_address,'user_image' => $user_image,'msg' => 'Profile','success'=>'1');
-
+        $response = array(
+            'user_id' => $user_id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $phone,
+            'address' => $user_address,
+            'city' => $user->city ?? '',
+            'state' => $user->state ?? '',
+            'country' => $user->country ?? '',
+            'zip_code' => $user->zip_code ?? '',
+            'profile_image' => $user_image,
+            'date_of_birth' => $user->date_of_birth ?? '',
+            'gender' => $user->gender ?? '',
+            'bio' => $user->bio ?? '',
+            'website' => $user->website ?? '',
+            'social_links' => array(
+                'facebook' => $user->facebook ?? '',
+                'twitter' => $user->twitter ?? '',
+                'instagram' => $user->instagram ?? '',
+                'linkedin' => $user->linkedin ?? ''
+            ),
+            'subscription_status' => $user->subscription_status ?? 'inactive',
+            'subscription_plan' => $user->subscription_plan ?? '',
+            'subscription_expires' => $user->subscription_expires ?? '',
+            'created_at' => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : '',
+            'updated_at' => $user->updated_at ? $user->updated_at->format('Y-m-d H:i:s') : '',
+            'status' => $user->status,
+            'email_verified' => $user->email_verified_at ? true : false,
+            'phone_verified' => $user->phone_verified_at ? true : false
+        );
 
         return \Response::json(array(
             'VIDEO_STREAMING_APP' => $response,
@@ -842,8 +869,46 @@ class AndroidApiController extends MainAPIController
         $user->email = $get_data['email'];
         $user->phone = $get_data['phone'];
         $user->user_address = $get_data['user_address'];
+        
+        // Update additional fields if provided
+        if(isset($get_data['city'])) {
+            $user->city = $get_data['city'];
+        }
+        if(isset($get_data['state'])) {
+            $user->state = $get_data['state'];
+        }
+        if(isset($get_data['country'])) {
+            $user->country = $get_data['country'];
+        }
+        if(isset($get_data['zip_code'])) {
+            $user->zip_code = $get_data['zip_code'];
+        }
+        if(isset($get_data['date_of_birth'])) {
+            $user->date_of_birth = $get_data['date_of_birth'];
+        }
+        if(isset($get_data['gender'])) {
+            $user->gender = $get_data['gender'];
+        }
+        if(isset($get_data['bio'])) {
+            $user->bio = $get_data['bio'];
+        }
+        if(isset($get_data['website'])) {
+            $user->website = $get_data['website'];
+        }
+        if(isset($get_data['facebook'])) {
+            $user->facebook = $get_data['facebook'];
+        }
+        if(isset($get_data['twitter'])) {
+            $user->twitter = $get_data['twitter'];
+        }
+        if(isset($get_data['instagram'])) {
+            $user->instagram = $get_data['instagram'];
+        }
+        if(isset($get_data['linkedin'])) {
+            $user->linkedin = $get_data['linkedin'];
+        }
 
-        if($get_data['password'])
+        if(isset($get_data['password']) && $get_data['password'])
         {
             $user->password = bcrypt($get_data['password']);
         }
@@ -5536,154 +5601,6 @@ class AndroidApiController extends MainAPIController
                 'has_next_page' => $page < $total_pages,
                 'has_prev_page' => $page > 1
             ),
-            'status_code' => 200
-        ));
-    }
-
-    public function profile()
-    {
-        $get_data = checkSignSalt($_POST['data']);
-        
-        $user_id = $get_data['user_id'];
-        
-        if (!$user_id) {
-            return \Response::json(array(
-                'VIDEO_STREAMING_APP' => [array('msg' => "User ID required",'success'=>'0')],
-                'status_code' => 400
-            ));
-        }
-        
-        $user = User::where('id', $user_id)->first();
-        
-        if (!$user) {
-            return \Response::json(array(
-                'VIDEO_STREAMING_APP' => [array('msg' => "User not found",'success'=>'0')],
-                'status_code' => 404
-            ));
-        }
-        
-        $response = array(
-            'user_id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->phone ?? '',
-            'address' => $user->address ?? '',
-            'city' => $user->city ?? '',
-            'state' => $user->state ?? '',
-            'country' => $user->country ?? '',
-            'zip_code' => $user->zip_code ?? '',
-            'profile_image' => $user->profile_image ? URL::to('/' . $user->profile_image) : '',
-            'date_of_birth' => $user->date_of_birth ?? '',
-            'gender' => $user->gender ?? '',
-            'bio' => $user->bio ?? '',
-            'website' => $user->website ?? '',
-            'social_links' => array(
-                'facebook' => $user->facebook ?? '',
-                'twitter' => $user->twitter ?? '',
-                'instagram' => $user->instagram ?? '',
-                'linkedin' => $user->linkedin ?? ''
-            ),
-            'subscription_status' => $user->subscription_status ?? 'inactive',
-            'subscription_plan' => $user->subscription_plan ?? '',
-            'subscription_expires' => $user->subscription_expires ?? '',
-            'created_at' => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : '',
-            'updated_at' => $user->updated_at ? $user->updated_at->format('Y-m-d H:i:s') : '',
-            'status' => $user->status,
-            'email_verified' => $user->email_verified_at ? true : false,
-            'phone_verified' => $user->phone_verified_at ? true : false
-        );
-        
-        return \Response::json(array(
-            'VIDEO_STREAMING_APP' => $response,
-            'status_code' => 200
-        ));
-    }
-    
-    public function profile_update()
-    {
-        $get_data = checkSignSalt($_POST['data']);
-        
-        $user_id = $get_data['user_id'];
-        
-        if (!$user_id) {
-            return \Response::json(array(
-                'VIDEO_STREAMING_APP' => [array('msg' => "User ID required",'success'=>'0')],
-                'status_code' => 400
-            ));
-        }
-        
-        $user = User::where('id', $user_id)->first();
-        
-        if (!$user) {
-            return \Response::json(array(
-                'VIDEO_STREAMING_APP' => [array('msg' => "User not found",'success'=>'0')],
-                'status_code' => 404
-            ));
-        }
-        
-        // Update user fields
-        if (isset($get_data['name'])) {
-            $user->name = $get_data['name'];
-        }
-        if (isset($get_data['phone'])) {
-            $user->phone = $get_data['phone'];
-        }
-        if (isset($get_data['address'])) {
-            $user->address = $get_data['address'];
-        }
-        if (isset($get_data['city'])) {
-            $user->city = $get_data['city'];
-        }
-        if (isset($get_data['state'])) {
-            $user->state = $get_data['state'];
-        }
-        if (isset($get_data['country'])) {
-            $user->country = $get_data['country'];
-        }
-        if (isset($get_data['zip_code'])) {
-            $user->zip_code = $get_data['zip_code'];
-        }
-        if (isset($get_data['date_of_birth'])) {
-            $user->date_of_birth = $get_data['date_of_birth'];
-        }
-        if (isset($get_data['gender'])) {
-            $user->gender = $get_data['gender'];
-        }
-        if (isset($get_data['bio'])) {
-            $user->bio = $get_data['bio'];
-        }
-        if (isset($get_data['website'])) {
-            $user->website = $get_data['website'];
-        }
-        if (isset($get_data['facebook'])) {
-            $user->facebook = $get_data['facebook'];
-        }
-        if (isset($get_data['twitter'])) {
-            $user->twitter = $get_data['twitter'];
-        }
-        if (isset($get_data['instagram'])) {
-            $user->instagram = $get_data['instagram'];
-        }
-        if (isset($get_data['linkedin'])) {
-            $user->linkedin = $get_data['linkedin'];
-        }
-        
-        // Handle password update
-        if (isset($get_data['current_password']) && isset($get_data['new_password'])) {
-            if (Hash::check($get_data['current_password'], $user->password)) {
-                $user->password = Hash::make($get_data['new_password']);
-            } else {
-                return \Response::json(array(
-                    'VIDEO_STREAMING_APP' => [array('msg' => "Current password is incorrect",'success'=>'0')],
-                    'status_code' => 400
-                ));
-            }
-        }
-        
-        $user->save();
-        
-        return \Response::json(array(
-            'VIDEO_STREAMING_APP' => [array('msg' => "Profile updated successfully",'success'=>'1')],
             'status_code' => 200
         ));
     }
