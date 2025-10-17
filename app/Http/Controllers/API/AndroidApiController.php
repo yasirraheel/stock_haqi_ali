@@ -51,12 +51,6 @@ use Mail;
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
 
-require(base_path() . '/public/stripe-php/init.php');
-
-require_once(base_path() . '/public/paytm/PaytmChecksum.php');
-
-require(base_path() . '/public/coingate/vendor/autoload.php');
-
 class AndroidApiController extends MainAPIController
 {
 
@@ -1100,11 +1094,17 @@ class AndroidApiController extends MainAPIController
             $googleDriveUrl = $request->video_url;
     
             // Extract file ID safely
-            if (preg_match("/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/", $googleDriveUrl, $matches)) {
+            $googleDriveUrl = trim(urldecode($request->video_url));
+
+            if (preg_match('/(?:\/file\/d\/|\/d\/|id=|\/files\/)([a-zA-Z0-9_-]+)/', $googleDriveUrl, $matches)) {
                 $fileId = $matches[1];
             } else {
-                return response()->json(['status' => false, 'message' => 'Invalid Google Drive URL'], 400);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid Google Drive URL format. Please provide a valid file share link.'
+                ], 400);
             }
+            
     
             $video_url = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$google_drive_api}";
     
