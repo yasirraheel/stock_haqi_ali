@@ -1095,15 +1095,35 @@ class AndroidApiController extends MainAPIController
     
             // Extract file ID safely
             $googleDriveUrl = trim(urldecode($request->video_url));
+            
+            // Debug: Log the URL being processed
+            \Log::info('Processing Google Drive URL: ' . $googleDriveUrl);
 
-            if (preg_match('/(?:\/file\/d\/|\/d\/|id=|\/files\/)([a-zA-Z0-9_-]+)/', $googleDriveUrl, $matches)) {
-                $fileId = $matches[1];
-            } else {
+            // Improved regex to handle various Google Drive URL formats
+            $patterns = [
+                '/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/',
+                '/drive\.google\.com\/d\/([a-zA-Z0-9_-]+)/',
+                '/id=([a-zA-Z0-9_-]+)/',
+                '/\/files\/([a-zA-Z0-9_-]+)/'
+            ];
+            
+            $fileId = null;
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $googleDriveUrl, $matches)) {
+                    $fileId = $matches[1];
+                    break;
+                }
+            }
+            
+            if (!$fileId) {
+                \Log::error('Failed to extract file ID from URL: ' . $googleDriveUrl);
                 return response()->json([
                     'status' => false,
-                    'message' => 'Invalid Google Drive URL format. Please provide a valid file share link.'
+                    'message' => 'Invalid Google Drive URL format. Please provide a valid file share link. URL received: ' . $googleDriveUrl
                 ], 400);
             }
+            
+            \Log::info('Extracted file ID: ' . $fileId);
             
     
             $video_url = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$google_drive_api}";
