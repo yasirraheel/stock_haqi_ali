@@ -161,9 +161,6 @@ class AndroidApiController extends MainAPIController
 
     }
 
-
-
-
     public function postLogin()
     {
         // Add logging to see what's being received
@@ -286,8 +283,6 @@ class AndroidApiController extends MainAPIController
         ));
     }
 
-
-
     public function postSignup()
     {
 
@@ -362,7 +357,26 @@ class AndroidApiController extends MainAPIController
 
 
     }
+    public function logout()
+    {
+        $get_data=checkSignSalt($_POST['data']);
 
+        $user_id=$get_data['user_id'];
+
+        //Delete session file
+        $user_session_name=$get_data['user_session_name'];
+        \Session::getHandler()->destroy($user_session_name);
+
+        $user_device_obj = UsersDeviceHistory::where('user_id',$user_id)->where('user_session_name',$user_session_name);
+        $user_device_obj->delete();
+
+        $response[] = array('msg' => trans('words.logout'),'success'=>'1');
+
+        return \Response::json(array(
+            'VIDEO_STREAMING_APP' => $response,
+            'status_code' => 200
+        ));
+    }
     public function forgot_password()
     {
         $get_data=checkSignSalt($_POST['data']);
@@ -401,7 +415,6 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
         ));
     }
-
 
     public function profile()
     {
@@ -613,35 +626,6 @@ class AndroidApiController extends MainAPIController
 
     }
 
-
-
-    public function logout()
-    {
-        $get_data=checkSignSalt($_POST['data']);
-
-        $user_id=$get_data['user_id'];
-
-        //Delete session file
-        $user_session_name=$get_data['user_session_name'];
-        \Session::getHandler()->destroy($user_session_name);
-
-        $user_device_obj = UsersDeviceHistory::where('user_id',$user_id)->where('user_session_name',$user_session_name);
-        $user_device_obj->delete();
-
-        $response[] = array('msg' => trans('words.logout'),'success'=>'1');
-
-        return \Response::json(array(
-            'VIDEO_STREAMING_APP' => $response,
-            'status_code' => 200
-        ));
-    }
-
-
-
-
-
-
-
     public function genres()
     {
         $get_data=checkSignSalt($_POST['data']);
@@ -660,14 +644,6 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
         ));
     }
-
-
-
-
-
-
-
-    
 
     public function seasons()
     {
@@ -698,9 +674,6 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
         ));
     }
-
-
-
 
     public function movies()
     {
@@ -775,10 +748,6 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
         ));
     }
-
-    
-  
-
 
     public function random_videos()
     {
@@ -986,16 +955,6 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
         ));
     }
-
-
-  
-
-  
-
-  
-
-
-
 
     public function search()
     {
