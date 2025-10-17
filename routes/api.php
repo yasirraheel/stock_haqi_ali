@@ -41,6 +41,7 @@ Route::group(['prefix' => 'v1','namespace' => 'API'], function(){
     Route::post('account_delete', 'AndroidApiController@account_delete');
     Route::post('check_user_plan', 'AndroidApiController@check_user_plan');
     Route::post('search', 'AndroidApiController@search');
-     Route::post('movies/add_edit_movie', 'AndroidApiController@addnew');
+    Route::post('movies/add_edit_movie', 'AndroidApiController@addnew');
+    Route::get('genres', 'AndroidApiController@get_genres');
 
 });

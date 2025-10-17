@@ -1331,6 +1331,36 @@ class AndroidApiController extends MainAPIController
 
 
 
+    public function get_genres()
+    {
+        try {
+            // Get all active genres
+            $genres = \App\Genres::where('status', 1)
+                ->orderBy('genre_name', 'asc')
+                ->get(['id', 'genre_name']);
+            
+            $response = [];
+            foreach ($genres as $genre) {
+                $response[] = [
+                    'id' => $genre->id,
+                    'name' => $genre->genre_name
+                ];
+            }
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'Genres fetched successfully',
+                'data' => $response
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch genres: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function account_delete()
     {
 
