@@ -19,6 +19,8 @@
 # Logs
 storage/logs/*.log
 *.log
+laravel.log
+storage/logs/laravel.log
 
 # Laravel Framework
 storage/framework/cache/*
