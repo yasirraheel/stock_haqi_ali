@@ -792,12 +792,14 @@ class AndroidApiController extends MainAPIController
 
         $phone=$user->phone?$user->phone:'';
         $user_address=$user->user_address?$user->user_address:'';
+        $paypal_email=$user->paypal_email?$user->paypal_email:'';
 
         $response = array(
             'user_id' => $user_id,
             'name' => $user->name,
             'email' => $user->email,
             'phone' => $phone,
+            'paypal_email' => $paypal_email,
             'user_address' => $user_address,
             'user_image' => $user_image
         );
@@ -846,6 +848,7 @@ class AndroidApiController extends MainAPIController
         $user->name = $get_data['name'];
         $user->email = $get_data['email'];
         $user->phone = $get_data['phone'];
+        $user->paypal_email = $get_data['paypal_email'];
         $user->user_address = $get_data['user_address'];
 
         if($get_data['password'])
