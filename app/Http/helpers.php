@@ -541,21 +541,21 @@ function checkSignSalt($data_info){
         $data_json = $data_info;
 
         // Add logging
-        \Log::info('checkSignSalt - Raw data received:', $data_json);
+        \Log::info('checkSignSalt - Raw data received:', ['data' => $data_json]);
 
         // Decode Base64 first
         $decoded_data = base64_decode($data_json);
-        \Log::info('checkSignSalt - Base64 decoded:', $decoded_data);
+        \Log::info('checkSignSalt - Base64 decoded:', ['decoded' => $decoded_data]);
 
         // URL decode
         $url_decoded = urldecode($decoded_data);
-        \Log::info('checkSignSalt - URL decoded:', $url_decoded);
+        \Log::info('checkSignSalt - URL decoded:', ['url_decoded' => $url_decoded]);
 
         // JSON decode
         $data_arr = json_decode($url_decoded, true);
 
         // Add logging for decoded data
-        \Log::info('checkSignSalt - Final decoded data:', $data_arr);
+        \Log::info('checkSignSalt - Final decoded data:', ['final_data' => $data_arr]);
 
         // Check if decoding was successful
         if ($data_arr === null) {

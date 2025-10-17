@@ -231,9 +231,9 @@ class AndroidApiController extends MainAPIController
     public function postLogin()
     {
         // Add logging to see what's being received
-        \Log::info('Login attempt - POST data:', $_POST);
-        \Log::info('Login attempt - Raw input:', file_get_contents('php://input'));
-        
+        \Log::info('Login attempt - POST data:', ['data' => $_POST]);
+        \Log::info('Login attempt - Raw input:', ['input' => file_get_contents('php://input')]);
+
         if (!isset($_POST['data'])) {
             \Log::error('Login failed - No data parameter in POST');
             return \Response::json(array(
