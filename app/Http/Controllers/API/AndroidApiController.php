@@ -1100,14 +1100,8 @@ class AndroidApiController extends MainAPIController
             \Log::info('Content Type: ' . $request->header('Content-Type'));
             \Log::info('Authorization: ' . $request->header('Authorization'));
             
-            // Use checkSignSalt function to decode and validate data (same as profile update)
-            $get_data = checkSignSalt($request->input('data'));
-            
-            // Log the decoded data
-            \Log::info('Decoded Data using checkSignSalt: ' . json_encode($get_data));
-            
-            // Use the decoded data from checkSignSalt
-            $dataSource = $get_data;
+            // Use checkSignSalt to validate and decode data (same as profile update)
+            $dataSource = checkSignSalt($request->input('data'));
             
             // Log specific fields that are important for movie creation
             \Log::info('=== MOVIE DATA BREAKDOWN ===');
