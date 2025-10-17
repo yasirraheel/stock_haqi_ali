@@ -812,39 +812,48 @@ class AndroidApiController extends MainAPIController
 
     public function profile_update(Request $request)
     {
-         //$data =  \Request::except(array('_token'));
+        // Use EXACT same method as web UserController@editprofile
+        $get_data=checkSignSalt($request->input('data'));
 
-        $inputs = $request->all();
-         //dd($inputs);
-        //exit;
-        //echo $inputs['data'];
-        $get_data=checkSignSalt($inputs['data']);
-
-
-        $user_id=$get_data['user_id'];
+        $user_id = $get_data['user_id'];
         $user = User::findOrFail($user_id);
 
+        // Same validation as web
+        $rule = array(
+            'name' => 'required',
+            'email' => 'required|email|max:255|unique:users,email,'.$user_id,
+            'user_image' => 'mimes:jpg,jpeg,gif,png'
+        );
+
+        $data = array(
+            'name' => $get_data['name'],
+            'email' => $get_data['email'],
+            'user_image' => $request->file('user_image')
+        );
+
+        $validator = \Validator::make($data, $rule);
+
+        if ($validator->fails()) {
+            $response = array('msg' => 'Validation failed: ' . implode(', ', $validator->errors()->all()), 'success'=>'0');
+            return \Response::json(array(
+                'VIDEO_STREAMING_APP' => $response,
+                'status_code' => 200
+            ));
+        }
+
+        // EXACT same image handling as web
         $icon = $request->file('user_image');
 
-
         if($icon){
-
             \File::delete(public_path('/upload/').$user->user_image);
-
-            //$tmpFilePath = public_path().'/upload/';
             $tmpFilePath = public_path('/upload/');
-
-            $hardPath =  Str::slug($get_data['name'], '-').'-'.md5(time());
-
+            $hardPath = Str::slug($get_data['name'], '-').'-'.md5(time());
             $img = Image::make($icon);
-
             $img->fit(250, 250)->save($tmpFilePath.$hardPath.'-b.jpg');
-            //$img->fit(80, 80)->save($tmpFilePath.$hardPath. '-s.jpg');
-
             $user->user_image = $hardPath.'-b.jpg';
         }
 
-
+        // EXACT same field updates as web
         $user->name = $get_data['name'];
         $user->email = $get_data['email'];
         $user->phone = $get_data['phone'];
@@ -858,8 +867,7 @@ class AndroidApiController extends MainAPIController
 
         $user->save();
 
-
-        $response[] = array('msg' => trans('words.successfully_updated'),'success'=>'1');
+        $response = array('msg' => trans('words.successfully_updated'),'success'=>'1');
         return \Response::json(array(
             'VIDEO_STREAMING_APP' => $response,
             'status_code' => 200
