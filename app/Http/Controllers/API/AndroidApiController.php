@@ -624,7 +624,7 @@ class AndroidApiController extends MainAPIController
 
     public function genres()
     {
-        $get_data=checkSignSalt($_POST['data']);
+        // $get_data=checkSignSalt($_POST['data']);
 
         $genres_list = Genres::where('status',1)->orderby('id')->get();
 
