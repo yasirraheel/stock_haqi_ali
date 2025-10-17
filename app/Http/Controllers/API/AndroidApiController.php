@@ -1088,6 +1088,38 @@ class AndroidApiController extends MainAPIController
     public function addnew(Request $request)
     {
         try {
+            // Log all incoming request data
+            \Log::info('=== ADD NEW MOVIE API CALL ===');
+            \Log::info('Request Method: ' . $request->method());
+            \Log::info('Request URL: ' . $request->fullUrl());
+            \Log::info('Request Headers: ' . json_encode($request->headers->all()));
+            \Log::info('Request Data: ' . json_encode($request->all()));
+            \Log::info('User ID: ' . (Auth::id() ?? 'Not authenticated'));
+            \Log::info('IP Address: ' . $request->ip());
+            \Log::info('User Agent: ' . $request->userAgent());
+            \Log::info('Content Type: ' . $request->header('Content-Type'));
+            \Log::info('Authorization: ' . $request->header('Authorization'));
+            
+            // Log specific fields that are important for movie creation
+            \Log::info('=== MOVIE DATA BREAKDOWN ===');
+            \Log::info('Video Title: ' . ($request->video_title ?? 'Not provided'));
+            \Log::info('Video URL: ' . ($request->video_url ?? 'Not provided'));
+            \Log::info('Video Description: ' . ($request->video_description ?? 'Not provided'));
+            \Log::info('Genres: ' . json_encode($request->genres ?? []));
+            \Log::info('Actors ID: ' . json_encode($request->actors_id ?? []));
+            \Log::info('Director ID: ' . json_encode($request->director_id ?? []));
+            \Log::info('License Price: ' . ($request->license_price ?? 'Not provided'));
+            \Log::info('Video Quality: ' . ($request->video_quality ?? 'Not provided'));
+            \Log::info('Download Enable: ' . ($request->download_enable ?? 'Not provided'));
+            \Log::info('Download URL: ' . ($request->download_url ?? 'Not provided'));
+            \Log::info('Subtitle On/Off: ' . ($request->subtitle_on_off ?? 'Not provided'));
+            \Log::info('Poster Link: ' . ($request->poster_link ?? 'Not provided'));
+            \Log::info('Video Image: ' . ($request->video_image ?? 'Not provided'));
+            \Log::info('Webpage URL: ' . ($request->webpage_url ?? 'Not provided'));
+            \Log::info('Status: ' . ($request->status ?? 'Not provided'));
+            \Log::info('Movie ID (for update): ' . ($request->id ?? 'New movie'));
+            \Log::info('==========================');
+            
             $google_drive_api = $this->getRandomApiKey();
             GoogleDriveApi::where('api_key', $google_drive_api)->increment('calls');
     
@@ -1185,13 +1217,32 @@ class AndroidApiController extends MainAPIController
                 }
             }
     
-            return response()->json([
+            $response_data = [
                 'status' => true,
                 'message' => !empty($inputs['id']) ? 'Movie successfully updated.' : 'Movie successfully added.',
                 'data' => $movie_obj
-            ], 200);
+            ];
+            
+            // Log successful response
+            \Log::info('=== SUCCESSFUL RESPONSE ===');
+            \Log::info('Response Data: ' . json_encode($response_data));
+            \Log::info('Movie ID: ' . $movie_obj->id);
+            \Log::info('Movie Title: ' . $movie_obj->video_title);
+            \Log::info('Video URL: ' . $movie_obj->video_url);
+            \Log::info('========================');
+            
+            return response()->json($response_data, 200);
     
         } catch (\Exception $e) {
+            // Log error details
+            \Log::error('=== ERROR IN ADDNEW METHOD ===');
+            \Log::error('Error Message: ' . $e->getMessage());
+            \Log::error('Error File: ' . $e->getFile());
+            \Log::error('Error Line: ' . $e->getLine());
+            \Log::error('Stack Trace: ' . $e->getTraceAsString());
+            \Log::error('Request Data: ' . json_encode($request->all()));
+            \Log::error('============================');
+            
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
