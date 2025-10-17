@@ -902,9 +902,32 @@ class AndroidApiController extends MainAPIController
             'user_address' => $user->user_address
         ]);
 
+        // Return updated profile data
+        $user_image = '';
+        if($user->user_image != '') {
+            $user_image = \URL::asset('upload/'.$user->user_image);
+        } else {
+            $user_image = \URL::asset('upload/profile.jpg');
+        }
+
+        $phone = $user->phone ? $user->phone : '';
+        $user_address = $user->user_address ? $user->user_address : '';
+        $paypal_email = $user->paypal_email ? $user->paypal_email : '';
+
+        $profile_data = array(
+            'user_id' => $user_id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $phone,
+            'paypal_email' => $paypal_email,
+            'user_address' => $user_address,
+            'user_image' => $user_image
+        );
+
         $response = array('msg' => trans('words.successfully_updated'),'success'=>'1');
         return \Response::json(array(
             'VIDEO_STREAMING_APP' => $response,
+            'profile_data' => $profile_data,
             'status_code' => 200
         ));
     }
