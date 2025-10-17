@@ -6,11 +6,11 @@ use App\Transactions;
 use App\Episodes;
 use App\Movies;
 use App\Sports;
-use App\RecentlyWatched; 
+use App\RecentlyWatched;
 use App\User;
 use App\Ads;
-use App\LiveTV; 
-use App\Player; 
+use App\LiveTV;
+use App\Player;
 use App\Series;
 use App\Watchlist;
 use App\PaymentGateway;
@@ -23,7 +23,7 @@ if (! function_exists('set_tmdb_language')) {
 
     function set_tmdb_language()
     {
-         
+
         if(getcong('default_language')=="en")
         {
             $default_language='en-US';
@@ -41,7 +41,7 @@ if (! function_exists('set_tmdb_language')) {
             $default_language='pt-PT';
         }
         else
-        {   
+        {
             $default_language='en-US';
         }
 
@@ -53,7 +53,7 @@ if (! function_exists('getcong_app')) {
 
     function getcong_app($key)
     {
-         
+
         $settings = SettingsAndroidApp::findOrFail('1');
         return $settings->$key;
     }
@@ -63,7 +63,7 @@ if (! function_exists('get_web_banner')) {
 
     function get_web_banner($key)
     {
-         
+
         $settings = WebAds::findOrFail('1');
         return $settings->$key;
     }
@@ -72,7 +72,7 @@ if (! function_exists('get_web_banner')) {
 if (! function_exists('check_user_ad_allow')) {
 
     function check_user_ad_allow()
-    {   
+    {
         if(Auth::check())
         {
             $user_id=Auth::User()->id;
@@ -90,12 +90,12 @@ if (! function_exists('check_user_ad_allow')) {
             {
                 return false;
             }
-         
+
         }
         else
         {
             return true;
-        }        
+        }
     }
 }
 
@@ -107,14 +107,14 @@ if (! function_exists('user_device_limit_reached')) {
         {
           return false;
         }
-        
+
         //user plan
         $plan_info = SubscriptionPlan::findOrFail($plan_id);
         $device_limit=$plan_info->plan_device_limit;
 
         //User Devices
         $user_device_total = UsersDeviceHistory::where('user_id','=',$user_id)->count();
-         
+
         if($user_device_total > $device_limit)
         {
           return true;
@@ -122,16 +122,16 @@ if (! function_exists('user_device_limit_reached')) {
         else
         {
           return false;
-        }         
-        
+        }
+
     }
 }
 
 if (! function_exists('check_watchlist')) {
 
     function check_watchlist($user_id,$post_id,$post_type)
-    { 
-         $watch_info = Watchlist::where('user_id', '=', $user_id)->where('post_id', '=', $post_id)->where('post_type', '=', $post_type)->first();   
+    {
+         $watch_info = Watchlist::where('user_id', '=', $user_id)->where('post_id', '=', $post_id)->where('post_type', '=', $post_type)->first();
 
 
         if($watch_info)
@@ -140,7 +140,7 @@ if (! function_exists('check_watchlist')) {
         }
         else
         {
-             
+
             return false;
         }
 
@@ -151,8 +151,8 @@ if (! function_exists('check_watchlist')) {
 if (! function_exists('get_episodes_pre_url')) {
 
     function get_episodes_pre_url($series_id,$id)
-    { 
-        $episode_info = Episodes::where('episode_series_id', '=', $series_id)->where('id', '<', $id)->orderBy('id','desc')->first(); 
+    {
+        $episode_info = Episodes::where('episode_series_id', '=', $series_id)->where('id', '<', $id)->orderBy('id','desc')->first();
 
         if($episode_info)
         {
@@ -161,10 +161,10 @@ if (! function_exists('get_episodes_pre_url')) {
         }
         else
         {
-             
+
             $pre_url= "";
         }
-        
+
 
         return $pre_url;
     }
@@ -174,8 +174,8 @@ if (! function_exists('get_episodes_next_url')) {
 
     function get_episodes_next_url($series_id,$id)
     {
-          
-        $episode_info = Episodes::where('episode_series_id', '=', $series_id)->where('id', '>', $id)->orderBy('id','asc')->first(); 
+
+        $episode_info = Episodes::where('episode_series_id', '=', $series_id)->where('id', '>', $id)->orderBy('id','asc')->first();
 
         if($episode_info)
         {
@@ -184,10 +184,10 @@ if (! function_exists('get_episodes_next_url')) {
         }
         else
         {
-             
+
             $pre_url= "";
         }
-        
+
 
         return $pre_url;
     }
@@ -243,12 +243,12 @@ if (! function_exists('share_url_get')) {
         else if($type=="sports")
         {
             $share_url= \URL::to('sports/details/'.$slug.'/'.$id);
-        } 
+        }
         else
         {
             $share_url= \URL::to('shows/details/'.$slug.'/'.$id);
         }
-        
+
 
         return $share_url;
     }
@@ -261,7 +261,7 @@ if (! function_exists('recently_watched_info')) {
         if($video_type=="Movies")
         {
             $recently_info = Movies::where('id',$video_id)->first();
-        } 
+        }
         else if($video_type=="Sports")
         {
             $recently_info = Sports::where('id',$video_id)->first();
@@ -274,7 +274,7 @@ if (! function_exists('recently_watched_info')) {
         {
             $recently_info = Episodes::where('id',$video_id)->first();
         }
-        
+
 
         return $recently_info;
     }
@@ -304,8 +304,8 @@ if (! function_exists('getcong')) {
     	//echo "string";exit;
 
        if(file_exists(base_path('/public/.lic')))
-       { 
-            $settings = Settings::findOrFail('1'); 
+       {
+            $settings = Settings::findOrFail('1');
 
             return $settings->$key;
        }
@@ -316,13 +316,13 @@ if (! function_exists('get_player_cong')) {
 
     function get_player_cong($key)
     {
-         
-        $settings = Player::findOrFail('1'); 
+
+        $settings = Player::findOrFail('1');
 
         return $settings->$key;
     }
 }
- 
+
 //Site
 
 if (!function_exists('classActivePathSite')) {
@@ -338,7 +338,7 @@ if (!function_exists('classActivePathSite')) {
         }
         return ' active';
     }
-} 
+}
 
 //Admin
 if (!function_exists('classActivePath')) {
@@ -446,16 +446,16 @@ function generate_timezone_list()
     return $timezone_list;
 }
 
-} 
+}
 
 if (!function_exists('plan_count_by_month')) {
     function plan_count_by_month($plan_id,$month_name)
-    {       
+    {
             //echo $month_name;
 
              $start_month = date('Y-m-d', strtotime('first day of '.$month_name.''));
              $finish_month = date('Y-m-d', strtotime('last day of '.$month_name.''));
-             
+
             $monthly_plan_purchase = Transactions::where('plan_id',$plan_id)->whereBetween('date', array(strtotime($start_month), strtotime($finish_month)))->count();
 
             return $monthly_plan_purchase;
@@ -465,31 +465,31 @@ if (!function_exists('plan_count_by_month')) {
 if (! function_exists('check_verify_purchase')) {
 
     function check_verify_purchase()
-    { 
+    {
        /* $api = new LicenseBoxAPI();
         $verify_obj=$api->verify_license(false);
 
         //print_r($verify_obj);
         //exit;
 
- 
+
         if($verify_obj["status"]==1)
         {
             return true;
         }
         else
-        {    
-            \Redirect::to('admin/verify_purchase')->send();             
+        {
+            \Redirect::to('admin/verify_purchase')->send();
             exit;
         }*/
-        
-        return true; 
+
+        return true;
     }
 }
 
 if (! function_exists('verify_envato_purchase_code')) {
 function verify_envato_purchase_code($product_code)
-    { 
+    {
 		return array('buyer' => 'buyer', 'item' => array('id' => '26077273'));
         $url = "https://api.envato.com/v3/market/author/sale?code=".$product_code;
         $curl = curl_init($url);
@@ -506,12 +506,12 @@ function verify_envato_purchase_code($product_code)
         $envatoRes = curl_exec($curl);
         curl_close($curl);
         $envatoRes = json_decode($envatoRes);
-         
+
 
          return $envatoRes;
-      
+
     }
-} 
+}
 
 if (! function_exists('grab_image')) {
 function grab_image($file_url,$save_to){
@@ -524,7 +524,7 @@ function grab_image($file_url,$save_to){
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16");
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); 
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
         $output = curl_exec($ch);
         $file = fopen($save_to, "w+");
@@ -540,14 +540,44 @@ function checkSignSalt($data_info){
 
         $data_json = $data_info;
 
-        $data_arr = json_decode(urldecode(base64_decode($data_json)),true);
+        // Add logging
+        \Log::info('checkSignSalt - Raw data received:', $data_json);
 
-        //echo $data_arr['salt'];
-        //exit;
+        // Decode Base64 first
+        $decoded_data = base64_decode($data_json);
+        \Log::info('checkSignSalt - Base64 decoded:', $decoded_data);
+
+        // URL decode
+        $url_decoded = urldecode($decoded_data);
+        \Log::info('checkSignSalt - URL decoded:', $url_decoded);
+
+        // JSON decode
+        $data_arr = json_decode($url_decoded, true);
+
+        // Add logging for decoded data
+        \Log::info('checkSignSalt - Final decoded data:', $data_arr);
+
+        // Check if decoding was successful
+        if ($data_arr === null) {
+            \Log::error('checkSignSalt - JSON decode failed');
+            $set['VIDEO_STREAMING_APP'][] = array("status" => -1, "message" => "Invalid data format.");
+            header( 'Content-Type: application/json; charset=utf-8' );
+            echo $val= str_replace('\\/', '/', json_encode($set,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            exit();
+        }
+
+        // Check if required fields exist
+        if (!isset($data_arr['sign']) || !isset($data_arr['salt'])) {
+            \Log::error('checkSignSalt - Missing sign or salt fields');
+            $set['VIDEO_STREAMING_APP'][] = array("status" => -1, "message" => "Missing sign or salt fields.");
+            header( 'Content-Type: application/json; charset=utf-8' );
+            echo $val= str_replace('\\/', '/', json_encode($set,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            exit();
+        }
 
         if($data_arr['sign'] == '' && $data_arr['salt'] == '' ){
             //$data['data'] = array("status" => -1, "message" => "Invalid sign salt.");
-        
+
             $set['VIDEO_STREAMING_APP'][] = array("status" => -1, "message" => "Invalid sign salt.");
             header( 'Content-Type: application/json; charset=utf-8' );
             echo $val= str_replace('\\/', '/', json_encode($set,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
@@ -555,25 +585,25 @@ function checkSignSalt($data_info){
 
 
         }else{
-            
-            $data_arr['salt'];    
-            
+
+            $data_arr['salt'];
+
             $md5_salt=md5($key.$data_arr['salt']);
 
             if($data_arr['sign']!=$md5_salt){
 
                 //$data['data'] = array("status" => -1, "message" => "Invalid sign salt.");
-                $set['VIDEO_STREAMING_APP'][] = array("status" => -1, "message" => "Invalid sign salt.");   
+                $set['VIDEO_STREAMING_APP'][] = array("status" => -1, "message" => "Invalid sign salt.");
                 header( 'Content-Type: application/json; charset=utf-8' );
                 echo $val= str_replace('\\/', '/', json_encode($set,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                 exit();
             }
         }
-        
+
         return $data_arr;
-        
+
     }
-}    
+}
 
 if (! function_exists('check_app_user_plan')) {
 
@@ -585,10 +615,10 @@ if (! function_exists('check_app_user_plan')) {
         $user_info = User::findOrFail($user_id);
         $user_plan_id=$user_info->plan_id;
         $user_plan_exp_date=$user_info->exp_date;
- 
+
 
         if($user_plan_id==0)
-        {          
+        {
              return false;
         }
         else if(strtotime(date('m/d/Y'))>$user_plan_exp_date)
@@ -600,7 +630,7 @@ if (! function_exists('check_app_user_plan')) {
         {
                 return true;
         }
-         
+
     }
 }
 
@@ -608,8 +638,8 @@ if (! function_exists('get_ads')) {
 
     function get_ads($key)
     {
-         
-        $ad_obj = Ads::where('ad_key',$key)->first(); 
+
+        $ad_obj = Ads::where('ad_key',$key)->first();
 
         return $ad_obj;
     }
@@ -617,9 +647,9 @@ if (! function_exists('get_ads')) {
 
 if (! function_exists('getPaymentGatewayInfo')) {
 function getPaymentGatewayInfo($id,$field_name=null)
-{ 
- 
-    $gateway_obj= PaymentGateway::find($id); 
+{
+
+    $gateway_obj= PaymentGateway::find($id);
 
     if(isset($field_name))
     {
@@ -631,16 +661,16 @@ function getPaymentGatewayInfo($id,$field_name=null)
         return $gateway_info->$field_name;
     }
     else
-    { 
+    {
         return $gateway_obj;
     }
-     
+
 }
 }
 
 if (! function_exists('getStatisticsColors')) {
 function getStatisticsColors($colorId)
-{ 
+{
 
     switch ($colorId) {
       case "1":
@@ -660,7 +690,7 @@ function getStatisticsColors($colorId)
         break;
       case "6":
         return "#f9c851";
-        break;         
+        break;
       default:
         return "#ff8acc";
     }
@@ -671,7 +701,7 @@ function getStatisticsColors($colorId)
 
 if (! function_exists('getCurrencySymbols')) {
     function getCurrencySymbols($code)
-    { 
+    {
         $currency_symbols = array(
                             'AED' => '&#1583;.&#1573;', // ?
                             'AFN' => '&#65;&#102;',
@@ -833,7 +863,7 @@ if (! function_exists('getCurrencySymbols')) {
                             'ZMK' => '&#90;&#75;', // ?
                             'ZWL' => '&#90;&#36;',
                         );
-            
+
             $currency_html_code=$currency_symbols[$code];
 
             return $currency_html_code;
@@ -843,7 +873,7 @@ if (! function_exists('getCurrencySymbols')) {
 
 if (! function_exists('getCurrencyList')) {
     function getCurrencyList()
-    {                   
+    {
             // count 164
             $currency_list = array(
                 "AFA" => "Afghan Afghani",
@@ -1011,7 +1041,7 @@ if (! function_exists('getCurrencyList')) {
                 "YER" => "Yemeni Rial",
                 "ZMK" => "Zambian Kwacha"
             );
- 
+
 
             return $currency_list;
     }
@@ -1030,7 +1060,7 @@ if (! function_exists('plan_decimal_price')) {
 if (! function_exists('get_season_trailer')) {
 
     function get_season_trailer($series_id, $season_number) {
-         
+
         $curl = curl_init();
 
         curl_setopt_array($curl, [
@@ -1053,27 +1083,27 @@ if (! function_exists('get_season_trailer')) {
         curl_close($curl);
 
         if ($err) {
-        
+
          //   echo "cURL Error #:" . $err;
-         
+
          return '';
 
         } else {
         //echo $response;
 
         $data= json_decode($response);
- 
+
         $videos_length = count($data->results);
 
             for($cn=0;$cn<= $videos_length;$cn++)
             {
                 if(isset($data->results[$cn]->type) AND $data->results[$cn]->type == "Trailer")
                 {
-                    $trailer_id = $data->results[$cn]->key;                     
+                    $trailer_id = $data->results[$cn]->key;
                 }
 
             }
- 
+
         }
 
         return isset($trailer_id)?$trailer_id:'';
