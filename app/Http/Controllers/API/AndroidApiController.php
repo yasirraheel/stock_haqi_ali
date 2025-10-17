@@ -1333,14 +1333,29 @@ class AndroidApiController extends MainAPIController
 
     public function get_genres()
     {
+        // Log the request
+        \Log::info('=== GET GENRES API CALL ===');
+        \Log::info('Request Method: ' . request()->method());
+        \Log::info('Request URL: ' . request()->fullUrl());
+        \Log::info('IP Address: ' . request()->ip());
+        \Log::info('User Agent: ' . request()->userAgent());
+        \Log::info('Request Headers: ' . json_encode(request()->headers->all()));
+        \Log::info('==========================');
+        
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
         $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
+        
+        \Log::info('API Key received: ' . ($api_key ? 'Present' : 'Not provided'));
+        \Log::info('Validating API key...');
 
         try {
             // Get all active genres
+            \Log::info('Fetching genres from database...');
             $genres = \App\Genres::where('status', 1)
                 ->orderBy('genre_name', 'asc')
                 ->get(['id', 'genre_name']);
+            
+            \Log::info('Found ' . $genres->count() . ' active genres');
             
             $response = [];
             foreach ($genres as $genre) {
@@ -1348,15 +1363,31 @@ class AndroidApiController extends MainAPIController
                     'id' => $genre->id,
                     'name' => $genre->genre_name
                 ];
+                \Log::info('Genre: ID=' . $genre->id . ', Name=' . $genre->genre_name);
             }
             
-            return response()->json([
+            $final_response = [
                 'status' => true,
                 'message' => 'Genres fetched successfully',
                 'data' => $response
-            ], 200);
+            ];
+            
+            \Log::info('=== SUCCESSFUL RESPONSE ===');
+            \Log::info('Response Data: ' . json_encode($final_response));
+            \Log::info('Total Genres: ' . count($response));
+            \Log::info('========================');
+            
+            return response()->json($final_response, 200);
             
         } catch (\Exception $e) {
+            // Log error details
+            \Log::error('=== ERROR IN GET GENRES ===');
+            \Log::error('Error Message: ' . $e->getMessage());
+            \Log::error('Error File: ' . $e->getFile());
+            \Log::error('Error Line: ' . $e->getLine());
+            \Log::error('Stack Trace: ' . $e->getTraceAsString());
+            \Log::error('==========================');
+            
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to fetch genres: ' . $e->getMessage()
