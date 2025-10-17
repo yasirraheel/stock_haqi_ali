@@ -1100,33 +1100,47 @@ class AndroidApiController extends MainAPIController
             \Log::info('Content Type: ' . $request->header('Content-Type'));
             \Log::info('Authorization: ' . $request->header('Authorization'));
             
+            // Decode encrypted data if present
+            $decodedData = null;
+            if ($request->has('data')) {
+                try {
+                    $decodedData = json_decode(urldecode($request->data), true);
+                    \Log::info('Decoded Data: ' . json_encode($decodedData));
+                } catch (\Exception $e) {
+                    \Log::error('Failed to decode data: ' . $e->getMessage());
+                }
+            }
+            
+            // Use decoded data if available, otherwise fall back to direct request parameters
+            $dataSource = $decodedData ?? $request->all();
+            
             // Log specific fields that are important for movie creation
             \Log::info('=== MOVIE DATA BREAKDOWN ===');
-            \Log::info('Video Title: ' . ($request->video_title ?? 'Not provided'));
-            \Log::info('Video URL: ' . ($request->video_url ?? 'Not provided'));
-            \Log::info('Video Description: ' . ($request->video_description ?? 'Not provided'));
-            \Log::info('Genres: ' . json_encode($request->genres ?? []));
-            \Log::info('Actors ID: ' . json_encode($request->actors_id ?? []));
-            \Log::info('Director ID: ' . json_encode($request->director_id ?? []));
-            \Log::info('License Price: ' . ($request->license_price ?? 'Not provided'));
-            \Log::info('Video Quality: ' . ($request->video_quality ?? 'Not provided'));
-            \Log::info('Download Enable: ' . ($request->download_enable ?? 'Not provided'));
-            \Log::info('Download URL: ' . ($request->download_url ?? 'Not provided'));
-            \Log::info('Subtitle On/Off: ' . ($request->subtitle_on_off ?? 'Not provided'));
-            \Log::info('Poster Link: ' . ($request->poster_link ?? 'Not provided'));
-            \Log::info('Video Image: ' . ($request->video_image ?? 'Not provided'));
-            \Log::info('Webpage URL: ' . ($request->webpage_url ?? 'Not provided'));
-            \Log::info('Status: ' . ($request->status ?? 'Not provided'));
-            \Log::info('Movie ID (for update): ' . ($request->id ?? 'New movie'));
+            \Log::info('Video Title: ' . ($dataSource['video_title'] ?? 'Not provided'));
+            \Log::info('Video URL: ' . ($dataSource['video_url'] ?? 'Not provided'));
+            \Log::info('Video Description: ' . ($dataSource['video_description'] ?? 'Not provided'));
+            \Log::info('Genres: ' . json_encode($dataSource['genres'] ?? []));
+            \Log::info('Actors ID: ' . json_encode($dataSource['actors_id'] ?? []));
+            \Log::info('Director ID: ' . json_encode($dataSource['director_id'] ?? []));
+            \Log::info('License Price: ' . ($dataSource['license_price'] ?? 'Not provided'));
+            \Log::info('Video Quality: ' . ($dataSource['video_quality'] ?? 'Not provided'));
+            \Log::info('Download Enable: ' . ($dataSource['download_enable'] ?? 'Not provided'));
+            \Log::info('Download URL: ' . ($dataSource['download_url'] ?? 'Not provided'));
+            \Log::info('Subtitle On/Off: ' . ($dataSource['subtitle_on_off'] ?? 'Not provided'));
+            \Log::info('Poster Link: ' . ($dataSource['poster_link'] ?? 'Not provided'));
+            \Log::info('Video Image: ' . ($dataSource['video_image'] ?? 'Not provided'));
+            \Log::info('Webpage URL: ' . ($dataSource['webpage_url'] ?? 'Not provided'));
+            \Log::info('Status: ' . ($dataSource['status'] ?? 'Not provided'));
+            \Log::info('Movie ID (for update): ' . ($dataSource['id'] ?? 'New movie'));
             \Log::info('==========================');
             
             $google_drive_api = $this->getRandomApiKey();
             GoogleDriveApi::where('api_key', $google_drive_api)->increment('calls');
     
-            $googleDriveUrl = $request->video_url;
+            $googleDriveUrl = $dataSource['video_url'] ?? '';
     
             // Extract file ID safely
-            $googleDriveUrl = trim(urldecode($request->video_url));
+            $googleDriveUrl = trim(urldecode($googleDriveUrl));
             
             // Debug: Log the URL being processed
             \Log::info('Processing Google Drive URL: ' . $googleDriveUrl);
@@ -1161,12 +1175,21 @@ class AndroidApiController extends MainAPIController
             $video_url = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$google_drive_api}";
     
             // Validate input
-            $request->validate([
+            $validator = \Validator::make($dataSource, [
                 'genres' => 'required|array',
                 'video_title' => 'required|string|max:255',
             ]);
+            
+            if ($validator->fails()) {
+                \Log::error('Validation failed: ' . json_encode($validator->errors()));
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
     
-            $inputs = $request->all();
+            $inputs = $dataSource;
     
             // Create or update movie
             $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
