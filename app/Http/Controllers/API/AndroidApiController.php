@@ -45,6 +45,7 @@ use Session;
 use URL;
 use Illuminate\Support\Facades\Password;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Mail;
 
 use Razorpay\Api\Api;
@@ -1178,36 +1179,33 @@ class AndroidApiController extends MainAPIController
     public function getRandomApiKey()
     {
         // Get all available Google Drive API keys
-        $google_drive_apis = GoogleDriveApi::all();
-
+        $google_drive_apis = GoogleDriveApi::pluck('api_key');
+    
         if ($google_drive_apis->isEmpty()) {
-            session()->flash('error', 'No API keys available.');
-
+            throw new \Exception('No Google Drive API keys available.');
         }
-
-        // Retrieve the last used API key (from session or cache)
-        $lastUsedApiKey = session()->get('last_used_api_key', null);
-
-        // Filter out the last used API key from the list
-        $availableApiKeys = $google_drive_apis->filter(function ($api) use ($lastUsedApiKey) {
-            return $api->api_key !== $lastUsedApiKey;
+    
+        // Retrieve the last used key (from cache)
+        $lastUsedApiKey = Cache::get('last_used_api_key');
+    
+        // Exclude the last used one, if possible
+        $availableApiKeys = $google_drive_apis->reject(function ($key) use ($lastUsedApiKey) {
+            return $key === $lastUsedApiKey;
         });
-
-        // If only one key is available, we can't alternate
+    
+        // If no alternate available (e.g. only one key), fallback to full list
         if ($availableApiKeys->isEmpty()) {
-            session()->flash('error', 'Only one API key available, cannot alternate.');
-
+            $availableApiKeys = $google_drive_apis;
         }
-
-        // Randomly select a new API key that hasn't been used last
-        $newApiKey = $availableApiKeys->random()->api_key;
-
-        // Store the new API key in session to prevent it from being reused next time
-        session()->put('last_used_api_key', $newApiKey);
-
+    
+        // Randomly select a new key
+        $newApiKey = $availableApiKeys->random();
+    
+        // Cache the new key for next rotation (e.g., 10 minutes)
+        Cache::put('last_used_api_key', $newApiKey, now()->addMinutes(10));
+    
         return $newApiKey;
     }
-
 
   
 
