@@ -815,25 +815,42 @@ class AndroidApiController extends MainAPIController
         // Use EXACT same method as web UserController@editprofile
         $get_data=checkSignSalt($request->input('data'));
 
+        // Debug logging
+        \Log::info('Profile Update - Received data:', ['data' => $get_data]);
+
         $user_id = $get_data['user_id'];
         $user = User::findOrFail($user_id);
 
-        // Same validation as web
+        // Debug logging - show current user data
+        \Log::info('Profile Update - Current user data:', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'paypal_email' => $user->paypal_email,
+            'user_address' => $user->user_address
+        ]);
+
+        // Same validation as web but handle image validation properly
         $rule = array(
             'name' => 'required',
-            'email' => 'required|email|max:255|unique:users,email,'.$user_id,
-            'user_image' => 'mimes:jpg,jpeg,gif,png'
+            'email' => 'required|email|max:255|unique:users,email,'.$user_id
         );
 
         $data = array(
             'name' => $get_data['name'],
-            'email' => $get_data['email'],
-            'user_image' => $request->file('user_image')
+            'email' => $get_data['email']
         );
+
+        // Only validate image if it's provided
+        if ($request->hasFile('user_image')) {
+            $rule['user_image'] = 'mimes:jpg,jpeg,gif,png';
+            $data['user_image'] = $request->file('user_image');
+        }
 
         $validator = \Validator::make($data, $rule);
 
         if ($validator->fails()) {
+            \Log::error('Profile Update - Validation failed:', ['errors' => $validator->errors()->all()]);
             $response = array('msg' => 'Validation failed: ' . implode(', ', $validator->errors()->all()), 'success'=>'0');
             return \Response::json(array(
                 'VIDEO_STREAMING_APP' => $response,
@@ -854,6 +871,14 @@ class AndroidApiController extends MainAPIController
         }
 
         // EXACT same field updates as web
+        \Log::info('Profile Update - About to update fields:', [
+            'new_name' => $get_data['name'],
+            'new_email' => $get_data['email'],
+            'new_phone' => $get_data['phone'],
+            'new_paypal_email' => $get_data['paypal_email'],
+            'new_user_address' => $get_data['user_address']
+        ]);
+
         $user->name = $get_data['name'];
         $user->email = $get_data['email'];
         $user->phone = $get_data['phone'];
@@ -865,7 +890,17 @@ class AndroidApiController extends MainAPIController
             $user->password = bcrypt($get_data['password']);
         }
 
-        $user->save();
+        $saveResult = $user->save();
+        \Log::info('Profile Update - Save result:', ['saved' => $saveResult]);
+
+        // Debug logging - show updated user data
+        \Log::info('Profile Update - Updated user data:', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'paypal_email' => $user->paypal_email,
+            'user_address' => $user->user_address
+        ]);
 
         $response = array('msg' => trans('words.successfully_updated'),'success'=>'1');
         return \Response::json(array(
