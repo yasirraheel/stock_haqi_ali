@@ -633,7 +633,7 @@ class AndroidApiController extends MainAPIController
                 $genre_id= $genres_data->id;
                 $genre_name= stripslashes($genres_data->genre_name);
                 $response[]=array("genre_id"=>$genre_id,"genre_name"=>$genre_name);
-        }
+       }
 
         return \Response::json(array(
             'VIDEO_STREAMING_APP' => $response,
@@ -948,7 +948,7 @@ class AndroidApiController extends MainAPIController
                 'total_available_videos' => $total_records,
                 'cycle_progress' => round((count($shown_videos) / max($total_records, 1)) * 100, 2) . '%'
             ),
-            'status_code' => 200
+             'status_code' => 200
         ));
     }
 
@@ -1296,16 +1296,6 @@ class AndroidApiController extends MainAPIController
 
 
 
- 
-
-  
-
-
-
-    
-
- 
-
 
     public function user_device_limit_reached()
     {
@@ -1331,73 +1321,35 @@ class AndroidApiController extends MainAPIController
 
 
 
-    public function get_genres()
-    {
-        // Log the request
-        \Log::info('=== GET GENRES API CALL ===');
-        \Log::info('Request Method: ' . request()->method());
-        \Log::info('Request URL: ' . request()->fullUrl());
-        \Log::info('IP Address: ' . request()->ip());
-        \Log::info('User Agent: ' . request()->userAgent());
-        \Log::info('Request Headers: ' . json_encode(request()->headers->all()));
-        \Log::info('==========================');
+    public function get_genres(Request $request)
+{
+    // Validate API Key
+    $api_key = $request->header('X-API-KEY') ?: $request->input('api_key');
+    $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
 
-        try {
-            // Get all active genres
-            \Log::info('Fetching genres from database...');
-            $genres = \App\Genres::where('status', 1)
-                ->orderBy('genre_name', 'asc')
-                ->get(['id', 'genre_name']);
-            
-            \Log::info('Found ' . $genres->count() . ' active genres');
-            
-            // Debug: Check if no genres found
-            if ($genres->count() == 0) {
-                \Log::warning('No active genres found in database!');
-                \Log::info('Checking all genres (including inactive):');
-                $all_genres = \App\Genres::all(['id', 'genre_name', 'status']);
-                foreach ($all_genres as $genre) {
-                    \Log::info('Genre: ID=' . $genre->id . ', Name=' . $genre->genre_name . ', Status=' . $genre->status);
-                }
-            }
-            
-            $response = [];
-            foreach ($genres as $genre) {
-                $response[] = [
-                    'id' => $genre->id,
-                    'name' => $genre->genre_name
-                ];
-                \Log::info('Genre: ID=' . $genre->id . ', Name=' . $genre->genre_name);
-            }
-            
-            $final_response = [
-                'status' => true,
-                'message' => 'Genres fetched successfully',
-                'data' => $response
-            ];
-            
-            \Log::info('=== SUCCESSFUL RESPONSE ===');
-            \Log::info('Response Data: ' . json_encode($final_response));
-            \Log::info('Total Genres: ' . count($response));
-            \Log::info('========================');
-            
-            return response()->json($final_response, 200);
-            
-        } catch (\Exception $e) {
-            // Log error details
-            \Log::error('=== ERROR IN GET GENRES ===');
-            \Log::error('Error Message: ' . $e->getMessage());
-            \Log::error('Error File: ' . $e->getFile());
-            \Log::error('Error Line: ' . $e->getLine());
-            \Log::error('Stack Trace: ' . $e->getTraceAsString());
-            \Log::error('==========================');
-            
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to fetch genres: ' . $e->getMessage()
-            ], 500);
-        }
+    if ($api_key !== $valid_api_key) {
+        return \Response::json([
+            'status' => false,
+            'message' => 'Unauthorized: Invalid API Key'
+        ], 401);
     }
+
+    // Get genres from database
+    $genres_list = \App\Models\Genres::where('status', 1)->orderBy('id')->get();
+
+    $response = [];
+    foreach($genres_list as $genres_data) {
+        $response[] = array(
+            "genre_id" => $genres_data->id,
+            "genre_name" => stripslashes($genres_data->genre_name)
+        );
+    }
+
+    return \Response::json(array(
+        'VIDEO_STREAMING_APP' => $response,
+        'status_code' => 200
+    ));
+}
 
     public function account_delete()
     {
@@ -1452,7 +1404,7 @@ class AndroidApiController extends MainAPIController
 
 
   
- 
+
     public function random_audios()
     {
         // Simple test response first
