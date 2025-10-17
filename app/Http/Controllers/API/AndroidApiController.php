@@ -1341,12 +1341,6 @@ class AndroidApiController extends MainAPIController
         \Log::info('User Agent: ' . request()->userAgent());
         \Log::info('Request Headers: ' . json_encode(request()->headers->all()));
         \Log::info('==========================');
-        
-        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-        
-        \Log::info('API Key received: ' . ($api_key ? 'Present' : 'Not provided'));
-        \Log::info('Validating API key...');
 
         try {
             // Get all active genres
@@ -1356,6 +1350,16 @@ class AndroidApiController extends MainAPIController
                 ->get(['id', 'genre_name']);
             
             \Log::info('Found ' . $genres->count() . ' active genres');
+            
+            // Debug: Check if no genres found
+            if ($genres->count() == 0) {
+                \Log::warning('No active genres found in database!');
+                \Log::info('Checking all genres (including inactive):');
+                $all_genres = \App\Genres::all(['id', 'genre_name', 'status']);
+                foreach ($all_genres as $genre) {
+                    \Log::info('Genre: ID=' . $genre->id . ', Name=' . $genre->genre_name . ', Status=' . $genre->status);
+                }
+            }
             
             $response = [];
             foreach ($genres as $genre) {
