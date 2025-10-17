@@ -27,7 +27,6 @@ Route::group(['prefix' => 'public', 'namespace' => 'API'], function(){
     Route::post('videos_list', 'AndroidApiController@videos_list');
     Route::post('audios_list', 'AndroidApiController@audios_list');
     Route::post('photos_list', 'AndroidApiController@photos_list');
-    Route::post('movies/add_edit_movie', 'AndroidApiController@addnew');
 });
 
 Route::group(['prefix' => 'v1','namespace' => 'API'], function(){
@@ -42,6 +41,6 @@ Route::group(['prefix' => 'v1','namespace' => 'API'], function(){
     Route::post('account_delete', 'AndroidApiController@account_delete');
     Route::post('check_user_plan', 'AndroidApiController@check_user_plan');
     Route::post('search', 'AndroidApiController@search');
-   
+     Route::post('movies/add_edit_movie', 'AndroidApiController@addnew');
 
 });
