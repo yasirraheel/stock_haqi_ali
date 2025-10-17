@@ -1228,7 +1228,38 @@ class AndroidApiController extends MainAPIController
         Session::flash('flash_message', !empty($inputs['id']) ? trans('words.successfully_updated') : trans('words.added'));
         return Redirect::back();
     }
+    public function getRandomApiKey()
+    {
+        // Get all available Google Drive API keys
+        $google_drive_apis = GoogleDriveApi::all();
 
+        if ($google_drive_apis->isEmpty()) {
+            session()->flash('error', 'No API keys available.');
+
+        }
+
+        // Retrieve the last used API key (from session or cache)
+        $lastUsedApiKey = session()->get('last_used_api_key', null);
+
+        // Filter out the last used API key from the list
+        $availableApiKeys = $google_drive_apis->filter(function ($api) use ($lastUsedApiKey) {
+            return $api->api_key !== $lastUsedApiKey;
+        });
+
+        // If only one key is available, we can't alternate
+        if ($availableApiKeys->isEmpty()) {
+            session()->flash('error', 'Only one API key available, cannot alternate.');
+
+        }
+
+        // Randomly select a new API key that hasn't been used last
+        $newApiKey = $availableApiKeys->random()->api_key;
+
+        // Store the new API key in session to prevent it from being reused next time
+        session()->put('last_used_api_key', $newApiKey);
+
+        return $newApiKey;
+    }
 
 
   
