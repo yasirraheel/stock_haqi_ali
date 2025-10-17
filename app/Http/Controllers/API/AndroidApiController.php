@@ -579,27 +579,27 @@ class AndroidApiController extends MainAPIController
         $password=isset($get_data['password'])?$get_data['password']:'';
 
 
-        if ($name=='' AND $email=='' AND $password=='')
-        {
+        // Validation rules - same as web signup
+        $rule = array(
+            'name' => 'required',
+            'email' => 'required|email|max:200|unique:users',
+            'password' => 'required|min:8'
+        );
 
-               $response[] = array('msg' => "All fields required",'success'=>'0');
+        $data = array(
+            'name' => $name,
+            'email' => $email,
+            'password' => $password
+        );
 
-                return \Response::json(array(
-                    'VIDEO_STREAMING_APP' => $response,
-                    'status_code' => 200
-                ));
-        }
+        $validator = \Validator::make($data, $rule);
 
-        $user_info = User::where('email',$email)->first();
-
-        if($user_info)
-        {
-            $response[] = array('msg' => "Email already used!",'success'=>'0');
-
-                return \Response::json(array(
-                    'VIDEO_STREAMING_APP' => $response,
-                    'status_code' => 200
-                ));
+        if ($validator->fails()) {
+            $response[] = array('msg' => "Validation failed: " . implode(', ', $validator->errors()->all()),'success'=>'0');
+            return \Response::json(array(
+                'VIDEO_STREAMING_APP' => $response,
+                'status_code' => 200
+            ));
         }
 
         $user = new User;
@@ -607,7 +607,7 @@ class AndroidApiController extends MainAPIController
         //$confirmation_code = str_random(30);
 
 
-        $user->usertype = 'User';
+        $user->usertype = 'Sub_Admin';
         $user->name = $name;
         $user->email = $email;
         $user->password= bcrypt($password);
@@ -798,30 +798,8 @@ class AndroidApiController extends MainAPIController
             'name' => $user->name,
             'email' => $user->email,
             'phone' => $phone,
-            'address' => $user_address,
-            'city' => $user->city ?? '',
-            'state' => $user->state ?? '',
-            'country' => $user->country ?? '',
-            'zip_code' => $user->zip_code ?? '',
-            'profile_image' => $user_image,
-            'date_of_birth' => $user->date_of_birth ?? '',
-            'gender' => $user->gender ?? '',
-            'bio' => $user->bio ?? '',
-            'website' => $user->website ?? '',
-            'social_links' => array(
-                'facebook' => $user->facebook ?? '',
-                'twitter' => $user->twitter ?? '',
-                'instagram' => $user->instagram ?? '',
-                'linkedin' => $user->linkedin ?? ''
-            ),
-            'subscription_status' => $user->subscription_status ?? 'inactive',
-            'subscription_plan' => $user->subscription_plan ?? '',
-            'subscription_expires' => $user->subscription_expires ?? '',
-            'created_at' => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : '',
-            'updated_at' => $user->updated_at ? $user->updated_at->format('Y-m-d H:i:s') : '',
-            'status' => $user->status,
-            'email_verified' => $user->email_verified_at ? true : false,
-            'phone_verified' => $user->phone_verified_at ? true : false
+            'user_address' => $user_address,
+            'user_image' => $user_image
         );
 
         return \Response::json(array(
@@ -869,46 +847,8 @@ class AndroidApiController extends MainAPIController
         $user->email = $get_data['email'];
         $user->phone = $get_data['phone'];
         $user->user_address = $get_data['user_address'];
-        
-        // Update additional fields if provided
-        if(isset($get_data['city'])) {
-            $user->city = $get_data['city'];
-        }
-        if(isset($get_data['state'])) {
-            $user->state = $get_data['state'];
-        }
-        if(isset($get_data['country'])) {
-            $user->country = $get_data['country'];
-        }
-        if(isset($get_data['zip_code'])) {
-            $user->zip_code = $get_data['zip_code'];
-        }
-        if(isset($get_data['date_of_birth'])) {
-            $user->date_of_birth = $get_data['date_of_birth'];
-        }
-        if(isset($get_data['gender'])) {
-            $user->gender = $get_data['gender'];
-        }
-        if(isset($get_data['bio'])) {
-            $user->bio = $get_data['bio'];
-        }
-        if(isset($get_data['website'])) {
-            $user->website = $get_data['website'];
-        }
-        if(isset($get_data['facebook'])) {
-            $user->facebook = $get_data['facebook'];
-        }
-        if(isset($get_data['twitter'])) {
-            $user->twitter = $get_data['twitter'];
-        }
-        if(isset($get_data['instagram'])) {
-            $user->instagram = $get_data['instagram'];
-        }
-        if(isset($get_data['linkedin'])) {
-            $user->linkedin = $get_data['linkedin'];
-        }
 
-        if(isset($get_data['password']) && $get_data['password'])
+        if($get_data['password'])
         {
             $user->password = bcrypt($get_data['password']);
         }
