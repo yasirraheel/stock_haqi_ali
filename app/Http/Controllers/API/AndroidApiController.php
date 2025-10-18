@@ -1334,7 +1334,7 @@ class AndroidApiController extends MainAPIController
     $api_key = $request->header('X-API-KEY') ?: $request->input('api_key');
 
     // Get genres from database
-    $genres_list = \App\Models\Genres::where('status', 1)->orderBy('id')->get();
+    $genres_list = Genres::where('status', 1)->orderBy('id')->get();
 
     $response = [];
     foreach($genres_list as $genres_data) {
