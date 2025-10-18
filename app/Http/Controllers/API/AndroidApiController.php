@@ -1191,13 +1191,27 @@ class AndroidApiController extends MainAPIController
 
             $user = User::findOrFail($user_id);
 
+            // Get language ID - use provided language or default to English
+            $movie_lang_id = $inputs['movie_lang_id'] ?? null;
+            if ($movie_lang_id === null || $movie_lang_id === '') {
+                // Get English language ID as fallback
+                $movie_lang_id = Language::getLanguageID('English');
+                if (!$movie_lang_id) {
+                    // If English doesn't exist, get the first active language
+                    $first_lang = Language::where('status', 1)->orderBy('id')->first();
+                    $movie_lang_id = $first_lang ? $first_lang->id : 1;
+                }
+            }
+
+            \Log::info('Language ID being used:', ['movie_lang_id' => $movie_lang_id]);
+
             // Create or update movie
             $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
             $original_file_id = $movie_obj->file_id ?? '';
 
             $movie_obj->fill([
                 'funding_url' => $inputs['funding_url'] ?? null,
-                'movie_lang_id' => 0,
+                'movie_lang_id' => $movie_lang_id,
                 'movie_genre_id' => implode(',', $genres),
                 'video_title' => addslashes($inputs['video_title']),
                 'video_slug' => Str::slug($inputs['video_title']),
