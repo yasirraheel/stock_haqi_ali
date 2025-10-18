@@ -1200,6 +1200,10 @@ class AndroidApiController extends MainAPIController
             } else {
                 \Log::info('Movie language ID provided:', ['movie_lang_id' => $movie_lang_id]);
             }
+            
+            // Ensure movie_lang_id is an integer
+            $movie_lang_id = (int) $movie_lang_id;
+            \Log::info('Final movie_lang_id value before save:', ['movie_lang_id' => $movie_lang_id, 'type' => gettype($movie_lang_id)]);
 
             // Create or update movie
             $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
@@ -1239,6 +1243,15 @@ class AndroidApiController extends MainAPIController
                     return response()->json(['status' => false, 'message' => 'Poster download failed'], 500);
                 }
             }
+
+            // Explicitly set movie_lang_id to ensure it's not null
+            $movie_obj->movie_lang_id = $movie_lang_id;
+            
+            \Log::info('Movie object before save:', [
+                'movie_lang_id' => $movie_obj->movie_lang_id,
+                'video_title' => $movie_obj->video_title,
+                'added_by' => $movie_obj->added_by
+            ]);
 
             $movie_obj->save();
 
