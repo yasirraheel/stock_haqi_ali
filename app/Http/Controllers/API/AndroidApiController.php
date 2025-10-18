@@ -56,6 +56,7 @@ class AndroidApiController extends MainAPIController
 
     public function index()
     {
+        \Log::info('API index endpoint called');
           $response[] = array('msg' => "API",'success'=>'1');
 
         return \Response::json(array(
@@ -66,7 +67,7 @@ class AndroidApiController extends MainAPIController
     }
     public function app_details()
     {
-
+        \Log::info('App details API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         if(isset($get_data['user_id']) && $get_data['user_id']!='')
@@ -159,6 +160,7 @@ class AndroidApiController extends MainAPIController
 
     public function postLogin()
     {
+        \Log::info('User login API endpoint called');
         // Add logging to see what's being received
         \Log::info('Login attempt - POST data:', ['data' => $_POST]);
         \Log::info('Login attempt - Raw input:', ['input' => file_get_contents('php://input')]);
@@ -281,7 +283,7 @@ class AndroidApiController extends MainAPIController
 
     public function postSignup()
     {
-
+        \Log::info('User signup API endpoint called');
 
         $get_data=checkSignSalt($_POST['data']);
 
@@ -355,6 +357,7 @@ class AndroidApiController extends MainAPIController
     }
     public function logout()
     {
+        \Log::info('User logout API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         $user_id=$get_data['user_id'];
@@ -375,6 +378,7 @@ class AndroidApiController extends MainAPIController
     }
     public function forgot_password()
     {
+        \Log::info('Forgot password API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         $email=isset($get_data['email'])?$get_data['email']:'';
@@ -414,6 +418,7 @@ class AndroidApiController extends MainAPIController
 
     public function profile()
     {
+        \Log::info('Get profile API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         $user_id=$get_data['user_id'];
@@ -451,6 +456,7 @@ class AndroidApiController extends MainAPIController
 
     public function profile_update(Request $request)
     {
+        \Log::info('Profile update API endpoint called');
         // Use EXACT same method as web UserController@editprofile
         $get_data=checkSignSalt($request->input('data'));
 
@@ -573,6 +579,7 @@ class AndroidApiController extends MainAPIController
 
     public function check_user_plan()
     {
+        \Log::info('Check user plan API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         $user_id=$get_data['user_id'];
@@ -624,6 +631,7 @@ class AndroidApiController extends MainAPIController
 
     public function genres()
     {
+        \Log::info('Genres API endpoint called');
         // $get_data=checkSignSalt($_POST['data']);
 
         $genres_list = Genres::where('status',1)->orderby('id')->get();
@@ -643,6 +651,7 @@ class AndroidApiController extends MainAPIController
 
     public function seasons()
     {
+        \Log::info('Seasons API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         $series_id=$get_data['show_id'];
@@ -673,6 +682,7 @@ class AndroidApiController extends MainAPIController
 
     public function movies()
     {
+        \Log::info('Movies API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         $slider= Slider::where('status',1)->whereRaw("find_in_set('Movies',slider_display_on)")->orderby('id','DESC')->get();
@@ -747,6 +757,7 @@ class AndroidApiController extends MainAPIController
 
     public function random_videos()
     {
+        \Log::info('Random videos API endpoint called');
         // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
 
@@ -945,6 +956,7 @@ class AndroidApiController extends MainAPIController
 
     public function search()
     {
+        \Log::info('Search API endpoint called');
         $get_data=checkSignSalt($_POST['data']);
 
         $keyword = $get_data['search_text'];
@@ -1078,6 +1090,7 @@ class AndroidApiController extends MainAPIController
     }
     public function addnew(Request $request)
     {
+        \Log::info('Add new movie API endpoint called');
         try {
             // Log all incoming request data
             \Log::info('=== ADD NEW MOVIE API CALL ===');
@@ -1252,6 +1265,7 @@ class AndroidApiController extends MainAPIController
 
     public function getRandomApiKey()
     {
+        \Log::info('Get random API key method called');
         // Get all available Google Drive API keys
         $google_drive_apis = GoogleDriveApi::pluck('api_key');
 
@@ -1290,6 +1304,7 @@ class AndroidApiController extends MainAPIController
 
     public function user_device_limit_reached()
     {
+        \Log::info('User device limit reached API endpoint called');
        $user_id=$_GET['user_id'];
        $plan_id=$_GET['plan_id'];
 
@@ -1314,6 +1329,7 @@ class AndroidApiController extends MainAPIController
 
     public function get_genres(Request $request)
 {
+    \Log::info('Get genres API endpoint called');
     // Get API key for session tracking (already validated by middleware)
     $api_key = $request->header('X-API-KEY') ?: $request->input('api_key');
 
@@ -1336,6 +1352,7 @@ class AndroidApiController extends MainAPIController
 
     public function account_delete()
     {
+        \Log::info('Account delete API endpoint called');
 
         $get_data=checkSignSalt($_POST['data']);
 
@@ -1390,6 +1407,7 @@ class AndroidApiController extends MainAPIController
 
     public function random_audios()
     {
+        \Log::info('Random audios API endpoint called');
         // Simple test response first
         return \Response::json(array(
             'AUDIO_STREAMING_APP' => array(
@@ -1425,6 +1443,7 @@ class AndroidApiController extends MainAPIController
 
     public function random_photos()
     {
+        \Log::info('Random photos API endpoint called');
         // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
 
@@ -1523,6 +1542,7 @@ class AndroidApiController extends MainAPIController
 
     public function all_content()
     {
+        \Log::info('All content API endpoint called');
         // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
 
@@ -1661,6 +1681,7 @@ class AndroidApiController extends MainAPIController
 
     public function videos_list()
     {
+        \Log::info('Videos list API endpoint called');
         // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
 
@@ -1757,6 +1778,7 @@ class AndroidApiController extends MainAPIController
 
     public function audios_list()
     {
+        \Log::info('Audios list API endpoint called');
         // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
 
@@ -1820,6 +1842,7 @@ class AndroidApiController extends MainAPIController
 
     public function photos_list()
     {
+        \Log::info('Photos list API endpoint called');
         // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
 
