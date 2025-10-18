@@ -16,13 +16,13 @@ class AppKeyMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // Get APP_KEY from environment
-        $app_key = env('APP_KEY');
+        // Get CUSTOM_API_KEY from environment (separate from Laravel's APP_KEY)
+        $app_key = env('CUSTOM_API_KEY');
 
         if (empty($app_key)) {
             return response()->json([
                 'error' => 'Configuration error',
-                'message' => 'APP_KEY not configured on server',
+                'message' => 'CUSTOM_API_KEY not configured on server',
                 'status_code' => 500
             ], 500);
         }
