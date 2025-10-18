@@ -18,8 +18,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Public API routes with API key authentication
-Route::group(['prefix' => 'public', 'namespace' => 'API'], function(){
+// Public API routes with APP_KEY authentication
+Route::group(['prefix' => 'public', 'namespace' => 'API', 'middleware' => 'app.key'], function(){
     Route::post('random_videos', 'AndroidApiController@random_videos');
     Route::post('random_audios', 'AndroidApiController@random_audios');
     Route::post('random_photos', 'AndroidApiController@random_photos');
@@ -30,7 +30,8 @@ Route::group(['prefix' => 'public', 'namespace' => 'API'], function(){
     Route::get('genres', 'AndroidApiController@get_genres');
 });
 
-Route::group(['prefix' => 'v1','namespace' => 'API'], function(){
+// Main API routes with APP_KEY authentication
+Route::group(['prefix' => 'v1','namespace' => 'API', 'middleware' => 'app.key'], function(){
     Route::get('/', 'AndroidApiController@index');
     Route::post('app_details', 'AndroidApiController@app_details');
     Route::post('login', 'AndroidApiController@postLogin');
@@ -43,6 +44,4 @@ Route::group(['prefix' => 'v1','namespace' => 'API'], function(){
     Route::post('check_user_plan', 'AndroidApiController@check_user_plan');
     Route::post('search', 'AndroidApiController@search');
     Route::post('movies/add_edit_movie', 'AndroidApiController@addnew');
-   
-
 });

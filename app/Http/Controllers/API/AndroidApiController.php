@@ -747,17 +747,8 @@ class AndroidApiController extends MainAPIController
 
     public function random_videos()
     {
-        // API Key validation for public access
+        // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-        if (!$api_key || $api_key !== $valid_api_key) {
-            return \Response::json(array(
-                'error' => 'Invalid or missing API key',
-                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                'status_code' => 401
-            ), 401);
-        }
 
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
@@ -1099,10 +1090,10 @@ class AndroidApiController extends MainAPIController
             \Log::info('User Agent: ' . $request->userAgent());
             \Log::info('Content Type: ' . $request->header('Content-Type'));
             \Log::info('Authorization: ' . $request->header('Authorization'));
-            
+
             // Use checkSignSalt to validate and decode data (same as profile update)
             $dataSource = checkSignSalt($request->input('data'));
-            
+
             // Log specific fields that are important for movie creation
             \Log::info('=== MOVIE DATA BREAKDOWN ===');
             \Log::info('Video Title: ' . ($dataSource['video_title'] ?? 'Not provided'));
@@ -1122,15 +1113,15 @@ class AndroidApiController extends MainAPIController
             \Log::info('Status: ' . ($dataSource['status'] ?? 'Not provided'));
             \Log::info('Movie ID (for update): ' . ($dataSource['id'] ?? 'New movie'));
             \Log::info('==========================');
-            
+
             $google_drive_api = $this->getRandomApiKey();
             GoogleDriveApi::where('api_key', $google_drive_api)->increment('calls');
-    
+
             $googleDriveUrl = $dataSource['video_url'] ?? '';
-    
+
             // Extract file ID safely
             $googleDriveUrl = trim(urldecode($googleDriveUrl));
-            
+
             // Debug: Log the URL being processed
             \Log::info('Processing Google Drive URL: ' . $googleDriveUrl);
 
@@ -1141,7 +1132,7 @@ class AndroidApiController extends MainAPIController
                 '/id=([a-zA-Z0-9_-]+)/',
                 '/\/files\/([a-zA-Z0-9_-]+)/'
             ];
-            
+
             $fileId = null;
             foreach ($patterns as $pattern) {
                 if (preg_match($pattern, $googleDriveUrl, $matches)) {
@@ -1149,7 +1140,7 @@ class AndroidApiController extends MainAPIController
                     break;
                 }
             }
-            
+
             if (!$fileId) {
                 \Log::error('Failed to extract file ID from URL: ' . $googleDriveUrl);
                 return response()->json([
@@ -1157,18 +1148,18 @@ class AndroidApiController extends MainAPIController
                     'message' => 'Invalid Google Drive URL format. Please provide a valid file share link. URL received: ' . $googleDriveUrl
                 ], 400);
             }
-            
+
             \Log::info('Extracted file ID: ' . $fileId);
-            
-    
+
+
             $video_url = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$google_drive_api}";
-    
+
             // Validate input
             $validator = \Validator::make($dataSource, [
                 'genres' => 'required|array',
                 'video_title' => 'required|string|max:255',
             ]);
-            
+
             if ($validator->fails()) {
                 \Log::error('Validation failed: ' . json_encode($validator->errors()));
                 return response()->json([
@@ -1177,13 +1168,13 @@ class AndroidApiController extends MainAPIController
                     'errors' => $validator->errors()
                 ], 400);
             }
-    
+
             $inputs = $dataSource;
-    
+
             // Create or update movie
             $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
             $original_file_id = $movie_obj->file_id ?? '';
-    
+
             $movie_obj->fill([
                 'funding_url' => $inputs['funding_url'] ?? null,
                 'movie_lang_id' => 0,
@@ -1201,13 +1192,13 @@ class AndroidApiController extends MainAPIController
                 'video_url' => $video_url,
                 'video_type' => 'URL'
             ]);
-    
+
             // Optional fields
             $movie_obj->video_quality = $inputs['video_quality'] ?? $movie_obj->video_quality;
             $movie_obj->download_enable = $inputs['download_enable'] ?? $movie_obj->download_enable;
             $movie_obj->download_url = $inputs['download_url'] ?? $movie_obj->download_url;
             $movie_obj->subtitle_on_off = $inputs['subtitle_on_off'] ?? $movie_obj->subtitle_on_off;
-    
+
             // Poster download
             if (!empty($inputs['poster_link'])) {
                 try {
@@ -1218,9 +1209,9 @@ class AndroidApiController extends MainAPIController
                     return response()->json(['status' => false, 'message' => 'Poster download failed'], 500);
                 }
             }
-    
+
             $movie_obj->save();
-    
+
             // Generate screenshot if needed
             if (empty($inputs['id']) || $original_file_id !== $fileId) {
                 $screenshotResult = $this->generateAIScreenshot($movie_obj->video_title, $movie_obj->video_description, $fileId);
@@ -1228,13 +1219,13 @@ class AndroidApiController extends MainAPIController
                     return response()->json(['status' => false, 'message' => $screenshotResult['error']], 500);
                 }
             }
-    
+
             $response_data = [
                 'status' => true,
                 'message' => !empty($inputs['id']) ? 'Movie successfully updated.' : 'Movie successfully added.',
                 'data' => $movie_obj
             ];
-            
+
             // Log successful response
             \Log::info('=== SUCCESSFUL RESPONSE ===');
             \Log::info('Response Data: ' . json_encode($response_data));
@@ -1242,9 +1233,9 @@ class AndroidApiController extends MainAPIController
             \Log::info('Movie Title: ' . $movie_obj->video_title);
             \Log::info('Video URL: ' . $movie_obj->video_url);
             \Log::info('========================');
-            
+
             return response()->json($response_data, 200);
-    
+
         } catch (\Exception $e) {
             // Log error details
             \Log::error('=== ERROR IN ADDNEW METHOD ===');
@@ -1254,43 +1245,43 @@ class AndroidApiController extends MainAPIController
             \Log::error('Stack Trace: ' . $e->getTraceAsString());
             \Log::error('Request Data: ' . json_encode($request->all()));
             \Log::error('============================');
-            
+
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
-    
+
     public function getRandomApiKey()
     {
         // Get all available Google Drive API keys
         $google_drive_apis = GoogleDriveApi::pluck('api_key');
-    
+
         if ($google_drive_apis->isEmpty()) {
             throw new \Exception('No Google Drive API keys available.');
         }
-    
+
         // Retrieve the last used key (from cache)
         $lastUsedApiKey = Cache::get('last_used_api_key');
-    
+
         // Exclude the last used one, if possible
         $availableApiKeys = $google_drive_apis->reject(function ($key) use ($lastUsedApiKey) {
             return $key === $lastUsedApiKey;
         });
-    
+
         // If no alternate available (e.g. only one key), fallback to full list
         if ($availableApiKeys->isEmpty()) {
             $availableApiKeys = $google_drive_apis;
         }
-    
+
         // Randomly select a new key
         $newApiKey = $availableApiKeys->random();
-    
+
         // Cache the new key for next rotation (e.g., 10 minutes)
         Cache::put('last_used_api_key', $newApiKey, now()->addMinutes(10));
-    
+
         return $newApiKey;
     }
 
-  
+
 
 
 
@@ -1317,22 +1308,14 @@ class AndroidApiController extends MainAPIController
              ));
     }
 
-  
+
 
 
 
     public function get_genres(Request $request)
 {
-    // Validate API Key
+    // Get API key for session tracking (already validated by middleware)
     $api_key = $request->header('X-API-KEY') ?: $request->input('api_key');
-    $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-    if ($api_key !== $valid_api_key) {
-        return \Response::json([
-            'status' => false,
-            'message' => 'Unauthorized: Invalid API Key'
-        ], 401);
-    }
 
     // Get genres from database
     $genres_list = \App\Models\Genres::where('status', 1)->orderBy('id')->get();
@@ -1403,7 +1386,7 @@ class AndroidApiController extends MainAPIController
 
 
 
-  
+
 
     public function random_audios()
     {
@@ -1442,17 +1425,8 @@ class AndroidApiController extends MainAPIController
 
     public function random_photos()
     {
-        // API Key validation for public access
+        // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-        if (!$api_key || $api_key !== $valid_api_key) {
-            return \Response::json(array(
-                'error' => 'Invalid or missing API key',
-                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                'status_code' => 401
-            ), 401);
-        }
 
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
@@ -1549,17 +1523,8 @@ class AndroidApiController extends MainAPIController
 
     public function all_content()
     {
-        // API Key validation for public access
+        // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-        if (!$api_key || $api_key !== $valid_api_key) {
-            return \Response::json(array(
-                'error' => 'Invalid or missing API key',
-                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                'status_code' => 401
-            ), 401);
-        }
 
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
@@ -1696,17 +1661,8 @@ class AndroidApiController extends MainAPIController
 
     public function videos_list()
     {
-        // API Key validation for public access
+        // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-        if (!$api_key || $api_key !== $valid_api_key) {
-            return \Response::json(array(
-                'error' => 'Invalid or missing API key',
-                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                'status_code' => 401
-            ), 401);
-        }
 
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
@@ -1801,17 +1757,8 @@ class AndroidApiController extends MainAPIController
 
     public function audios_list()
     {
-        // API Key validation for public access
+        // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-        if (!$api_key || $api_key !== $valid_api_key) {
-            return \Response::json(array(
-                'error' => 'Invalid or missing API key',
-                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                'status_code' => 401
-            ), 401);
-        }
 
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
@@ -1873,17 +1820,8 @@ class AndroidApiController extends MainAPIController
 
     public function photos_list()
     {
-        // API Key validation for public access
+        // Get API key for session tracking (already validated by middleware)
         $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
-        $valid_api_key = 'sk_cineworm_2024_random_video_api_key_secure';
-
-        if (!$api_key || $api_key !== $valid_api_key) {
-            return \Response::json(array(
-                'error' => 'Invalid or missing API key',
-                'message' => 'Please provide a valid API key in X-API-KEY header or api_key parameter',
-                'status_code' => 401
-            ), 401);
-        }
 
         // Check if data parameter exists, if not use default values
         if (!isset($_POST['data']) || empty($_POST['data'])) {
