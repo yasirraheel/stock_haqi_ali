@@ -1200,7 +1200,7 @@ class AndroidApiController extends MainAPIController
             } else {
                 \Log::info('Movie language ID provided:', ['movie_lang_id' => $movie_lang_id]);
             }
-            
+
             // Ensure movie_lang_id is an integer
             $movie_lang_id = (int) $movie_lang_id;
             \Log::info('Final movie_lang_id value before save:', ['movie_lang_id' => $movie_lang_id, 'type' => gettype($movie_lang_id)]);
@@ -1210,9 +1210,11 @@ class AndroidApiController extends MainAPIController
             $original_file_id = $movie_obj->file_id ?? '';
 
             $movie_obj->fill([
+                'video_access' => 'Paid', // Required field with default
                 'funding_url' => $inputs['funding_url'] ?? null,
                 'movie_lang_id' => $movie_lang_id,
                 'movie_genre_id' => implode(',', $genres),
+                'upcoming' => 0, // Required field with default
                 'video_title' => addslashes($inputs['video_title']),
                 'video_slug' => Str::slug($inputs['video_title']),
                 'video_description' => addslashes($inputs['video_description'] ?? ''),
@@ -1223,6 +1225,7 @@ class AndroidApiController extends MainAPIController
                 'file_id' => $fileId,
                 'webpage_url' => $inputs['webpage_url'] ?? null,
                 'status' => $user->usertype == 'Admin' ? ($inputs['status'] ?? 0) : 0,
+                'views' => 0, // Required field with default
                 'video_url' => $video_url,
                 'video_type' => 'URL'
             ]);
@@ -1246,7 +1249,7 @@ class AndroidApiController extends MainAPIController
 
             // Explicitly set movie_lang_id to ensure it's not null
             $movie_obj->movie_lang_id = $movie_lang_id;
-            
+
             \Log::info('Movie object before save:', [
                 'movie_lang_id' => $movie_obj->movie_lang_id,
                 'video_title' => $movie_obj->video_title,

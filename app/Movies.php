@@ -8,7 +8,32 @@ class Movies extends Model
 {
     protected $table = 'movie_videos';
 
-    protected $fillable = ['video_title','video_image','added_by','license_price','author','file_id'];
+    protected $fillable = [
+        'video_title',
+        'video_image', 
+        'added_by',
+        'license_price',
+        'author',
+        'file_id',
+        'video_access',
+        'movie_lang_id',
+        'movie_genre_id',
+        'upcoming',
+        'video_slug',
+        'video_description',
+        'actor_id',
+        'director_id',
+        'funding_url',
+        'webpage_url',
+        'status',
+        'views',
+        'video_url',
+        'video_type',
+        'video_quality',
+        'download_enable',
+        'download_url',
+        'subtitle_on_off'
+    ];
 
 
 	public $timestamps = false;
