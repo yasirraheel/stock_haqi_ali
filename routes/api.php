@@ -44,4 +44,5 @@ Route::group(['prefix' => 'v1','namespace' => 'API', 'middleware' => 'app.key'],
     Route::post('check_user_plan', 'AndroidApiController@check_user_plan');
     Route::post('search', 'AndroidApiController@search');
     Route::post('movies/add_edit_movie', 'AndroidApiController@addnew');
+    Route::post('movies/generate_description', 'AndroidApiController@generateDescription');
 });

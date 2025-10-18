@@ -39,6 +39,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GoogleDriveApi;
 use App\Models\Thumbnail;
 use App\Services\GeminiImageService;
+use App\Services\GeminiTextService;
 use Illuminate\Support\Facades\DB;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Str;
@@ -1262,9 +1263,17 @@ class AndroidApiController extends MainAPIController
 
             // Generate screenshot if needed
             if (empty($inputs['id']) || $original_file_id !== $fileId) {
-                $screenshotResult = $this->generateAIScreenshot($movie_obj->video_title, $movie_obj->video_description, $fileId);
+                $screenshotResult = $this->generateAIScreenshot($movie_obj->video_title, $movie_obj->video_description, $fileId, $movie_obj);
                 if (isset($screenshotResult['error'])) {
-                    return response()->json(['status' => false, 'message' => $screenshotResult['error']], 500);
+                    \Log::warning('Screenshot generation failed, continuing with upload: ' . $screenshotResult['error']);
+                    // Don't fail the upload if screenshot generation fails
+                } else {
+                    // Update movie object with the generated image
+                    if (isset($screenshotResult['image_path'])) {
+                        $movie_obj->video_image_thumb = $screenshotResult['image_path'];
+                        $movie_obj->video_image = $screenshotResult['image_path'];
+                        $movie_obj->save();
+                    }
                 }
             }
 
@@ -1922,35 +1931,59 @@ class AndroidApiController extends MainAPIController
     }
     public function generateDescription(Request $request)
     {
+        \Log::info('Generate description API endpoint called');
+        
         try {
             $movieTitle = $request->input('title', '');
             $genres = $request->input('genres', '');
             $actors = $request->input('actors', '');
             $directors = $request->input('directors', '');
 
+            \Log::info('Description generation request:', [
+                'title' => $movieTitle,
+                'genres' => $genres,
+                'actors' => $actors,
+                'directors' => $directors
+            ]);
+
             if (empty($movieTitle)) {
-                return response()->json(['error' => 'Movie title is required'], 400);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Movie title is required'
+                ], 400);
             }
 
             $geminiService = new GeminiTextService();
             $result = $geminiService->generateMovieDescription($movieTitle, $genres, $actors, $directors);
 
             if (isset($result['error'])) {
-                return response()->json(['error' => $result['error']], 500);
+                return response()->json([
+                    'status' => false,
+                    'message' => $result['error']
+                ], 500);
             }
 
             return response()->json([
-                'success' => true,
+                'status' => true,
+                'message' => 'Description generated successfully',
                 'description' => $result['description']
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Description Generation Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Error generating description: ' . $e->getMessage()], 500);
+            \Log::error('Description Generation Error: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Error generating description: ' . $e->getMessage()
+            ], 500);
         }
     }
-    public function generateAIScreenshot($videoTitle, $videoDescription, $fileId)
+    public function generateAIScreenshot($videoTitle, $videoDescription, $fileId, $movieObj = null)
     {
+        \Log::info('AI Screenshot generation started', [
+            'videoTitle' => $videoTitle,
+            'fileId' => $fileId
+        ]);
+
         try {
             $geminiService = new GeminiImageService();
 
@@ -1959,7 +1992,7 @@ class AndroidApiController extends MainAPIController
 
             // If Gemini fails, use fallback method
             if (isset($result['error'])) {
-                Log::warning('Gemini AI failed, using fallback: ' . $result['error']);
+                \Log::warning('Gemini AI failed, using fallback: ' . $result['error']);
                 $result = $geminiService->generateFallbackImage($videoTitle, $fileId);
 
                 if (!$result) {
@@ -1976,19 +2009,15 @@ class AndroidApiController extends MainAPIController
                 ['video_image_thumb' => $result['image_path']]
             );
 
-            // Update the movie object with the generated image
-            $movies = session()->get('movie_obj');
-            if ($movies) {
-                $movies->video_image_thumb = $result['image_path'];
-                $movies->video_image = $result['image_path'];
-                $movies->save();
-                session()->forget('movie_obj');
-            }
+            \Log::info('Screenshot generated and saved to Thumbnail model', [
+                'file_id' => $fileId,
+                'image_path' => $result['image_path']
+            ]);
 
             return $result;
 
         } catch (\Exception $e) {
-            Log::error('AI Screenshot Generation Error: ' . $e->getMessage());
+            \Log::error('AI Screenshot Generation Error: ' . $e->getMessage());
             return ['error' => 'Error generating AI screenshot: ' . $e->getMessage()];
         }
     }

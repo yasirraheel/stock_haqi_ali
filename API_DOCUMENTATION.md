@@ -724,6 +724,44 @@ All API responses follow this general structure:
 }
 ```
 
+### 13. Generate Movie Description
+- **URL**: `POST /api/v1/movies/generate_description`
+- **Description**: Generate AI-powered movie description based on title and metadata
+- **Authentication**: Required (APP_KEY)
+
+**Request Body** (JSON):
+```json
+{
+    "title": "Movie Title (Required)",
+    "genres": "Action,Drama,Thriller (Optional)",
+    "actors": "Actor1,Actor2 (Optional)",
+    "directors": "Director1,Director2 (Optional)"
+}
+```
+
+**Response**:
+```json
+{
+    "status": true,
+    "message": "Description generated successfully",
+    "description": "Generated movie description text here..."
+}
+```
+
+**Error Response**:
+```json
+{
+    "status": false,
+    "message": "Movie title is required"
+}
+```
+
+**App Implementation Flow**:
+1. Call this endpoint before video upload to generate description
+2. Display the generated description to user for verification/editing
+3. User can modify the description if needed
+4. Use the final description in the video upload request
+
 ---
 
 ## Data Encoding
