@@ -1140,7 +1140,7 @@ class AndroidApiController extends MainAPIController
 
             // Validate input
             $validator = \Validator::make($dataSource, [
-                'genres' => 'required|array',
+                'genres' => 'required',
                 'video_title' => 'required|string|max:255',
             ]);
 
@@ -1154,6 +1154,31 @@ class AndroidApiController extends MainAPIController
             }
 
             $inputs = $dataSource;
+
+            // Handle genres - can be array or comma-separated string
+            if (isset($inputs['genres'])) {
+                if (is_array($inputs['genres'])) {
+                    // Already an array
+                    $genres = $inputs['genres'];
+                } else {
+                    // Convert comma-separated string to array
+                    $genres = explode(',', $inputs['genres']);
+                    $genres = array_map('trim', $genres); // Remove any extra spaces
+                    $genres = array_filter($genres); // Remove empty values
+                }
+
+                \Log::info('Processed genres:', ['genres_array' => $genres]);
+            } else {
+                $genres = [];
+            }
+
+            // Validate that we have at least one genre
+            if (empty($genres)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'At least one genre is required'
+                ], 400);
+            }
 
             // Get user from the request data
             $user_id = $inputs['user_id'] ?? null;
@@ -1173,7 +1198,7 @@ class AndroidApiController extends MainAPIController
             $movie_obj->fill([
                 'funding_url' => $inputs['funding_url'] ?? null,
                 'movie_lang_id' => 0,
-                'movie_genre_id' => implode(',', $inputs['genres']),
+                'movie_genre_id' => implode(',', $genres),
                 'video_title' => addslashes($inputs['video_title']),
                 'video_slug' => Str::slug($inputs['video_title']),
                 'video_description' => addslashes($inputs['video_description'] ?? ''),
