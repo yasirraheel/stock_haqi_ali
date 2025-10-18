@@ -1931,7 +1931,11 @@ class AndroidApiController extends MainAPIController
     }
     public function generateDescription(Request $request)
     {
-        \Log::info('Generate description API endpoint called');
+        \Log::info('=== GENERATE DESCRIPTION API CALLED ===', [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'timestamp' => now()
+        ]);
         
         try {
             $movieTitle = $request->input('title', '');
@@ -1939,29 +1943,71 @@ class AndroidApiController extends MainAPIController
             $actors = $request->input('actors', '');
             $directors = $request->input('directors', '');
 
-            \Log::info('Description generation request:', [
+            \Log::info('Request parameters received:', [
                 'title' => $movieTitle,
+                'title_length' => strlen($movieTitle),
                 'genres' => $genres,
+                'genres_count' => empty($genres) ? 0 : count(explode(',', $genres)),
                 'actors' => $actors,
-                'directors' => $directors
+                'actors_count' => empty($actors) ? 0 : count(explode(',', $actors)),
+                'directors' => $directors,
+                'directors_count' => empty($directors) ? 0 : count(explode(',', $directors))
             ]);
 
             if (empty($movieTitle)) {
+                \Log::warning('Description generation failed: Movie title is empty', [
+                    'request_data' => $request->all()
+                ]);
                 return response()->json([
                     'status' => false,
                     'message' => 'Movie title is required'
                 ], 400);
             }
 
+            \Log::info('Starting Gemini AI service initialization');
             $geminiService = new GeminiTextService();
+            
+            \Log::info('Calling Gemini AI for description generation', [
+                'title' => $movieTitle,
+                'has_genres' => !empty($genres),
+                'has_actors' => !empty($actors),
+                'has_directors' => !empty($directors)
+            ]);
+            
+            $startTime = microtime(true);
             $result = $geminiService->generateMovieDescription($movieTitle, $genres, $actors, $directors);
+            $endTime = microtime(true);
+            $executionTime = round(($endTime - $startTime) * 1000, 2);
+
+            \Log::info('Gemini AI response received', [
+                'execution_time_ms' => $executionTime,
+                'has_error' => isset($result['error']),
+                'has_description' => isset($result['description']),
+                'description_length' => isset($result['description']) ? strlen($result['description']) : 0
+            ]);
 
             if (isset($result['error'])) {
+                \Log::error('Gemini AI returned error', [
+                    'error_message' => $result['error'],
+                    'execution_time_ms' => $executionTime,
+                    'request_data' => [
+                        'title' => $movieTitle,
+                        'genres' => $genres,
+                        'actors' => $actors,
+                        'directors' => $directors
+                    ]
+                ]);
                 return response()->json([
                     'status' => false,
                     'message' => $result['error']
                 ], 500);
             }
+
+            \Log::info('Description generated successfully', [
+                'execution_time_ms' => $executionTime,
+                'description_preview' => isset($result['description']) ? substr($result['description'], 0, 100) . '...' : 'No description',
+                'full_description_length' => isset($result['description']) ? strlen($result['description']) : 0
+            ]);
 
             return response()->json([
                 'status' => true,
@@ -1970,7 +2016,14 @@ class AndroidApiController extends MainAPIController
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Description Generation Error: ' . $e->getMessage());
+            \Log::error('Description Generation Exception', [
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'error_trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'timestamp' => now()
+            ]);
             return response()->json([
                 'status' => false,
                 'message' => 'Error generating description: ' . $e->getMessage()
