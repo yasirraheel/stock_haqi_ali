@@ -1093,39 +1093,12 @@ class AndroidApiController extends MainAPIController
         \Log::info('Add new movie API endpoint called');
         try {
             // Log all incoming request data
-            \Log::info('=== ADD NEW MOVIE API CALL ===');
-            \Log::info('Request Method: ' . $request->method());
-            \Log::info('Request URL: ' . $request->fullUrl());
-            \Log::info('Request Headers: ' . json_encode($request->headers->all()));
-            \Log::info('Request Data: ' . json_encode($request->all()));
-            \Log::info('User ID: ' . (Auth::id() ?? 'Not authenticated'));
-            \Log::info('IP Address: ' . $request->ip());
-            \Log::info('User Agent: ' . $request->userAgent());
-            \Log::info('Content Type: ' . $request->header('Content-Type'));
-            \Log::info('Authorization: ' . $request->header('Authorization'));
 
             // Use checkSignSalt to validate and decode data (same as profile update)
             $dataSource = checkSignSalt($request->input('data'));
 
             // Log specific fields that are important for movie creation
-            \Log::info('=== MOVIE DATA BREAKDOWN ===');
-            \Log::info('Video Title: ' . ($dataSource['video_title'] ?? 'Not provided'));
-            \Log::info('Video URL: ' . ($dataSource['video_url'] ?? 'Not provided'));
-            \Log::info('Video Description: ' . ($dataSource['video_description'] ?? 'Not provided'));
-            \Log::info('Genres: ' . json_encode($dataSource['genres'] ?? []));
-            \Log::info('Actors ID: ' . json_encode($dataSource['actors_id'] ?? []));
-            \Log::info('Director ID: ' . json_encode($dataSource['director_id'] ?? []));
-            \Log::info('License Price: ' . ($dataSource['license_price'] ?? 'Not provided'));
-            \Log::info('Video Quality: ' . ($dataSource['video_quality'] ?? 'Not provided'));
-            \Log::info('Download Enable: ' . ($dataSource['download_enable'] ?? 'Not provided'));
-            \Log::info('Download URL: ' . ($dataSource['download_url'] ?? 'Not provided'));
-            \Log::info('Subtitle On/Off: ' . ($dataSource['subtitle_on_off'] ?? 'Not provided'));
-            \Log::info('Poster Link: ' . ($dataSource['poster_link'] ?? 'Not provided'));
-            \Log::info('Video Image: ' . ($dataSource['video_image'] ?? 'Not provided'));
-            \Log::info('Webpage URL: ' . ($dataSource['webpage_url'] ?? 'Not provided'));
-            \Log::info('Status: ' . ($dataSource['status'] ?? 'Not provided'));
-            \Log::info('Movie ID (for update): ' . ($dataSource['id'] ?? 'New movie'));
-            \Log::info('==========================');
+
 
             $google_drive_api = $this->getRandomApiKey();
             GoogleDriveApi::where('api_key', $google_drive_api)->increment('calls');
@@ -1135,8 +1108,6 @@ class AndroidApiController extends MainAPIController
             // Extract file ID safely
             $googleDriveUrl = trim(urldecode($googleDriveUrl));
 
-            // Debug: Log the URL being processed
-            \Log::info('Processing Google Drive URL: ' . $googleDriveUrl);
 
             // Improved regex to handle various Google Drive URL formats
             $patterns = [
@@ -1184,6 +1155,17 @@ class AndroidApiController extends MainAPIController
 
             $inputs = $dataSource;
 
+            // Get user from the request data
+            $user_id = $inputs['user_id'] ?? null;
+            if (!$user_id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User ID is required'
+                ], 400);
+            }
+
+            $user = User::findOrFail($user_id);
+
             // Create or update movie
             $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
             $original_file_id = $movie_obj->file_id ?? '';
@@ -1197,11 +1179,11 @@ class AndroidApiController extends MainAPIController
                 'video_description' => addslashes($inputs['video_description'] ?? ''),
                 'actor_id' => isset($inputs['actors_id']) ? implode(',', $inputs['actors_id']) : null,
                 'director_id' => isset($inputs['director_id']) ? implode(',', $inputs['director_id']) : null,
-                'added_by' => Auth::id(),
+                'added_by' => $user_id,
                 'license_price' => $inputs['license_price'] ?? 0,
                 'file_id' => $fileId,
                 'webpage_url' => $inputs['webpage_url'] ?? null,
-                'status' => auth()->user()->usertype == 'Admin' ? ($inputs['status'] ?? 0) : 0,
+                'status' => $user->usertype == 'Admin' ? ($inputs['status'] ?? 0) : 0,
                 'video_url' => $video_url,
                 'video_type' => 'URL'
             ]);
@@ -1239,25 +1221,11 @@ class AndroidApiController extends MainAPIController
                 'data' => $movie_obj
             ];
 
-            // Log successful response
-            \Log::info('=== SUCCESSFUL RESPONSE ===');
-            \Log::info('Response Data: ' . json_encode($response_data));
-            \Log::info('Movie ID: ' . $movie_obj->id);
-            \Log::info('Movie Title: ' . $movie_obj->video_title);
-            \Log::info('Video URL: ' . $movie_obj->video_url);
-            \Log::info('========================');
 
             return response()->json($response_data, 200);
 
         } catch (\Exception $e) {
             // Log error details
-            \Log::error('=== ERROR IN ADDNEW METHOD ===');
-            \Log::error('Error Message: ' . $e->getMessage());
-            \Log::error('Error File: ' . $e->getFile());
-            \Log::error('Error Line: ' . $e->getLine());
-            \Log::error('Stack Trace: ' . $e->getTraceAsString());
-            \Log::error('Request Data: ' . json_encode($request->all()));
-            \Log::error('============================');
 
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
@@ -1265,7 +1233,7 @@ class AndroidApiController extends MainAPIController
 
     public function getRandomApiKey()
     {
-        \Log::info('Get random API key method called');
+
         // Get all available Google Drive API keys
         $google_drive_apis = GoogleDriveApi::pluck('api_key');
 
@@ -1296,12 +1264,6 @@ class AndroidApiController extends MainAPIController
     }
 
 
-
-
-
-
-
-
     public function user_device_limit_reached()
     {
         \Log::info('User device limit reached API endpoint called');
@@ -1322,8 +1284,6 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
              ));
     }
-
-
 
 
 
