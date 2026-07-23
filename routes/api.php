@@ -20,13 +20,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // Public API routes with APP_KEY authentication
 Route::group(['prefix' => 'public', 'namespace' => 'API', 'middleware' => 'app.key'], function(){
-    Route::post('random_videos', 'AndroidApiController@random_videos');
-    Route::post('random_audios', 'AndroidApiController@random_audios');
-    Route::post('random_photos', 'AndroidApiController@random_photos');
-    Route::post('all_content', 'AndroidApiController@all_content');
-    Route::post('videos_list', 'AndroidApiController@videos_list');
-    Route::post('audios_list', 'AndroidApiController@audios_list');
-    Route::post('photos_list', 'AndroidApiController@photos_list');
+    Route::match(['get', 'post', 'options'], 'random_videos', 'AndroidApiController@random_videos');
+    Route::match(['get', 'post', 'options'], 'random_audios', 'AndroidApiController@random_audios');
+    Route::match(['get', 'post', 'options'], 'random_photos', 'AndroidApiController@random_photos');
+    Route::match(['get', 'post', 'options'], 'all_content', 'AndroidApiController@all_content');
+    Route::match(['get', 'post', 'options'], 'videos_list', 'AndroidApiController@videos_list');
+    Route::match(['get', 'post', 'options'], 'audios_list', 'AndroidApiController@audios_list');
+    Route::match(['get', 'post', 'options'], 'photos_list', 'AndroidApiController@photos_list');
     Route::get('genres', 'AndroidApiController@get_genres');
 });
 

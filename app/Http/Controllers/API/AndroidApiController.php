@@ -1811,28 +1811,48 @@ class AndroidApiController extends MainAPIController
             $get_data = checkSignSalt($_POST['data']);
         }
 
-        // Get pagination parameters
-        $page = isset($get_data['page']) ? (int)$get_data['page'] : 1;
-        $per_page = isset($get_data['per_page']) ? (int)$get_data['per_page'] : 10;
-        $offset = ($page - 1) * $per_page;
+        // Get pagination and search parameters
+        $page = isset($get_data['page']) ? (int)$get_data['page'] : (int)request()->input('page', 1);
+        $per_page = isset($get_data['per_page']) ? (int)$get_data['per_page'] : (int)request()->input('per_page', 50);
+        $search = request()->input('search');
+        $genre = request()->input('genre');
+        $offset = max(0, ($page - 1) * $per_page);
 
-        // Get audios with pagination
-        $audios = Audio::where('is_active', true)
-                       ->orderBy('id', 'desc')
+        // Build audios query
+        $query = Audio::where('is_active', true);
+
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('tags', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($genre)) {
+            $query->where('genre', $genre);
+        }
+
+        $total_audios = $query->count();
+        $total_pages = ceil($total_audios / max(1, $per_page));
+
+        $audios = $query->orderBy('id', 'desc')
                        ->offset($offset)
                        ->limit($per_page)
                        ->get();
 
-        $total_audios = Audio::where('is_active', true)->count();
-        $total_pages = ceil($total_audios / $per_page);
-
         $response = array();
         foreach($audios as $audio_data) {
+            $audio_url = $audio_data->audio_path;
+            if ($audio_url && !str_starts_with($audio_url, 'http://') && !str_starts_with($audio_url, 'https://')) {
+                $audio_url = 'https://stock.cineworm.org/storage/' . ltrim($audio_url, '/');
+            }
+
             $response[] = array(
                 "audio_id" => $audio_data->id,
                 "title" => $audio_data->title,
                 "description" => $audio_data->description,
-                "audio_url" => 'https://stock.cineworm.org/storage/' . $audio_data->audio_path,
+                "audio_url" => $audio_url,
                 "duration" => $audio_data->duration,
                 "file_size" => $audio_data->file_size,
                 "format" => $audio_data->format,

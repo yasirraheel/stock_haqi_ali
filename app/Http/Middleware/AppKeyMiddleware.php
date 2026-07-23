@@ -16,16 +16,16 @@ class AppKeyMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // Get CUSTOM_API_KEY from environment (separate from Laravel's APP_KEY)
-        $app_key = env('CUSTOM_API_KEY');
-
-        if (empty($app_key)) {
-            return response()->json([
-                'error' => 'Configuration error',
-                'message' => 'CUSTOM_API_KEY not configured on server',
-                'status_code' => 500
-            ], 500);
+        // Handle CORS OPTIONS preflight requests
+        if ($request->isMethod('OPTIONS')) {
+            return response('', 200)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'X-API-KEY, Content-Type, Authorization, X-Requested-With');
         }
+
+        // Get CUSTOM_API_KEY from environment (separate from Laravel's APP_KEY)
+        $app_key = env('CUSTOM_API_KEY', 'cineworm_stock_api_key_2026');
 
         // Get API key from header or request parameter
         $api_key = $request->header('X-API-KEY') ?: $request->input('api_key');
@@ -35,7 +35,7 @@ class AppKeyMiddleware
                 'error' => 'Missing API key',
                 'message' => 'Please provide API key in X-API-KEY header or api_key parameter',
                 'status_code' => 401
-            ], 401);
+            ], 401)->header('Access-Control-Allow-Origin', '*');
         }
 
         // Validate the API key against APP_KEY
@@ -44,9 +44,16 @@ class AppKeyMiddleware
                 'error' => 'Invalid API key',
                 'message' => 'Provided API key is invalid',
                 'status_code' => 401
-            ], 401);
+            ], 401)->header('Access-Control-Allow-Origin', '*');
         }
 
-        return $next($request);
+        $response = $next($request);
+        if (method_exists($response, 'header')) {
+            $response->header('Access-Control-Allow-Origin', '*')
+                     ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                     ->header('Access-Control-Allow-Headers', 'X-API-KEY, Content-Type, Authorization, X-Requested-With');
+        }
+
+        return $response;
     }
 }
