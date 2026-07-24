@@ -1991,7 +1991,7 @@ class AndroidApiController extends MainAPIController
                 "effect_url" => $effect->effect_url,
                 "category" => $effect->category ?? 'General',
                 "license_price" => $effect->license_price ?? '0.00',
-                "is_premium" => (isset($effect->is_premium) && $effect->is_premium) || (isset($effect->license_price) && $effect->license_price > 0) ? 'true' : 'false'
+                "is_premium" => ((isset($effect->is_premium) && (int)$effect->is_premium === 1) || (isset($effect->license_price) && (float)$effect->license_price > 0)) ? 'true' : 'false'
             );
         }
 
