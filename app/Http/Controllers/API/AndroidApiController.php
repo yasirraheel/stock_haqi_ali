@@ -1949,6 +1949,65 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
         ));
     }
+
+    public function effects_list()
+    {
+        \Log::info('Effects list API endpoint called');
+        $api_key = request()->header('X-API-KEY') ?: request()->input('api_key');
+
+        $search = request()->input('search');
+        $category = request()->input('category');
+        $page = (int)request()->input('page', 1);
+        $per_page = (int)request()->input('per_page', 50);
+        $offset = max(0, ($page - 1) * $per_page);
+
+        $query = DB::table('effects')->where('is_active', true);
+
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($category)) {
+            $query->where('category', $category);
+        }
+
+        $total_effects = $query->count();
+        $total_pages = ceil($total_effects / max(1, $per_page));
+
+        $effects = $query->orderBy('id', 'desc')
+                        ->offset($offset)
+                        ->limit($per_page)
+                        ->get();
+
+        $response = array();
+        foreach($effects as $effect) {
+            $response[] = array(
+                "effect_id" => $effect->id,
+                "title" => $effect->title,
+                "description" => $effect->description,
+                "effect_url" => $effect->effect_url,
+                "category" => $effect->category ?? 'General',
+                "license_price" => $effect->license_price ?? '0.00',
+                "is_premium" => (isset($effect->is_premium) && $effect->is_premium) || (isset($effect->license_price) && $effect->license_price > 0) ? 'true' : 'false'
+            );
+        }
+
+        return \Response::json(array(
+            'EFFECTS_LIST' => $response,
+            'pagination' => array(
+                'current_page' => $page,
+                'per_page' => $per_page,
+                'total_effects' => $total_effects,
+                'total_pages' => $total_pages,
+                'has_next_page' => $page < $total_pages,
+                'has_prev_page' => $page > 1
+            ),
+            'status_code' => 200
+        ));
+    }
     public function generateDescription(Request $request)
     {
         \Log::info('=== GENERATE DESCRIPTION API CALLED ===', [

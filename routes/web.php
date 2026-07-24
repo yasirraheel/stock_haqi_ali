@@ -56,6 +56,17 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     ]);
     Route::post('audio/metadata', 'AudioController@getAudioMetadata')->name('admin.audio.metadata');
 
+    // Effects Routes
+    Route::resource('effects', 'EffectsController')->names([
+        'index' => 'admin.effects.index',
+        'create' => 'admin.effects.create',
+        'store' => 'admin.effects.store',
+        'show' => 'admin.effects.show',
+        'edit' => 'admin.effects.edit',
+        'update' => 'admin.effects.update',
+        'destroy' => 'admin.effects.destroy'
+    ]);
+
     // Photo Categories Routes
     Route::resource('photo-categories', 'PhotoCategoryController')->only(['index', 'store', 'destroy'])->names([
         'index' => 'admin.photo-categories.index',

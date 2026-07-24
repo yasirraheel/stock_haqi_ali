@@ -67,6 +67,19 @@
                     </li>
 
                     <li class="has_sub">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('effects') }}">
+                            <i class="fa fa-magic"></i>
+                            <span>Effects</span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <ul class="list-unstyled">
+                            <li class="{{ classActivePath('effects') }}"><a href="{{ route('admin.effects.index') }}"
+                                    class="{{ classActivePath('effects') }}"><i
+                                        class="fa fa-magic"></i><span>All Effects</span></a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has_sub">
                         <a href="javascript:void(0);" class="waves-effect">
                             <i class="fa fa-users"></i>
                             <span>{{ trans('words.users') }}</span>
