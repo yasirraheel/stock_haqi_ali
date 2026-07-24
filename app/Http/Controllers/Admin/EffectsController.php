@@ -62,13 +62,16 @@ class EffectsController extends Controller
             $effect_url = "https://drive.google.com/uc?export=download&id={$fileId}";
         }
 
+        $is_premium = (int)$request->input('is_premium', 0) === 1;
+        $license_price = $is_premium && $request->license_price ? round((float)$request->license_price, 2) : 0;
+
         $effect = new Effect();
         $effect->title = $request->title;
         $effect->description = $request->description;
         $effect->effect_url = $effect_url;
         $effect->category = $request->category ?: 'General';
-        $effect->license_price = $request->license_price ? round((float)$request->license_price, 2) : 0;
-        $effect->is_premium = $request->has('is_premium') || ($request->license_price && $request->license_price > 0);
+        $effect->license_price = $license_price;
+        $effect->is_premium = $is_premium;
         $effect->is_active = $request->has('is_active') ? (bool)$request->is_active : true;
 
         $effect->save();
@@ -94,7 +97,7 @@ class EffectsController extends Controller
             'effect_url' => 'required|string',
             'category' => 'nullable|string',
             'license_price' => 'nullable|numeric|min:0',
-            'is_premium' => 'nullable|boolean',
+            'is_premium' => 'nullable',
             'is_active' => 'nullable|boolean'
         ]);
 
@@ -110,12 +113,15 @@ class EffectsController extends Controller
             $effect_url = "https://drive.google.com/uc?export=download&id={$fileId}";
         }
 
+        $is_premium = (int)$request->input('is_premium', 0) === 1;
+        $license_price = $is_premium && $request->license_price ? round((float)$request->license_price, 2) : 0;
+
         $effect->title = $request->title;
         $effect->description = $request->description;
         $effect->effect_url = $effect_url;
         $effect->category = $request->category ?: 'General';
-        $effect->license_price = $request->license_price ? round((float)$request->license_price, 2) : 0;
-        $effect->is_premium = $request->has('is_premium') || ($request->license_price && $request->license_price > 0);
+        $effect->license_price = $license_price;
+        $effect->is_premium = $is_premium;
         $effect->is_active = $request->has('is_active') ? (bool)$request->is_active : true;
 
         $effect->save();
