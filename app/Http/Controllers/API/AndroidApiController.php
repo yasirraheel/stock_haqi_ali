@@ -2008,6 +2008,64 @@ class AndroidApiController extends MainAPIController
             'status_code' => 200
         ));
     }
+    public function effect_download(Request $request)
+    {
+        $effectId = (int) $request->input('effect_id');
+        $effect = DB::table('effects')->where('id', $effectId)->where('is_active', true)->first();
+
+        if (!$effect || !filter_var($effect->effect_url, FILTER_VALIDATE_URL)) {
+            return \Response::json(['message' => 'Effect not found'], 404);
+        }
+
+        $sourceUrl = $effect->effect_url;
+        $contentType = 'application/octet-stream';
+        $fileName = preg_replace('/[^a-zA-Z0-9._ -]/', '', $effect->title ?: 'stock-effect') . '.bin';
+
+        $head = curl_init($sourceUrl);
+        curl_setopt_array($head, [
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_NOBODY => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 20,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_USERAGENT => 'Reel2Reel Stock Effect Proxy',
+        ]);
+        curl_exec($head);
+        $headType = curl_getinfo($head, CURLINFO_CONTENT_TYPE);
+        $headDisposition = curl_getinfo($head, CURLINFO_CONTENT_DISPOSITION);
+        $headUrl = curl_getinfo($head, CURLINFO_EFFECTIVE_URL);
+        curl_close($head);
+
+        if (is_string($headType) && $headType !== '') $contentType = explode(';', $headType)[0];
+        if (is_string($headDisposition) && preg_match('/filename="?([^";]+)"?/i', $headDisposition, $match)) {
+            $fileName = preg_replace('/[^a-zA-Z0-9._ -]/', '', $match[1]);
+        } elseif (is_string($headUrl) && preg_match('/\.([a-z0-9]{2,5})(?:[?#]|$)/i', $headUrl, $match)) {
+            $fileName = preg_replace('/\.[^.]+$/', '.' . strtolower($match[1]), $fileName);
+        }
+
+        return response()->stream(function () use ($sourceUrl) {
+            $curl = curl_init($sourceUrl);
+            curl_setopt_array($curl, [
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_RETURNTRANSFER => false,
+                CURLOPT_CONNECTTIMEOUT => 20,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_USERAGENT => 'Reel2Reel Stock Effect Proxy',
+                CURLOPT_WRITEFUNCTION => static function ($handle, $chunk) {
+                    echo $chunk;
+                    flush();
+                    return strlen($chunk);
+                },
+            ]);
+            curl_exec($curl);
+            curl_close($curl);
+        }, 200, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'attachment; filename="' . addslashes($fileName) . '"',
+            'Cache-Control' => 'no-store',
+        ]);
+    }
+
     public function generateDescription(Request $request)
     {
         \Log::info('=== GENERATE DESCRIPTION API CALLED ===', [
