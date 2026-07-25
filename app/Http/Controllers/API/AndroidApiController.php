@@ -2032,14 +2032,11 @@ class AndroidApiController extends MainAPIController
         ]);
         curl_exec($head);
         $headType = curl_getinfo($head, CURLINFO_CONTENT_TYPE);
-        $headDisposition = curl_getinfo($head, CURLINFO_CONTENT_DISPOSITION);
         $headUrl = curl_getinfo($head, CURLINFO_EFFECTIVE_URL);
         curl_close($head);
 
         if (is_string($headType) && $headType !== '') $contentType = explode(';', $headType)[0];
-        if (is_string($headDisposition) && preg_match('/filename="?([^";]+)"?/i', $headDisposition, $match)) {
-            $fileName = preg_replace('/[^a-zA-Z0-9._ -]/', '', $match[1]);
-        } elseif (is_string($headUrl) && preg_match('/\.([a-z0-9]{2,5})(?:[?#]|$)/i', $headUrl, $match)) {
+        if (is_string($headUrl) && preg_match('/\.([a-z0-9]{2,5})(?:[?#]|$)/i', $headUrl, $match)) {
             $fileName = preg_replace('/\.[^.]+$/', '.' . strtolower($match[1]), $fileName);
         }
 
