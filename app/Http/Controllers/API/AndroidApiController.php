@@ -2018,6 +2018,9 @@ class AndroidApiController extends MainAPIController
         }
 
         $sourceUrl = $effect->effect_url;
+        if (preg_match('/(?:id=|file\/d\/|\/d\/)([a-zA-Z0-9_-]+)/', $sourceUrl, $driveMatch)) {
+            $sourceUrl = 'https://drive.usercontent.google.com/download?id=' . $driveMatch[1] . '&export=download&confirm=t';
+        }
         $contentType = 'application/octet-stream';
         $fileName = preg_replace('/[^a-zA-Z0-9._ -]/', '', $effect->title ?: 'stock-effect') . '.bin';
 
