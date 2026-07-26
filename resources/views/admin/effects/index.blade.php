@@ -37,7 +37,8 @@
                       <th>Category</th>
                       <th>Effect URL / GD Link</th>
                       <th>Access Type</th>
-                      <th>Status</th>
+                      <th>Active Status</th>
+                      <th>Process Status</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -59,7 +60,22 @@
                         @endif
                       </td>
                       <td>@if($effect->is_active)<span class="badge badge-success">Active</span> @else<span class="badge badge-danger">Inactive</span>@endif</td>
-
+                      <td>
+                          @if($effect->status == 'ready')
+                              <span class="badge badge-success">Ready</span>
+                              @if($effect->processed_url)
+                                  <div class="mt-2">
+                                      <a href="javascript:void(0);" onclick="showPreview('{{ $effect->processed_url }}')" class="btn btn-sm btn-info" style="font-size: 11px;"><i class="fa fa-play"></i> Preview Processed</a>
+                                  </div>
+                              @endif
+                          @elseif($effect->status == 'processing')
+                              <span class="badge badge-warning">Processing...</span>
+                          @elseif($effect->status == 'error')
+                              <span class="badge badge-danger">Failed</span>
+                          @else
+                              <span class="badge badge-secondary">Pending</span>
+                          @endif
+                      </td>
                       <td>
                         <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-icon waves-effect waves-light btn-success m-b-5 m-r-5" data-toggle="tooltip" title="Edit"> <i class="fa fa-edit"></i> </a>
                         <form action="{{ route('admin.effects.destroy', $effect->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this effect?');">
@@ -84,4 +100,43 @@
       </div>
       @include("admin.copyright")
     </div>
+    <!-- Video Preview Modal -->
+    <div id="videoPreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="videoPreviewModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title mt-0">Processed Effect Preview</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closePreview()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <video id="previewPlayer" controls style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <source src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPreview(url) {
+            var player = document.getElementById('previewPlayer');
+            player.src = url;
+            $('#videoPreviewModal').modal('show');
+            player.play().catch(function(e) { console.warn("Auto-play prevented", e); });
+        }
+
+        function closePreview() {
+            var player = document.getElementById('previewPlayer');
+            player.pause();
+            player.src = '';
+        }
+
+        // Also stop video if modal is closed by clicking outside
+        $('#videoPreviewModal').on('hidden.bs.modal', function () {
+            closePreview();
+        });
+    </script>
 @endsection
