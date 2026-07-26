@@ -72,10 +72,30 @@ class ProcessStockEffectJob implements ShouldQueue
             $header = substr($response, 0, $header_size);
             $body = substr($response, $header_size);
             
-            // Check if it's the virus scan warning page
-            if (strpos($body, 'confirm=') !== false && preg_match('/confirm=([a-zA-Z0-9_-]+)/', $body, $confirmMatch)) {
-                $confirmToken = $confirmMatch[1];
-                $finalUrl = "https://drive.google.com/uc?export=download&id={$fileId}&confirm={$confirmToken}";
+            // Check if it's the virus scan warning page by looking for the download-form
+            if (strpos($body, 'download-form') !== false) {
+                $finalUrl = '';
+                
+                // Extract action URL
+                if (preg_match('/action="([^"]+)"/', $body, $actionMatch)) {
+                    $finalUrl = $actionMatch[1] . "?";
+                } else {
+                    $finalUrl = "https://drive.usercontent.google.com/download?";
+                }
+                
+                // Extract all hidden inputs
+                preg_match_all('/<input type="hidden" name="([^"]+)" value="([^"]+)">/', $body, $inputs);
+                
+                $params = [];
+                if (!empty($inputs[1])) {
+                    for ($i = 0; $i < count($inputs[1]); $i++) {
+                        $params[] = $inputs[1][$i] . "=" . urlencode($inputs[2][$i]);
+                    }
+                    $finalUrl .= implode("&", $params);
+                } else {
+                    // Fallback just in case
+                    $finalUrl .= "id={$fileId}&export=download&confirm=t";
+                }
                 
                 curl_setopt($ch, CURLOPT_URL, $finalUrl);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
