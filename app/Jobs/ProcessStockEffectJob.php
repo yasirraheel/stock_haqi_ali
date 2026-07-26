@@ -53,70 +53,34 @@ class ProcessStockEffectJob implements ShouldQueue
             $fileId = '';
             if (preg_match('/(?:id=|file\/d\/|\/d\/)([a-zA-Z0-9_-]+)/', $sourceUrl, $driveMatch)) {
                 $fileId = $driveMatch[1];
-                $sourceUrl = 'https://drive.google.com/uc?export=download&id=' . $fileId;
+                
+                // Fetch a random Google Drive API key from the database
+                $apiRecord = \App\Models\GoogleDriveApi::inRandomOrder()->first();
+                if ($apiRecord && !empty($apiRecord->api_key)) {
+                    $apiKey = $apiRecord->api_key;
+                    // Increment the API call count
+                    \App\Models\GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
+                    // Use the official Google Drive API to download the file directly, bypassing all virus scans
+                    $sourceUrl = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$apiKey}";
+                } else {
+                    // Fallback if no API key is available
+                    $sourceUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
+                }
             }
 
             $ch = curl_init($sourceUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HEADER, true);
-            curl_setopt($ch, CURLOPT_NOBODY, false);
-            
-            // We must use a cookie jar to store the session for the virus scan bypass
-            $cookieFile = "{$effectsDir}/cookie_{$this->effectId}.txt";
-            curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
-            curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
-            
-            $response = curl_exec($ch);
-            $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-            $header = substr($response, 0, $header_size);
-            $body = substr($response, $header_size);
-            
-            // Check if it's the virus scan warning page by looking for the download-form
-            if (strpos($body, 'download-form') !== false) {
-                $finalUrl = '';
-                
-                // Extract action URL
-                if (preg_match('/action="([^"]+)"/', $body, $actionMatch)) {
-                    $finalUrl = $actionMatch[1] . "?";
-                } else {
-                    $finalUrl = "https://drive.usercontent.google.com/download?";
-                }
-                
-                // Extract all hidden inputs
-                preg_match_all('/<input type="hidden" name="([^"]+)" value="([^"]+)">/', $body, $inputs);
-                
-                $params = [];
-                if (!empty($inputs[1])) {
-                    for ($i = 0; $i < count($inputs[1]); $i++) {
-                        $params[] = $inputs[1][$i] . "=" . urlencode($inputs[2][$i]);
-                    }
-                    $finalUrl .= implode("&", $params);
-                } else {
-                    // Fallback just in case
-                    $finalUrl .= "id={$fileId}&export=download&confirm=t";
-                }
-                
-                curl_setopt($ch, CURLOPT_URL, $finalUrl);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-                curl_setopt($ch, CURLOPT_HEADER, false);
-                $fp = fopen($tempPath, 'w+');
-                curl_setopt($ch, CURLOPT_FILE, $fp);
-                curl_exec($ch);
-                fclose($fp);
-            } else {
-                // If no virus scan warning, we just save the body we already downloaded
-                file_put_contents($tempPath, $body);
-            }
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            $fp = fopen($tempPath, 'w+');
+            curl_setopt($ch, CURLOPT_FILE, $fp);
+            curl_exec($ch);
+            fclose($fp);
             
             if (curl_errno($ch)) {
                 throw new \Exception('Curl error: ' . curl_error($ch));
             }
             curl_close($ch);
-            
-            if (file_exists($cookieFile)) {
-                unlink($cookieFile);
-            }
 
             // 2. Convert via FFmpeg
             $ffmpegPath = '/home/u273790872/bin/ffmpeg';
