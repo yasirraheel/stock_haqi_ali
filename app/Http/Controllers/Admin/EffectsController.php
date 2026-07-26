@@ -120,6 +120,7 @@ class EffectsController extends Controller
         $license_price = $is_premium && $request->license_price ? round((float)$request->license_price, 2) : 0;
 
         $urlChanged = $effect->getOriginal('effect_url') !== $effect_url;
+        $needsProcessing = $urlChanged || empty($effect->processed_url);
         
         $effect->title = $request->title;
         $effect->description = $request->description;
@@ -129,15 +130,15 @@ class EffectsController extends Controller
         $effect->is_premium = $is_premium;
         $effect->is_active = $request->has('is_active') ? (bool)$request->is_active : true;
 
-        if ($urlChanged) {
+        if ($needsProcessing) {
             $effect->status = 'pending';
         }
 
         $effect->save();
 
-        if ($urlChanged) {
+        if ($needsProcessing) {
             \App\Jobs\ProcessStockEffectJob::dispatch($effect->id);
-            $message = 'Effect updated and queued for re-processing successfully.';
+            $message = 'Effect updated and queued for processing successfully.';
         } else {
             $message = 'Effect updated successfully.';
         }
