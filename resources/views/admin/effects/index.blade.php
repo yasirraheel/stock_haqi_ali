@@ -84,6 +84,9 @@
                       <td>
                           @if($effect->status == 'ready')
                               <span class="badge badge-success">Ready</span>
+                              @if($effect->converted_bytes !== null)
+                                  <div class="mt-1 text-muted" style="font-size: 11px;">Converted: {{ number_format($effect->converted_bytes) }} bytes ({{ number_format($effect->converted_bytes / 1048576, 2) }} MB)</div>
+                              @endif
                               @if($effect->processed_url)
                                   <div class="mt-2">
                                       <a href="javascript:void(0);" onclick="showPreview('{{ $effect->processed_url }}')" class="btn btn-sm btn-info" style="font-size: 11px;"><i class="fa fa-play"></i> Preview Processed</a>

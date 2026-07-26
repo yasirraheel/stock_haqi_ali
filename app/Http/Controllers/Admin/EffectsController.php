@@ -26,6 +26,11 @@ class EffectsController extends Controller
         }
 
         $effects = $query->orderBy('id', 'desc')->paginate(20);
+        $effects->getCollection()->transform(function ($effect) {
+            $path = storage_path("app/public/effects/{$effect->id}.mp4");
+            $effect->converted_bytes = file_exists($path) ? filesize($path) : null;
+            return $effect;
+        });
         $page_title = 'Effects Management';
         return view('admin.effects.index', compact('effects', 'page_title'));
     }

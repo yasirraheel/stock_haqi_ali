@@ -129,15 +129,15 @@ class ProcessStockEffectJob implements ShouldQueue
                 $returnCode = 0;
             }
 
-            // Cleanup temp file
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
-
             if ($returnCode === 0 && file_exists($outputPath) && filesize($outputPath) > 0) {
+                $convertedBytes = filesize($outputPath);
                 DB::table('effects')->where('id', $this->effectId)->update([
                     'status' => 'ready',
                     'processed_url' => url("storage/effects/{$this->effectId}.mp4")
+                ]);
+                \Log::info("Effect Processing Complete [ID: {$this->effectId}]", [
+                    'converted_bytes' => $convertedBytes,
+                    'converted_size_mb' => round($convertedBytes / 1048576, 2),
                 ]);
             } else {
                 throw new \Exception('FFmpeg conversion failed: ' . implode("\n", $outputLines));
@@ -146,6 +146,14 @@ class ProcessStockEffectJob implements ShouldQueue
         } catch (\Exception $e) {
             \Log::error("Effect Processing Failed [ID: {$this->effectId}]: " . $e->getMessage());
             DB::table('effects')->where('id', $this->effectId)->update(['status' => 'error']);
+        } finally {
+            // Never retain the downloaded Google Drive source after processing.
+            if (isset($tempPath) && file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
+            if (isset($cookieFile) && file_exists($cookieFile)) {
+                @unlink($cookieFile);
+            }
         }
     }
 }
