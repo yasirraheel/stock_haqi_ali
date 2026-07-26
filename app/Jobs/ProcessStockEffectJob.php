@@ -82,31 +82,35 @@ class ProcessStockEffectJob implements ShouldQueue
             }
             curl_close($ch);
 
-            // 2. Convert via FFmpeg
+            // 2. Convert via FFmpeg.
+            // Keep the output compatible with Reel2Reel and the older Hostinger FFmpeg build.
             $ffmpegPath = '/home/u273790872/bin/ffmpeg';
-            if (!file_exists($ffmpegPath)) {
-                $ffmpegPath = 'ffmpeg'; // fallback
+            if (!file_exists($ffmpegPath) || !is_executable($ffmpegPath)) {
+                $ffmpegPath = 'ffmpeg';
             }
 
-            // Build command as array to avoid quoting issues with -vf filter
+            if (file_exists($outputPath)) {
+                unlink($outputPath);
+            }
+
+            $cmdParts = [
+                $ffmpegPath, '-y', '-hide_banner', '-loglevel', 'error',
+                '-i', $tempPath,
+                '-map', '0:v:0',
+                '-vf', 'scale=1280:-2',
+                '-c:v', 'libx264',
+                '-preset', 'veryfast',
+                '-crf', '28',
+                '-pix_fmt', 'yuv420p',
+                '-movflags', '+faststart',
+                '-an',
+                $outputPath,
+            ];
+
             $returnCode = 1;
             $outputLines = [];
-
             if (function_exists('proc_open')) {
-                // proc_open is most reliable - no quoting issues, works even when shell_exec is disabled
-                $cmdParts = [
-                    $ffmpegPath, '-y', '-i', $tempPath,
-                    '-map', '0:v:0',
-                    '-vcodec', 'libx264',
-                    '-preset', 'fast',
-                    '-profile:v', 'high',
-                    '-level', '5.1',
-                    '-vf', 'scale=1920:-2,format=yuv420p',
-                    '-crf', '26',
-                    '-an',
-                    $outputPath
-                ];
-                $descriptorspec = [0 => ['pipe','r'], 1 => ['pipe','w'], 2 => ['pipe','w']];
+                $descriptorspec = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
                 $process = proc_open($cmdParts, $descriptorspec, $pipes);
                 if (is_resource($process)) {
                     fclose($pipes[0]);
@@ -118,13 +122,10 @@ class ProcessStockEffectJob implements ShouldQueue
                     $outputLines = [$stdoutContent, $stderrContent];
                 }
             } elseif (function_exists('shell_exec')) {
-                $cmd = $ffmpegPath . ' -y -i ' . escapeshellarg($tempPath)
-                    . ' -map 0:v:0 -vcodec libx264 -preset fast -profile:v high -level 5.1'
-                    . ' -vf scale=1920:-2,format=yuv420p -crf 26 -an '
-                    . escapeshellarg($outputPath) . ' 2>&1';
-                $out = shell_exec($cmd);
-                $returnCode = file_exists($outputPath) && filesize($outputPath) > 0 ? 0 : 1;
+                $quoted = array_map('escapeshellarg', $cmdParts);
+                $out = shell_exec(implode(' ', $quoted) . ' 2>&1');
                 $outputLines = [$out];
+                $returnCode = 0;
             }
 
             // Cleanup temp file
@@ -132,7 +133,7 @@ class ProcessStockEffectJob implements ShouldQueue
                 unlink($tempPath);
             }
 
-            if ($returnCode === 0 && file_exists($outputPath)) {
+            if ($returnCode === 0 && file_exists($outputPath) && filesize($outputPath) > 0) {
                 DB::table('effects')->where('id', $this->effectId)->update([
                     'status' => 'ready',
                     'processed_url' => url("storage/effects/{$this->effectId}.mp4")
