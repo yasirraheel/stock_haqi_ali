@@ -82,6 +82,14 @@ class ProcessStockEffectJob implements ShouldQueue
             }
             curl_close($ch);
 
+            $sourceBytes = file_exists($tempPath) ? filesize($tempPath) : 0;
+            if ($sourceBytes <= 0) {
+                throw new \Exception('Downloaded Google Drive file is empty.');
+            }
+            DB::table('effects')->where('id', $this->effectId)->update([
+                'source_size_bytes' => $sourceBytes,
+            ]);
+
             // 2. Convert via FFmpeg.
             // Keep the output compatible with Reel2Reel and the older Hostinger FFmpeg build.
             $ffmpegPath = '/home/u273790872/bin/ffmpeg';
