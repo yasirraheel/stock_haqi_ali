@@ -73,6 +73,7 @@ class EffectsController extends Controller
         $effect->license_price = $license_price;
         $effect->is_premium = $is_premium;
         $effect->is_active = $request->has('is_active') ? (bool)$request->is_active : true;
+        $effect->status = 'pending';
 
         $effect->save();
 
