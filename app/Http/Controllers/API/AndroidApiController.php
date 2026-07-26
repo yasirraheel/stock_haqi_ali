@@ -2066,6 +2066,63 @@ class AndroidApiController extends MainAPIController
         ]);
     }
 
+    public function effect_process(Request $request)
+    {
+        $effectId = (int) $request->input('effect_id');
+        $effect = DB::table('effects')->where('id', $effectId)->where('is_active', true)->first();
+
+        if (!$effect) {
+            return \Response::json(['status' => 'error', 'message' => 'Effect not found'], 404);
+        }
+
+        $outputPath = storage_path("app/public/effects/{$effectId}.mp4");
+        
+        if (file_exists($outputPath)) {
+            return \Response::json([
+                'status' => 'ready',
+                'url' => url("storage/effects/{$effectId}.mp4")
+            ]);
+        }
+
+        $cacheKey = "effect_progress_{$effectId}";
+        $currentProgress = Cache::get($cacheKey);
+
+        if (!$currentProgress || (isset($currentProgress['status']) && $currentProgress['status'] === 'error')) {
+            Cache::put($cacheKey, ['status' => 'queued', 'progress' => 0], 3600);
+            
+            // Execute background artisan command
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                pclose(popen("start /B php artisan effect:process {$effectId}", "r"));
+            } else {
+                exec("php artisan effect:process {$effectId} > /dev/null 2>&1 &");
+            }
+        }
+
+        return \Response::json([
+            'status' => 'processing'
+        ]);
+    }
+
+    public function effect_progress(Request $request)
+    {
+        $effectId = (int) $request->input('effect_id');
+        $cacheKey = "effect_progress_{$effectId}";
+        $progress = Cache::get($cacheKey);
+
+        if (!$progress) {
+            $outputPath = storage_path("app/public/effects/{$effectId}.mp4");
+            if (file_exists($outputPath)) {
+                return \Response::json([
+                    'status' => 'ready',
+                    'url' => url("storage/effects/{$effectId}.mp4")
+                ]);
+            }
+            return \Response::json(['status' => 'queued', 'progress' => 0]);
+        }
+
+        return \Response::json($progress);
+    }
+
     public function generateDescription(Request $request)
     {
         \Log::info('=== GENERATE DESCRIPTION API CALLED ===', [
