@@ -13,7 +13,7 @@
                     <strong><i class="fa fa-info-circle"></i> Background Processing Cron Job</strong><br>
                     To ensure effects are processed continuously in the background, please add the following Cron Job in your Hostinger cPanel to run <strong>Once Per Minute (* * * * *)</strong>:
                     <div class="input-group mt-2 mb-1" style="max-width: 700px;">
-                        <input type="text" class="form-control" id="cronCommand" value="cd /home/u273790872/domains/cineworm.org/public_html/stock && php artisan schedule:run >> /dev/null 2>&1" readonly>
+                        <input type="text" class="form-control" id="cronCommand" value="/usr/bin/php /home/u273790872/domains/cineworm.org/public_html/stock/artisan schedule:run >> /dev/null 2>&1" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-primary" type="button" onclick="copyCron()">Copy</button>
                         </div>
