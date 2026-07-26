@@ -68,7 +68,11 @@ class ProcessStockEffectJob implements ShouldQueue
             fclose($fp);
 
             // 2. Convert via FFmpeg
-            $cmd = "ffmpeg -i " . escapeshellarg($tempPath) . " -y -vcodec libx264 -crf 23 -preset fast -acodec aac " . escapeshellarg($outputPath) . " 2>&1";
+            $ffmpegPath = '/home/u273790872/bin/ffmpeg';
+            if (!file_exists($ffmpegPath)) {
+                $ffmpegPath = 'ffmpeg'; // fallback
+            }
+            $cmd = $ffmpegPath . " -i " . escapeshellarg($tempPath) . " -y -vcodec libx264 -crf 23 -preset fast -acodec aac " . escapeshellarg($outputPath) . " 2>&1";
             
             if (function_exists('shell_exec')) {
                 $output = shell_exec($cmd);
