@@ -69,7 +69,18 @@ class ProcessStockEffectJob implements ShouldQueue
 
             // 2. Convert via FFmpeg
             $cmd = "ffmpeg -i " . escapeshellarg($tempPath) . " -y -vcodec libx264 -crf 23 -preset fast -acodec aac " . escapeshellarg($outputPath) . " 2>&1";
-            exec($cmd, $output, $returnCode);
+            
+            if (function_exists('shell_exec')) {
+                $output = shell_exec($cmd);
+                $returnCode = file_exists($outputPath) ? 0 : 1;
+                $output = [$output];
+            } else {
+                $process = \Symfony\Component\Process\Process::fromShellCommandline($cmd);
+                $process->setTimeout(3600);
+                $process->run();
+                $output = [$process->getOutput(), $process->getErrorOutput()];
+                $returnCode = $process->getExitCode();
+            }
 
             // Cleanup temp file
             if (file_exists($tempPath)) {
