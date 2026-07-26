@@ -9,6 +9,27 @@
             <div class="col-12">
               <div class="card-box table-responsive">
 
+                <div class="alert alert-info">
+                    <strong><i class="fa fa-info-circle"></i> Background Processing Cron Job</strong><br>
+                    To ensure effects are processed continuously in the background, please add the following Cron Job in your Hostinger cPanel to run <strong>Once Per Minute (* * * * *)</strong>:
+                    <div class="input-group mt-2 mb-1" style="max-width: 700px;">
+                        <input type="text" class="form-control" id="cronCommand" value="cd /home/u273790872/domains/cineworm.org/public_html/stock && php artisan schedule:run >> /dev/null 2>&1" readonly>
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button" onclick="copyCron()">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    function copyCron() {
+                        var copyText = document.getElementById("cronCommand");
+                        copyText.select();
+                        copyText.setSelectionRange(0, 99999);
+                        document.execCommand("copy");
+                        alert("Cron command copied to clipboard!");
+                    }
+                </script>
+
                 <div class="row">
                   <div class="col-md-3">
                      <a href="{{ route('admin.effects.create') }}" class="btn btn-success btn-md waves-effect waves-light m-b-20" data-toggle="tooltip" title="Add Effect"><i class="fa fa-plus"></i> Add New Effect</a>
