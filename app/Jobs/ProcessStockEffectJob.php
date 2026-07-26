@@ -100,6 +100,7 @@ class ProcessStockEffectJob implements ShouldQueue
                 '-vf', 'scale=1280:-2',
                 '-c:v', 'libx264',
                 '-preset', 'veryfast',
+                '-threads', '1',
                 '-crf', '28',
                 '-pix_fmt', 'yuv420p',
                 '-movflags', '+faststart',
