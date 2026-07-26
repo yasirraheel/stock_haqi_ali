@@ -87,7 +87,7 @@ class ProcessStockEffectJob implements ShouldQueue
             if (!file_exists($ffmpegPath)) {
                 $ffmpegPath = 'ffmpeg'; // fallback
             }
-            $cmd = $ffmpegPath . " -y -i " . escapeshellarg($tempPath) . " -vcodec libx264 -preset fast -profile:v high -level 5.1 -vf \"scale=1920:-2,format=yuv420p\" -crf 26 -acodec aac -b:a 128k -ac 2 " . escapeshellarg($outputPath) . " 2>&1";
+            $cmd = $ffmpegPath . " -y -i " . escapeshellarg($tempPath) . " -map 0:v:0 -vcodec libx264 -preset fast -profile:v high -level 5.1 -vf \"scale=1920:-2,format=yuv420p\" -crf 26 -an " . escapeshellarg($outputPath) . " 2>&1";
             
             if (function_exists('shell_exec')) {
                 $output = shell_exec($cmd);
