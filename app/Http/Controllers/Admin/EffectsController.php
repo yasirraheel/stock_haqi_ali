@@ -76,8 +76,10 @@ class EffectsController extends Controller
 
         $effect->save();
 
+        \App\Jobs\ProcessStockEffectJob::dispatch($effect->id);
+
         return redirect()->route('admin.effects.index')
-            ->with('flash_message', 'Effect created successfully.');
+            ->with('flash_message', 'Effect created and queued for processing successfully.');
     }
 
     public function edit($id)
@@ -116,6 +118,8 @@ class EffectsController extends Controller
         $is_premium = (int)$request->input('is_premium', 0) === 1;
         $license_price = $is_premium && $request->license_price ? round((float)$request->license_price, 2) : 0;
 
+        $urlChanged = $effect->getOriginal('effect_url') !== $effect_url;
+        
         $effect->title = $request->title;
         $effect->description = $request->description;
         $effect->effect_url = $effect_url;
@@ -124,10 +128,21 @@ class EffectsController extends Controller
         $effect->is_premium = $is_premium;
         $effect->is_active = $request->has('is_active') ? (bool)$request->is_active : true;
 
+        if ($urlChanged) {
+            $effect->status = 'pending';
+        }
+
         $effect->save();
 
+        if ($urlChanged) {
+            \App\Jobs\ProcessStockEffectJob::dispatch($effect->id);
+            $message = 'Effect updated and queued for re-processing successfully.';
+        } else {
+            $message = 'Effect updated successfully.';
+        }
+
         return redirect()->route('admin.effects.index')
-            ->with('flash_message', 'Effect updated successfully.');
+            ->with('flash_message', $message);
     }
 
     public function destroy($id)

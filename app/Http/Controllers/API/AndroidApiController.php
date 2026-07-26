@@ -1961,7 +1961,7 @@ class AndroidApiController extends MainAPIController
         $per_page = (int)request()->input('per_page', 50);
         $offset = max(0, ($page - 1) * $per_page);
 
-        $query = DB::table('effects')->where('is_active', true);
+        $query = DB::table('effects')->where('is_active', true)->where('status', 'ready');
 
         if (!empty($search)) {
             $query->where(function($q) use ($search) {
@@ -1988,7 +1988,7 @@ class AndroidApiController extends MainAPIController
                 "effect_id" => $effect->id,
                 "title" => $effect->title,
                 "description" => $effect->description,
-                "effect_url" => $effect->effect_url,
+                "effect_url" => $effect->processed_url ?: $effect->effect_url,
                 "category" => $effect->category ?? 'General',
                 "license_price" => $effect->license_price ?? '0.00',
                 "is_premium" => ((isset($effect->is_premium) && (int)$effect->is_premium === 1) || (isset($effect->license_price) && (float)$effect->license_price > 0)) ? 'true' : 'false'
