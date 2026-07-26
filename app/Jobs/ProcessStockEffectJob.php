@@ -87,18 +87,44 @@ class ProcessStockEffectJob implements ShouldQueue
             if (!file_exists($ffmpegPath)) {
                 $ffmpegPath = 'ffmpeg'; // fallback
             }
-            $cmd = $ffmpegPath . " -y -i " . escapeshellarg($tempPath) . " -map 0:v:0 -vcodec libx264 -preset fast -profile:v high -level 5.1 -vf \"scale=1920:-2,format=yuv420p\" -crf 26 -an " . escapeshellarg($outputPath) . " 2>&1";
-            
-            if (function_exists('shell_exec')) {
-                $output = shell_exec($cmd);
-                $returnCode = file_exists($outputPath) ? 0 : 1;
-                $output = [$output];
-            } else {
-                $process = \Symfony\Component\Process\Process::fromShellCommandline($cmd);
-                $process->setTimeout(3600);
-                $process->run();
-                $output = [$process->getOutput(), $process->getErrorOutput()];
-                $returnCode = $process->getExitCode();
+
+            // Build command as array to avoid quoting issues with -vf filter
+            $returnCode = 1;
+            $outputLines = [];
+
+            if (function_exists('proc_open')) {
+                // proc_open is most reliable - no quoting issues, works even when shell_exec is disabled
+                $cmdParts = [
+                    $ffmpegPath, '-y', '-i', $tempPath,
+                    '-map', '0:v:0',
+                    '-vcodec', 'libx264',
+                    '-preset', 'fast',
+                    '-profile:v', 'high',
+                    '-level', '5.1',
+                    '-vf', 'scale=1920:-2,format=yuv420p',
+                    '-crf', '26',
+                    '-an',
+                    $outputPath
+                ];
+                $descriptorspec = [0 => ['pipe','r'], 1 => ['pipe','w'], 2 => ['pipe','w']];
+                $process = proc_open($cmdParts, $descriptorspec, $pipes);
+                if (is_resource($process)) {
+                    fclose($pipes[0]);
+                    $stdoutContent = stream_get_contents($pipes[1]);
+                    $stderrContent = stream_get_contents($pipes[2]);
+                    fclose($pipes[1]);
+                    fclose($pipes[2]);
+                    $returnCode = proc_close($process);
+                    $outputLines = [$stdoutContent, $stderrContent];
+                }
+            } elseif (function_exists('shell_exec')) {
+                $cmd = $ffmpegPath . ' -y -i ' . escapeshellarg($tempPath)
+                    . ' -map 0:v:0 -vcodec libx264 -preset fast -profile:v high -level 5.1'
+                    . ' -vf scale=1920:-2,format=yuv420p -crf 26 -an '
+                    . escapeshellarg($outputPath) . ' 2>&1';
+                $out = shell_exec($cmd);
+                $returnCode = file_exists($outputPath) && filesize($outputPath) > 0 ? 0 : 1;
+                $outputLines = [$out];
             }
 
             // Cleanup temp file
@@ -112,7 +138,7 @@ class ProcessStockEffectJob implements ShouldQueue
                     'processed_url' => url("storage/effects/{$this->effectId}.mp4")
                 ]);
             } else {
-                throw new \Exception('FFmpeg conversion failed: ' . implode("\n", $output));
+                throw new \Exception('FFmpeg conversion failed: ' . implode("\n", $outputLines));
             }
 
         } catch (\Exception $e) {
