@@ -103,6 +103,9 @@ class ProcessStockEffectJob implements ShouldQueue
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
                 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
                 curl_setopt($ch, CURLOPT_HEADER, false);
+                curl_setopt($ch, CURLOPT_BUFFERSIZE, 1048576); // 1 MB buffer for high throughput
+                curl_setopt($ch, CURLOPT_TCP_NODELAY, 1);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
                 
                 $effectId = $this->effectId;
                 curl_setopt($ch, CURLOPT_NOPROGRESS, false);
