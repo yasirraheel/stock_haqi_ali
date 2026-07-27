@@ -163,7 +163,7 @@ class ProcessStockEffectJob implements ShouldQueue
             $cmdParts = [
                 $ffmpegPath, '-y', '-hide_banner', '-loglevel', 'error',
                 '-i', $tempPath,
-                '-map', '0:v:0',
+                '-map', '0:v:0?',
                 '-vf', 'scale=1280:-2',
                 '-c:v', 'libx264',
                 '-preset', 'veryfast',
@@ -200,6 +200,8 @@ class ProcessStockEffectJob implements ShouldQueue
                 $convertedBytes = filesize($outputPath);
                 DB::table('effects')->where('id', $this->effectId)->update([
                     'status' => 'ready',
+                    'process_percent' => 100,
+                    'process_step' => 'Ready',
                     'processed_url' => url("storage/effects/{$this->effectId}.mp4")
                 ]);
                 \Log::info("Effect Processing Complete [ID: {$this->effectId}]", [
@@ -211,8 +213,12 @@ class ProcessStockEffectJob implements ShouldQueue
             }
 
         } catch (\Exception $e) {
-            \Log::error("Effect Processing Failed [ID: {$this->effectId}]: " . $e->getMessage());
-            DB::table('effects')->where('id', $this->effectId)->update(['status' => 'error']);
+            $msg = $e->getMessage();
+            \Log::error("Effect Processing Failed [ID: {$this->effectId}]: " . $msg);
+            DB::table('effects')->where('id', $this->effectId)->update([
+                'status' => 'failed',
+                'process_step' => 'Failed: ' . \Illuminate\Support\Str::limit($msg, 80)
+            ]);
         } finally {
             // Unlink temporary raw download file only when processing successfully completes (ready).
             // On retries or failures, retain raw file so Google Drive is NOT re-queried/downloaded again.

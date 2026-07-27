@@ -144,16 +144,22 @@ class GoogleDriveScannerController extends Controller
                     $size = isset($file['size']) ? (int)$file['size'] : 0;
                     $directUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
 
+                    // Check if file is a ZIP archive or non-video compressed file
+                    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    $isArchive = in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'iso'])
+                        || strpos(strtolower($mimeType), 'zip') !== false
+                        || strpos(strtolower($mimeType), 'compressed') !== false;
+
                     // Check if existing record
                     $record = GoogleDriveFile::where('file_id', $fileId)->first();
                     if (!$record) {
                         $newCount++;
                     }
 
-                    // Preserve status if already imported or blocked
-                    $currentStatus = 'scanned';
+                    // Preserve status or auto-block ZIP archives
+                    $currentStatus = $isArchive ? 'blocked' : 'scanned';
                     if ($record) {
-                        if ($record->status === 'blocked') {
+                        if ($record->status === 'blocked' || $isArchive) {
                             $currentStatus = 'blocked';
                         } elseif ($record->status === 'imported') {
                             $currentStatus = 'imported';
@@ -181,7 +187,7 @@ class GoogleDriveScannerController extends Controller
             // Increment API call counter
             GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
 
-            Session::flash('flash_message', "Successfully scanned folder [{$folderId}]! Synced {$syncedCount} total files ({$newCount} new added).");
+            Session::flash('flash_message', "Successfully scanned folder [{$folderId}]! Synced {$syncedCount} total files ({$newCount} new added). ZIP archives were automatically blocked.");
         } catch (\Exception $e) {
             Session::flash('error_message', 'Scan Error: ' . $e->getMessage());
         }
@@ -192,12 +198,25 @@ class GoogleDriveScannerController extends Controller
     /**
      * Import a scanned file as an Effect in the database and queue background conversion.
      *
+     * @param Request $request
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function importFile(Request $request, $id)
     {
         $driveFile = GoogleDriveFile::findOrFail($id);
+
+        // Check if file is a ZIP archive
+        $ext = strtolower(pathinfo($driveFile->name, PATHINFO_EXTENSION));
+        if (in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz', 'bz2']) || strpos(strtolower($driveFile->mime_type), 'zip') !== false) {
+            $driveFile->status = 'blocked';
+            $driveFile->save();
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => "File '{$driveFile->name}' is a ZIP archive and cannot be converted to video! It has been moved to Blocked."], 400);
+            }
+            Session::flash('error_message', "File '{$driveFile->name}' is a ZIP archive and cannot be converted to video!");
+            return redirect()->back();
+        }
 
         if ($driveFile->status === 'blocked') {
             if ($request->expectsJson() || $request->ajax()) {

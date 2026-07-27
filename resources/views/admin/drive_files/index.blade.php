@@ -339,8 +339,8 @@
                                 html = '<span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + (stepText || 'Downloading...') + '</span>';
                             } else if (currentStatus === 'processing') {
                                 html = '<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cogs fa-spin"></i> ' + (stepText || 'Compressing MP4...') + '</span>';
-                            } else if (currentStatus === 'failed') {
-                                html = '<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-triangle"></i> Failed</span>';
+                            } else if (currentStatus === 'failed' || currentStatus === 'error') {
+                                html = '<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + (stepText || 'Failed') + '"><i class="fa fa-exclamation-triangle"></i> ' + (stepText || 'Failed') + '</span>';
                             } else {
                                 html = '<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>';
                             }

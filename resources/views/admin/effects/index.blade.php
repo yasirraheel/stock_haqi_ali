@@ -275,7 +275,8 @@
                                     var stepText = item.process_step || 'Converting MP4...';
                                     statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
                                 } else if (currentStatus === 'error' || currentStatus === 'failed') {
-                                    statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-circle"></i> Failed</span>');
+                                    var stepText = item.process_step || 'Failed';
+                                    statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-circle"></i> ' + stepText + '</span>');
                                 } else {
                                     statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>');
                                 }
