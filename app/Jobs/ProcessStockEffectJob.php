@@ -68,71 +68,83 @@ class ProcessStockEffectJob implements ShouldQueue
             $tempPath = "{$effectsDir}/{$this->effectId}_raw.tmp";
             $outputPath = "{$effectsDir}/{$this->effectId}.mp4";
 
-            // 1. Download file
-            $sourceUrl = $effect->effect_url;
-            $fileId = '';
-            if (preg_match('/(?:id=|file\/d\/|\/d\/)([a-zA-Z0-9_-]+)/', $sourceUrl, $driveMatch)) {
-                $fileId = $driveMatch[1];
-                
-                // Fetch a random Google Drive API key from the database
-                $apiRecord = \App\Models\GoogleDriveApi::inRandomOrder()->first();
-                if ($apiRecord && !empty($apiRecord->api_key)) {
-                    $apiKey = $apiRecord->api_key;
-                    // Increment the API call count
-                    \App\Models\GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
-                    // Use the official Google Drive API to download the file directly, bypassing all virus scans
-                    $sourceUrl = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$apiKey}";
-                } else {
-                    // Fallback if no API key is available
-                    $sourceUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
-                }
-            }
-
-            $ch = curl_init($sourceUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HEADER, false);
-            
-            $effectId = $this->effectId;
-            curl_setopt($ch, CURLOPT_NOPROGRESS, false);
-            curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function($resource, $downloadSize, $downloaded) use ($effectId) {
-                if ($downloadSize > 0) {
-                    $percent = min(99, (int)round(($downloaded / $downloadSize) * 100));
-                    $downloadedMb = number_format($downloaded / 1048576, 1);
-                    $totalMb = number_format($downloadSize / 1048576, 1);
-
-                    static $lastUpdate = 0;
-                    if (time() - $lastUpdate >= 1 || $percent == 99) {
-                        $lastUpdate = time();
-                        DB::table('effects')->where('id', $effectId)->update([
-                            'status' => 'downloading',
-                            'process_percent' => $percent,
-                            'process_step' => "Downloading {$percent}% ({$downloadedMb} MB / {$totalMb} MB)"
-                        ]);
+            // 1. Download file (Skip if already downloaded on disk from a previous attempt)
+            if (file_exists($tempPath) && filesize($tempPath) > 0) {
+                $sourceBytes = filesize($tempPath);
+                $sourceMb = number_format($sourceBytes / 1048576, 1);
+                \Log::info("Skipping Google Drive download for Effect ID {$this->effectId} - local file already cached ({$sourceMb} MB)");
+                DB::table('effects')->where('id', $this->effectId)->update([
+                    'source_size_bytes' => $sourceBytes,
+                    'status' => 'processing',
+                    'process_percent' => 100,
+                    'process_step' => "Downloaded ({$sourceMb} MB) - Converting MP4..."
+                ]);
+            } else {
+                $sourceUrl = $effect->effect_url;
+                $fileId = '';
+                if (preg_match('/(?:id=|file\/d\/|\/d\/)([a-zA-Z0-9_-]+)/', $sourceUrl, $driveMatch)) {
+                    $fileId = $driveMatch[1];
+                    
+                    // Fetch a random Google Drive API key from the database
+                    $apiRecord = \App\Models\GoogleDriveApi::inRandomOrder()->first();
+                    if ($apiRecord && !empty($apiRecord->api_key)) {
+                        $apiKey = $apiRecord->api_key;
+                        // Increment the API call count
+                        \App\Models\GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
+                        // Use the official Google Drive API to download the file directly, bypassing all virus scans
+                        $sourceUrl = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$apiKey}";
+                    } else {
+                        // Fallback if no API key is available
+                        $sourceUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
                     }
                 }
-            });
 
-            $fp = fopen($tempPath, 'w+');
-            curl_setopt($ch, CURLOPT_FILE, $fp);
-            curl_exec($ch);
-            fclose($fp);
-            
-            if (curl_errno($ch)) {
-                throw new \Exception('Curl error: ' . curl_error($ch));
-            }
-            curl_close($ch);
+                $ch = curl_init($sourceUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_HEADER, false);
+                
+                $effectId = $this->effectId;
+                curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+                curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function($resource, $downloadSize, $downloaded) use ($effectId) {
+                    if ($downloadSize > 0) {
+                        $percent = min(99, (int)round(($downloaded / $downloadSize) * 100));
+                        $downloadedMb = number_format($downloaded / 1048576, 1);
+                        $totalMb = number_format($downloadSize / 1048576, 1);
 
-            $sourceBytes = file_exists($tempPath) ? filesize($tempPath) : 0;
-            if ($sourceBytes <= 0) {
-                throw new \Exception('Downloaded Google Drive file is empty.');
+                        static $lastUpdate = 0;
+                        if (time() - $lastUpdate >= 1 || $percent == 99) {
+                            $lastUpdate = time();
+                            DB::table('effects')->where('id', $effectId)->update([
+                                'status' => 'downloading',
+                                'process_percent' => $percent,
+                                'process_step' => "Downloading {$percent}% ({$downloadedMb} MB / {$totalMb} MB)"
+                            ]);
+                        }
+                    }
+                });
+
+                $fp = fopen($tempPath, 'w+');
+                curl_setopt($ch, CURLOPT_FILE, $fp);
+                curl_exec($ch);
+                fclose($fp);
+                
+                if (curl_errno($ch)) {
+                    throw new \Exception('Curl error: ' . curl_error($ch));
+                }
+                curl_close($ch);
+
+                $sourceBytes = file_exists($tempPath) ? filesize($tempPath) : 0;
+                if ($sourceBytes <= 0) {
+                    throw new \Exception('Downloaded Google Drive file is empty.');
+                }
+                DB::table('effects')->where('id', $this->effectId)->update([
+                    'source_size_bytes' => $sourceBytes,
+                    'status' => 'processing',
+                    'process_percent' => 100,
+                    'process_step' => 'Converting & Compressing MP4...'
+                ]);
             }
-            DB::table('effects')->where('id', $this->effectId)->update([
-                'source_size_bytes' => $sourceBytes,
-                'status' => 'processing',
-                'process_percent' => 100,
-                'process_step' => 'Converting & Compressing MP4...'
-            ]);
 
             // 2. Convert via FFmpeg.
             // Keep the output compatible with Reel2Reel and the older Hostinger FFmpeg build.
@@ -199,9 +211,13 @@ class ProcessStockEffectJob implements ShouldQueue
             \Log::error("Effect Processing Failed [ID: {$this->effectId}]: " . $e->getMessage());
             DB::table('effects')->where('id', $this->effectId)->update(['status' => 'error']);
         } finally {
-            // Never retain the downloaded Google Drive source after processing.
+            // Unlink temporary raw download file only when processing successfully completes (ready).
+            // On retries or failures, retain raw file so Google Drive is NOT re-queried/downloaded again.
             if (isset($tempPath) && file_exists($tempPath)) {
-                @unlink($tempPath);
+                $checkEffect = DB::table('effects')->where('id', $this->effectId)->first();
+                if ($checkEffect && $checkEffect->status === 'ready') {
+                    @unlink($tempPath);
+                }
             }
             if (isset($cookieFile) && file_exists($cookieFile)) {
                 @unlink($cookieFile);
