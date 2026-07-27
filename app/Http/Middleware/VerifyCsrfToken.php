@@ -12,6 +12,8 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
+        'admin/effects/check-status',
+        'effects/check-status',
         '/razorpay-success',
          '/paytm/*',
          '/payu_success',

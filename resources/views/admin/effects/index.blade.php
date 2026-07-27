@@ -242,9 +242,8 @@
 
                 $.ajax({
                     url: '{{ route("admin.effects.check-status") }}',
-                    type: 'POST',
+                    type: 'GET',
                     data: {
-                        _token: '{{ csrf_token() }}',
                         ids: pendingIds.join(',')
                     },
                     success: function(data) {

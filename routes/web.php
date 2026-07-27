@@ -57,7 +57,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     Route::post('audio/metadata', 'AudioController@getAudioMetadata')->name('admin.audio.metadata');
 
     // Effects Routes
-    Route::post('effects/check-status', 'EffectsController@checkStatus')->name('admin.effects.check-status');
+    Route::match(['get', 'post'], 'effects/check-status', 'EffectsController@checkStatus')->name('admin.effects.check-status');
     Route::resource('effects', 'EffectsController')->names([
         'index' => 'admin.effects.index',
         'create' => 'admin.effects.create',
