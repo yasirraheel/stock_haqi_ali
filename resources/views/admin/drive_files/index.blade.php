@@ -104,8 +104,6 @@
                                             <th>#</th>
                                             <th>File Name</th>
                                             <th>File Size</th>
-                                            <th>File ID</th>
-                                            <th>Folder ID</th>
                                             <th>Direct Download URL</th>
                                             <th>Status</th>
                                             <th class="text-center">Action</th>
@@ -122,8 +120,6 @@
                                                     @endif
                                                 </td>
                                                 <td>{{ $file->formatted_size }}</td>
-                                                <td>{{ $file->file_id }}</td>
-                                                <td>{{ $file->folder_id }}</td>
                                                 <td>
                                                     <div class="input-group input-group-sm" style="min-width: 250px;">
                                                         <input type="text" class="form-control form-control-sm" id="url_{{ $file->id }}" value="{{ $file->url }}" readonly>
@@ -142,7 +138,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8" class="text-center p-4">No scanned files found. Enter a Google Drive Folder ID above and click "Scan & Sync Folder Files".</td>
+                                                <td colspan="6" class="text-center p-4">No scanned files found. Enter a Google Drive Folder ID above and click "Scan & Sync Folder Files".</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
