@@ -185,65 +185,6 @@
     </div>
 
     <script>
-        function previewDriveFile(fileId, fileName) {
-            document.getElementById('previewModalTitle').innerHTML = '<i class="fa fa-play-circle text-info"></i> Preview: ' + fileName;
-            var iframe = document.getElementById('previewIframe');
-            iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
-            $('#driveFilePreviewModal').modal('show');
-        }
-
-        function closeDrivePreview() {
-            var iframe = document.getElementById('previewIframe');
-            iframe.src = '';
-        }
-
-        $('#driveFilePreviewModal').on('hidden.bs.modal', function () {
-            closeDrivePreview();
-        });
-
-        function copyUrl(elementId) {
-            var copyText = document.getElementById(elementId);
-            copyText.select();
-            copyText.setSelectionRange(0, 99999);
-            document.execCommand("copy");
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    position: 'center',
-                    icon: 'success',
-                    title: 'Copied!',
-                    text: 'Direct download URL copied to clipboard.',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    background: "#1a2234",
-                    color: "#fff"
-                });
-            } else {
-                alert("Direct URL copied to clipboard!");
-            }
-        }
-
-        function confirmDelete(fileId) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: '{{ trans("words.dlt_warning") }}',
-                    text: '{{ trans("words.dlt_warning_text") }}',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: '{{ trans("words.dlt_confirm") }}',
-                    cancelButtonText: '{{ trans("words.btn_cancel") }}',
-                    background: '#1a2234',
-                    color: '#fff'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        document.getElementById('delete-form-' + fileId).submit();
-                    }
-                });
-            }
-        }
-
         window.confirmClearBlocked = function() {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
@@ -268,5 +209,88 @@
                 }
             }
         };
+
+        window.confirmDelete = function(fileId) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '{{ trans("words.dlt_warning") }}',
+                    text: '{{ trans("words.dlt_warning_text") }}',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '{{ trans("words.dlt_confirm") }}',
+                    cancelButtonText: '{{ trans("words.btn_cancel") }}',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var form = document.getElementById('delete-form-' + fileId);
+                        if (form) form.submit();
+                    }
+                });
+            } else {
+                if (confirm("Are you sure you want to remove this record?")) {
+                    var form = document.getElementById('delete-form-' + fileId);
+                    if (form) form.submit();
+                }
+            }
+        };
+
+        window.copyUrl = function(elementId) {
+            var copyText = document.getElementById(elementId);
+            if (!copyText) return;
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: 'Direct download URL copied to clipboard.',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    background: "#1a2234",
+                    color: "#fff"
+                });
+            } else {
+                alert("Direct URL copied to clipboard!");
+            }
+        };
+
+        window.previewDriveFile = function(fileId, fileName) {
+            document.getElementById('previewModalTitle').innerHTML = '<i class="fa fa-play-circle text-info"></i> Preview: ' + fileName;
+            var iframe = document.getElementById('previewIframe');
+            if (iframe) {
+                iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+            }
+            if (typeof jQuery !== 'undefined') {
+                jQuery('#driveFilePreviewModal').modal('show');
+            }
+        };
+
+        window.closeDrivePreview = function() {
+            var iframe = document.getElementById('previewIframe');
+            if (iframe) iframe.src = '';
+        };
+
+        (function() {
+            function initModalListener() {
+                if (typeof jQuery === 'undefined') {
+                    setTimeout(initModalListener, 100);
+                    return;
+                }
+                jQuery('#driveFilePreviewModal').on('hidden.bs.modal', function () {
+                    window.closeDrivePreview();
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initModalListener);
+            } else {
+                initModalListener();
+            }
+        })();
     </script>
 @endsection
