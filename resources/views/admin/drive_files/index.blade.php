@@ -131,8 +131,8 @@
                                                 </td>
                                                 <td><span class="badge badge-success">{{ ucfirst($file->status) }}</span></td>
                                                 <td class="text-center">
-                                                    {!! Form::open(['route' => ['admin.drive-files.destroy', $file->id], 'method' => 'DELETE', 'style' => 'display:inline-block;', 'onclick' => 'return confirm("Are you sure you want to remove this record?")']) !!}
-                                                    <button type="submit" class="btn btn-icon waves-effect waves-light btn-danger m-b-5" data-toggle="tooltip" title="Remove"><i class="fa fa-remove"></i></button>
+                                                    {!! Form::open(['route' => ['admin.drive-files.destroy', $file->id], 'method' => 'DELETE', 'id' => 'delete-form-'.$file->id, 'style' => 'display:inline-block;']) !!}
+                                                    <button type="button" class="btn btn-icon waves-effect waves-light btn-danger m-b-5" onclick="confirmDelete({{ $file->id }})" data-toggle="tooltip" title="Remove"><i class="fa fa-remove"></i></button>
                                                     {!! Form::close() !!}
                                                 </td>
                                             </tr>
@@ -163,7 +163,46 @@
             copyText.select();
             copyText.setSelectionRange(0, 99999);
             document.execCommand("copy");
-            alert("Direct URL copied to clipboard!");
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: 'Direct download URL copied to clipboard.',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    background: "#1a2234",
+                    color: "#fff"
+                });
+            } else {
+                alert("Direct URL copied to clipboard!");
+            }
+        }
+
+        function confirmDelete(fileId) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '{{ trans("words.dlt_warning") }}',
+                    text: '{{ trans("words.dlt_warning_text") }}',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '{{ trans("words.dlt_confirm") }}',
+                    cancelButtonText: '{{ trans("words.btn_cancel") }}',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('delete-form-' + fileId).submit();
+                    }
+                });
+            } else {
+                if (confirm("Are you sure you want to remove this record?")) {
+                    document.getElementById('delete-form-' + fileId).submit();
+                }
+            }
         }
     </script>
 @endsection
