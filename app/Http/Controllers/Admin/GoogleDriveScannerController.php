@@ -42,8 +42,9 @@ class GoogleDriveScannerController extends Controller
         $files = $query->orderBy('id', 'DESC')->paginate(20);
         $totalFiles = GoogleDriveFile::count();
         $foldersCount = GoogleDriveFile::distinct('folder_id')->count('folder_id');
+        $page_title = 'Google Drive Scanned Files';
 
-        return view('admin.drive_files.index', compact('files', 'totalFiles', 'foldersCount'));
+        return view('admin.drive_files.index', compact('files', 'totalFiles', 'foldersCount', 'page_title'));
     }
 
     /**
