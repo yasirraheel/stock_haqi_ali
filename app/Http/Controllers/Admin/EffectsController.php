@@ -53,6 +53,8 @@ class EffectsController extends Controller
             $response[$effect->id] = [
                 'id' => $effect->id,
                 'status' => $effect->status,
+                'process_percent' => $effect->process_percent ?? 0,
+                'process_step' => $effect->process_step ?? '',
                 'converted_mb' => $convertedMb,
                 'processed_url' => $effect->processed_url
             ];

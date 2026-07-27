@@ -54,7 +54,11 @@ class ProcessStockEffectJob implements ShouldQueue
             return;
         }
 
-        DB::table('effects')->where('id', $this->effectId)->update(['status' => 'processing']);
+        DB::table('effects')->where('id', $this->effectId)->update([
+            'status' => 'downloading',
+            'process_percent' => 0,
+            'process_step' => 'Starting Download...'
+        ]);
 
         try {
             $effectsDir = storage_path('app/public/effects');
@@ -88,6 +92,27 @@ class ProcessStockEffectJob implements ShouldQueue
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_HEADER, false);
+            
+            $effectId = $this->effectId;
+            curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+            curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function($resource, $downloadSize, $downloaded) use ($effectId) {
+                if ($downloadSize > 0) {
+                    $percent = min(99, (int)round(($downloaded / $downloadSize) * 100));
+                    $downloadedMb = number_format($downloaded / 1048576, 1);
+                    $totalMb = number_format($downloadSize / 1048576, 1);
+
+                    static $lastUpdate = 0;
+                    if (time() - $lastUpdate >= 1 || $percent == 99) {
+                        $lastUpdate = time();
+                        DB::table('effects')->where('id', $effectId)->update([
+                            'status' => 'downloading',
+                            'process_percent' => $percent,
+                            'process_step' => "Downloading {$percent}% ({$downloadedMb} MB / {$totalMb} MB)"
+                        ]);
+                    }
+                }
+            });
+
             $fp = fopen($tempPath, 'w+');
             curl_setopt($ch, CURLOPT_FILE, $fp);
             curl_exec($ch);
@@ -104,6 +129,9 @@ class ProcessStockEffectJob implements ShouldQueue
             }
             DB::table('effects')->where('id', $this->effectId)->update([
                 'source_size_bytes' => $sourceBytes,
+                'status' => 'processing',
+                'process_percent' => 100,
+                'process_step' => 'Converting & Compressing MP4...'
             ]);
 
             // 2. Convert via FFmpeg.

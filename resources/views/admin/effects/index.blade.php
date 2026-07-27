@@ -107,8 +107,10 @@
                               @if($effect->converted_bytes !== null)
                                   <br><small style="color: #aaa;">{{ number_format($effect->converted_bytes / 1048576, 2) }} MB</small>
                               @endif
+                          @elseif($effect->status == 'downloading')
+                              <span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> {{ $effect->process_step ?: 'Downloading...' }}</span>
                           @elseif($effect->status == 'processing')
-                              <span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> Processing...</span>
+                              <span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> {{ $effect->process_step ?: 'Converting MP4...' }}</span>
                           @elseif($effect->status == 'error')
                               <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-circle"></i> Failed</span>
                           @else
@@ -263,10 +265,14 @@
                                         var previewBtn = '<button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview(\'' + item.processed_url + '\')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>';
                                         appendGroup.prepend(previewBtn);
                                     }
+                                } else if (currentStatus === 'downloading') {
+                                    var stepText = item.process_step || 'Downloading...';
+                                    statusCell.html('<span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + stepText + '</span>');
+                                } else if (currentStatus === 'processing') {
+                                    var stepText = item.process_step || 'Converting MP4...';
+                                    statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
                                 } else if (currentStatus === 'error' || currentStatus === 'failed') {
                                     statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-circle"></i> Failed</span>');
-                                } else if (currentStatus === 'processing') {
-                                    statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> Processing...</span>');
                                 } else {
                                     statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>');
                                 }
