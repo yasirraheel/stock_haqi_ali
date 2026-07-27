@@ -82,9 +82,16 @@
                       <td><strong>{{ $effect->title }}</strong></td>
                       <td><span class="badge badge-info">{{ $effect->category ?? 'General' }}</span></td>
                       <td>
-                        <a href="{{ $effect->effect_url }}" target="_blank" class="text-primary truncate" style="max-width: 250px; display: inline-block;">
-                          {{ $effect->effect_url }}
-                        </a>
+                        <div class="input-group input-group-sm" style="min-width: 380px;">
+                          <input type="text" class="form-control form-control-sm" id="effect_url_{{ $effect->id }}" value="{{ $effect->effect_url }}" readonly>
+                          <div class="input-group-append">
+                            @if($effect->processed_url)
+                              <button class="btn btn-sm btn-info" type="button" onclick="showPreview('{{ $effect->processed_url }}')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>
+                            @endif
+                            <button class="btn btn-sm btn-secondary" type="button" onclick="copyEffectUrl('effect_url_{{ $effect->id }}')" data-toggle="tooltip" title="Copy URL"><i class="fa fa-copy"></i> Copy</button>
+                            <a href="{{ $effect->effect_url }}" target="_blank" class="btn btn-sm btn-primary" data-toggle="tooltip" title="Open Link"><i class="fa fa-external-link"></i> Open</a>
+                          </div>
+                        </div>
                       </td>
                       <td>
                         @if($effect->is_premium || ($effect->license_price && $effect->license_price > 0))
@@ -96,32 +103,24 @@
                       <td>@if($effect->is_active)<span class="badge badge-success">Active</span> @else<span class="badge badge-danger">Inactive</span>@endif</td>
                       <td>
                           @if($effect->status == 'ready')
-                              <span class="badge badge-success">Ready</span>
-                              @if($effect->source_size_bytes !== null)
-                                  <div class="mt-1 text-muted" style="font-size: 11px;">Original: {{ number_format($effect->source_size_bytes / 1048576, 2) }} MB</div>
-                              @endif
+                              <span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>
                               @if($effect->converted_bytes !== null)
-                                  <div class="text-muted" style="font-size: 11px;">Converted: {{ number_format($effect->converted_bytes / 1048576, 2) }} MB</div>
-                              @endif
-                              @if($effect->processed_url)
-                                  <div class="mt-2">
-                                      <a href="javascript:void(0);" onclick="showPreview('{{ $effect->processed_url }}')" class="btn btn-sm btn-info" style="font-size: 11px;"><i class="fa fa-play"></i> Preview Processed</a>
-                                  </div>
+                                  <br><small style="color: #aaa;">{{ number_format($effect->converted_bytes / 1048576, 2) }} MB</small>
                               @endif
                           @elseif($effect->status == 'processing')
-                              <span class="badge badge-warning">Processing...</span>
+                              <span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> Processing...</span>
                           @elseif($effect->status == 'error')
-                              <span class="badge badge-danger">Failed</span>
+                              <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-circle"></i> Failed</span>
                           @else
-                              <span class="badge badge-secondary">Pending</span>
+                              <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>
                           @endif
                       </td>
-                      <td>
-                        <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-icon waves-effect waves-light btn-success m-b-5 m-r-5" data-toggle="tooltip" title="Edit"> <i class="fa fa-edit"></i> </a>
+                      <td class="text-center" style="white-space: nowrap;">
+                        <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-icon waves-effect waves-light btn-success btn-xs m-r-5" data-toggle="tooltip" title="Edit"> <i class="fa fa-edit"></i> </a>
                         <form action="{{ route('admin.effects.destroy', $effect->id) }}" method="POST" id="delete-form-{{ $effect->id }}" style="display:inline-block;">
                           @csrf
                           @method('DELETE')
-                          <button type="button" class="btn btn-icon waves-effect waves-light btn-danger m-b-5" onclick="confirmDeleteEffect({{ $effect->id }})" data-toggle="tooltip" title="Remove"> <i class="fa fa-remove"></i> </button>
+                          <button type="button" class="btn btn-icon waves-effect waves-light btn-danger btn-xs" onclick="confirmDeleteEffect({{ $effect->id }})" data-toggle="tooltip" title="Remove"> <i class="fa fa-remove"></i> </button>
                         </form>
                       </td>
                     </tr>
@@ -161,6 +160,28 @@
     </div>
 
     <script>
+        function copyEffectUrl(elementId) {
+            var copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: 'URL copied to clipboard.',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    background: '#1a2234',
+                    color: '#fff'
+                });
+            } else {
+                alert("URL copied to clipboard!");
+            }
+        }
+
         function confirmDeleteEffect(id) {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
