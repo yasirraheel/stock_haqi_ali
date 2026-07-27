@@ -92,17 +92,16 @@
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td style="white-space: nowrap;">
                         @if($effect->is_active)
                             <span class="badge badge-success">Active</span>
                         @else
                             <span class="badge badge-danger">Inactive</span>
                         @endif
-                        <br>
                         @if($effect->is_premium || ($effect->license_price && $effect->license_price > 0))
-                            <span class="badge badge-warning" style="margin-top: 4px; display: inline-block;"><i class="fa fa-star"></i> Premium (${{ number_format($effect->license_price, 2) }})</span>
+                            <span class="badge badge-warning"><i class="fa fa-star"></i> Premium (${{ number_format($effect->license_price, 2) }})</span>
                         @else
-                            <span class="badge badge-success" style="margin-top: 4px; display: inline-block;">Free</span>
+                            <span class="badge badge-success">Free</span>
                         @endif
                       </td>
                       <td class="status-cell">
