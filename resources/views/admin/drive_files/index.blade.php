@@ -105,8 +105,8 @@
                                             <th>File Name</th>
                                             <th>File Size</th>
                                             <th>Direct Download URL</th>
-                                            <th>Status</th>
-                                            <th class="text-center">Action</th>
+                                            <th>Import Status</th>
+                                            <th class="text-center" width="16%">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -129,10 +129,26 @@
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td><span class="badge badge-success">{{ ucfirst($file->status) }}</span></td>
+                                                <td>
+                                                    @if ($file->status === 'imported' || $file->effect_id)
+                                                        <span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Imported</span>
+                                                    @else
+                                                        <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;">Scanned</span>
+                                                    @endif
+                                                </td>
                                                 <td class="text-center">
+                                                    @if ($file->status === 'imported' || $file->effect_id)
+                                                        @if ($file->effect_id)
+                                                            <a href="{{ route('admin.effects.edit', $file->effect_id) }}" class="btn btn-icon waves-effect waves-light btn-info btn-xs m-r-5" data-toggle="tooltip" title="View/Edit Effect"><i class="fa fa-eye"></i> View</a>
+                                                        @endif
+                                                    @else
+                                                        {!! Form::open(['route' => ['admin.drive-files.import', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
+                                                        <button type="submit" class="btn btn-xs btn-success waves-effect waves-light m-r-5" data-toggle="tooltip" title="Import as Effect and start background processing"><i class="fa fa-download"></i> Import</button>
+                                                        {!! Form::close() !!}
+                                                    @endif
+
                                                     {!! Form::open(['route' => ['admin.drive-files.destroy', $file->id], 'method' => 'DELETE', 'id' => 'delete-form-'.$file->id, 'style' => 'display:inline-block;']) !!}
-                                                    <button type="button" class="btn btn-icon waves-effect waves-light btn-danger m-b-5" onclick="confirmDelete({{ $file->id }})" data-toggle="tooltip" title="Remove"><i class="fa fa-remove"></i></button>
+                                                    <button type="button" class="btn btn-icon waves-effect waves-light btn-danger btn-xs" onclick="confirmDelete({{ $file->id }})" data-toggle="tooltip" title="Remove Record"><i class="fa fa-remove"></i></button>
                                                     {!! Form::close() !!}
                                                 </td>
                                             </tr>

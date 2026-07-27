@@ -120,6 +120,9 @@ class GoogleDriveScannerController extends Controller
                         $newCount++;
                     }
 
+                    // Preserve status if already imported
+                    $currentStatus = ($record && $record->status === 'imported') ? 'imported' : 'scanned';
+
                     // Upsert by file_id to prevent duplicates
                     GoogleDriveFile::updateOrCreate(
                         ['file_id' => $fileId],
@@ -129,7 +132,7 @@ class GoogleDriveScannerController extends Controller
                             'mime_type' => $mimeType,
                             'size' => $size,
                             'url' => $directUrl,
-                            'status' => 'scanned'
+                            'status' => $currentStatus
                         ]
                     );
 
@@ -147,6 +150,57 @@ class GoogleDriveScannerController extends Controller
         }
 
         return redirect()->route('admin.drive-files.index', ['folder_id' => $folderId]);
+    }
+
+    /**
+     * Import a scanned file as an Effect in the database and queue background conversion.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function importFile($id)
+    {
+        $driveFile = GoogleDriveFile::findOrFail($id);
+
+        // Check if already imported
+        if ($driveFile->status === 'imported' && $driveFile->effect_id) {
+            $existingEffect = \App\Models\Effect::find($driveFile->effect_id);
+            if ($existingEffect) {
+                Session::flash('error_message', "File '{$driveFile->name}' is already imported as Effect #{$existingEffect->id}!");
+                return redirect()->back();
+            }
+        }
+
+        // Clean name (strip extension)
+        $cleanTitle = pathinfo($driveFile->name, PATHINFO_FILENAME);
+        if (empty($cleanTitle)) {
+            $cleanTitle = $driveFile->name;
+        }
+
+        $directUrl = "https://drive.google.com/uc?export=download&id={$driveFile->file_id}";
+
+        // Create Effect
+        $effect = new \App\Models\Effect();
+        $effect->title = $cleanTitle;
+        $effect->description = $cleanTitle;
+        $effect->effect_url = $directUrl;
+        $effect->category = 'General';
+        $effect->license_price = 0;
+        $effect->is_premium = 0;
+        $effect->is_active = 1;
+        $effect->status = 'pending';
+        $effect->save();
+
+        // Dispatch background processing job
+        \App\Jobs\ProcessStockEffectJob::dispatch($effect->id);
+
+        // Update GDrive file status
+        $driveFile->status = 'imported';
+        $driveFile->effect_id = $effect->id;
+        $driveFile->save();
+
+        Session::flash('flash_message', "Successfully imported '{$cleanTitle}' as Effect #{$effect->id}! It is queued for background processing.");
+        return redirect()->back();
     }
 
     /**

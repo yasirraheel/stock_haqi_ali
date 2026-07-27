@@ -74,6 +74,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     ]);
     Route::get('drive_files', 'GoogleDriveScannerController@index');
     Route::post('drive-files/scan', 'GoogleDriveScannerController@scanFolder')->name('admin.drive-files.scan');
+    Route::post('drive-files/{id}/import', 'GoogleDriveScannerController@importFile')->name('admin.drive-files.import');
 
     // Photo Categories Routes
     Route::resource('photo-categories', 'PhotoCategoryController')->only(['index', 'store', 'destroy'])->names([

@@ -18,8 +18,17 @@ class GoogleDriveFile extends Model
         'mime_type',
         'size',
         'url',
+        'effect_id',
         'status'
     ];
+
+    /**
+     * Relationship with Effect model.
+     */
+    public function effect()
+    {
+        return $this->belongsTo(Effect::class, 'effect_id');
+    }
 
     /**
      * Get human-readable file size.
