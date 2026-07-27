@@ -78,7 +78,7 @@
                   </thead>
                   <tbody>
                    @foreach($effects as $effect)
-                    <tr id="card_box_id_{{$effect->id}}">
+                    <tr id="card_box_id_{{$effect->id}}" data-effect-id="{{ $effect->id }}" data-status="{{ $effect->status }}">
                       <td><strong>{{ $effect->title }}</strong></td>
                       <td><span class="badge badge-info">{{ $effect->category ?? 'General' }}</span></td>
                       <td>
@@ -86,7 +86,7 @@
                           <input type="text" class="form-control form-control-sm" id="effect_url_{{ $effect->id }}" value="{{ $effect->effect_url }}" readonly>
                           <div class="input-group-append">
                             @if($effect->processed_url)
-                              <button class="btn btn-sm btn-info" type="button" onclick="showPreview('{{ $effect->processed_url }}')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>
+                              <button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview('{{ $effect->processed_url }}')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>
                             @endif
                             <button class="btn btn-sm btn-secondary" type="button" onclick="copyEffectUrl('effect_url_{{ $effect->id }}')" data-toggle="tooltip" title="Copy URL"><i class="fa fa-copy"></i> Copy</button>
                             <a href="{{ $effect->effect_url }}" target="_blank" class="btn btn-sm btn-primary" data-toggle="tooltip" title="Open Link"><i class="fa fa-external-link"></i> Open</a>
@@ -101,7 +101,7 @@
                         @endif
                       </td>
                       <td>@if($effect->is_active)<span class="badge badge-success">Active</span> @else<span class="badge badge-danger">Inactive</span>@endif</td>
-                      <td>
+                      <td class="status-cell">
                           @if($effect->status == 'ready')
                               <span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>
                               @if($effect->converted_bytes !== null)
@@ -219,6 +219,61 @@
             player.pause();
             player.src = '';
         }
+
+        // Auto-poll effect processing status via AJAX every 3 seconds
+        $(document).ready(function() {
+            var checkInterval = setInterval(function() {
+                var pendingIds = [];
+                $('tr[data-effect-id]').each(function() {
+                    var status = $(this).attr('data-status');
+                    if (status === 'pending' || status === 'processing') {
+                        pendingIds.push($(this).attr('data-effect-id'));
+                    }
+                });
+
+                if (pendingIds.length === 0) {
+                    clearInterval(checkInterval);
+                    return;
+                }
+
+                $.ajax({
+                    url: '{{ route("admin.effects.check-status") }}',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        ids: pendingIds
+                    },
+                    success: function(data) {
+                        $.each(data, function(id, item) {
+                            var tr = $('#card_box_id_' + id);
+                            if (tr.length) {
+                                tr.attr('data-status', item.status);
+                                var statusCell = tr.find('.status-cell');
+                                
+                                if (item.status === 'ready') {
+                                    var html = '<span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>';
+                                    if (item.converted_mb) {
+                                        html += '<br><small style="color: #aaa;">' + item.converted_mb + '</small>';
+                                    }
+                                    statusCell.html(html);
+
+                                    // Auto-inject Preview button into URL input group append if not present
+                                    var appendGroup = tr.find('.input-group-append');
+                                    if (item.processed_url && appendGroup.find('.btn-preview-processed').length === 0) {
+                                        var previewBtn = '<button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview(\'' + item.processed_url + '\')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>';
+                                        appendGroup.prepend(previewBtn);
+                                    }
+                                } else if (item.status === 'error') {
+                                    statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-circle"></i> Failed</span>');
+                                } else if (item.status === 'processing') {
+                                    statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> Processing...</span>');
+                                }
+                            }
+                        });
+                    }
+                });
+            }, 3000);
+        });
 
         // Also stop video if modal is closed by clicking outside
         $('#videoPreviewModal').on('hidden.bs.modal', function () {

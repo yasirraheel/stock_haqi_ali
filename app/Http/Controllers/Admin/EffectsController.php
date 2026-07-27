@@ -35,6 +35,32 @@ class EffectsController extends Controller
         return view('admin.effects.index', compact('effects', 'page_title'));
     }
 
+    public function checkStatus(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([]);
+        }
+
+        $effects = Effect::whereIn('id', $ids)->get();
+        $response = [];
+
+        foreach ($effects as $effect) {
+            $path = storage_path("app/public/effects/{$effect->id}.mp4");
+            $convertedBytes = file_exists($path) ? filesize($path) : null;
+            $convertedMb = $convertedBytes !== null ? number_format($convertedBytes / 1048576, 2) . ' MB' : null;
+
+            $response[$effect->id] = [
+                'id' => $effect->id,
+                'status' => $effect->status,
+                'converted_mb' => $convertedMb,
+                'processed_url' => $effect->processed_url
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function create()
     {
         $page_title = 'Add New Effect';
