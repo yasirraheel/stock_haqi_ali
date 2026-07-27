@@ -72,6 +72,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
         'index' => 'admin.drive-files.index',
         'destroy' => 'admin.drive-files.destroy'
     ]);
+    Route::get('drive_files', 'GoogleDriveScannerController@index');
     Route::post('drive-files/scan', 'GoogleDriveScannerController@scanFolder')->name('admin.drive-files.scan');
 
     // Photo Categories Routes
