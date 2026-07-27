@@ -17,14 +17,14 @@ class GoogleDriveScannerController extends Controller
     }
 
     /**
-     * Display a listing of scanned Google Drive files.
+     * Display a listing of scanned Google Drive files (excluding blocked).
      *
      * @param Request $request
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
     {
-        $query = GoogleDriveFile::query();
+        $query = GoogleDriveFile::where('status', '!=', 'blocked');
 
         if ($request->has('s') && !empty($request->get('s'))) {
             $search = trim($request->get('s'));
@@ -40,11 +40,40 @@ class GoogleDriveScannerController extends Controller
         }
 
         $files = $query->orderBy('id', 'DESC')->paginate(20);
-        $totalFiles = GoogleDriveFile::count();
-        $foldersCount = GoogleDriveFile::distinct('folder_id')->count('folder_id');
+        $totalFiles = GoogleDriveFile::where('status', '!=', 'blocked')->count();
+        $blockedCount = GoogleDriveFile::where('status', 'blocked')->count();
+        $foldersCount = GoogleDriveFile::where('status', '!=', 'blocked')->distinct('folder_id')->count('folder_id');
         $page_title = 'Google Drive Scanned Files';
 
-        return view('admin.drive_files.index', compact('files', 'totalFiles', 'foldersCount', 'page_title'));
+        return view('admin.drive_files.index', compact('files', 'totalFiles', 'blockedCount', 'foldersCount', 'page_title'));
+    }
+
+    /**
+     * Display a listing of blocked Google Drive files.
+     *
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+    public function blocked(Request $request)
+    {
+        $query = GoogleDriveFile::where('status', 'blocked');
+
+        if ($request->has('s') && !empty($request->get('s'))) {
+            $search = trim($request->get('s'));
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('file_id', 'LIKE', "%{$search}%")
+                  ->orWhere('folder_id', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $files = $query->orderBy('id', 'DESC')->paginate(20);
+        $totalFiles = GoogleDriveFile::where('status', '!=', 'blocked')->count();
+        $blockedCount = GoogleDriveFile::where('status', 'blocked')->count();
+        $foldersCount = GoogleDriveFile::distinct('folder_id')->count('folder_id');
+        $page_title = 'Blocked Files';
+
+        return view('admin.drive_files.blocked', compact('files', 'totalFiles', 'blockedCount', 'foldersCount', 'page_title'));
     }
 
     /**
@@ -120,8 +149,15 @@ class GoogleDriveScannerController extends Controller
                         $newCount++;
                     }
 
-                    // Preserve status if already imported
-                    $currentStatus = ($record && $record->status === 'imported') ? 'imported' : 'scanned';
+                    // Preserve status if already imported or blocked
+                    $currentStatus = 'scanned';
+                    if ($record) {
+                        if ($record->status === 'blocked') {
+                            $currentStatus = 'blocked';
+                        } elseif ($record->status === 'imported') {
+                            $currentStatus = 'imported';
+                        }
+                    }
 
                     // Upsert by file_id to prevent duplicates
                     GoogleDriveFile::updateOrCreate(
@@ -162,6 +198,11 @@ class GoogleDriveScannerController extends Controller
     {
         $driveFile = GoogleDriveFile::findOrFail($id);
 
+        if ($driveFile->status === 'blocked') {
+            Session::flash('error_message', "File '{$driveFile->name}' is BLOCKED and cannot be imported! Unblock it first if needed.");
+            return redirect()->back();
+        }
+
         // Check if already imported
         if ($driveFile->status === 'imported' && $driveFile->effect_id) {
             $existingEffect = \App\Models\Effect::find($driveFile->effect_id);
@@ -200,6 +241,38 @@ class GoogleDriveScannerController extends Controller
         $driveFile->save();
 
         Session::flash('flash_message', "Successfully imported '{$cleanTitle}' as Effect #{$effect->id}! It is queued for background processing.");
+        return redirect()->back();
+    }
+
+    /**
+     * Mark a scanned file as blocked.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function blockFile($id)
+    {
+        $driveFile = GoogleDriveFile::findOrFail($id);
+        $driveFile->status = 'blocked';
+        $driveFile->save();
+
+        Session::flash('flash_message', "File '{$driveFile->name}' has been blocked and moved to Blocked Files.");
+        return redirect()->back();
+    }
+
+    /**
+     * Unblock a blocked file.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function unblockFile($id)
+    {
+        $driveFile = GoogleDriveFile::findOrFail($id);
+        $driveFile->status = $driveFile->effect_id ? 'imported' : 'scanned';
+        $driveFile->save();
+
+        Session::flash('flash_message', "File '{$driveFile->name}' unblocked successfully.");
         return redirect()->back();
     }
 

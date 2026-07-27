@@ -73,8 +73,11 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
         'destroy' => 'admin.drive-files.destroy'
     ]);
     Route::get('drive_files', 'GoogleDriveScannerController@index');
+    Route::get('blocked-files', 'GoogleDriveScannerController@blocked')->name('admin.drive-files.blocked');
     Route::post('drive-files/scan', 'GoogleDriveScannerController@scanFolder')->name('admin.drive-files.scan');
     Route::post('drive-files/{id}/import', 'GoogleDriveScannerController@importFile')->name('admin.drive-files.import');
+    Route::post('drive-files/{id}/block', 'GoogleDriveScannerController@blockFile')->name('admin.drive-files.block');
+    Route::post('drive-files/{id}/unblock', 'GoogleDriveScannerController@unblockFile')->name('admin.drive-files.unblock');
 
     // Photo Categories Routes
     Route::resource('photo-categories', 'PhotoCategoryController')->only(['index', 'store', 'destroy'])->names([

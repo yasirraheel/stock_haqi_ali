@@ -14,7 +14,7 @@
                                     <div class="card-box widget-user">
                                         <div class="text-center">
                                             <h2 class="text-primary" data-plugin="counterup">{{ number_format($totalFiles) }}</h2>
-                                            <h5 style="color: #f9f9f9;">Total Synced Files</h5>
+                                            <h5 style="color: #f9f9f9;">Active Scanned Files</h5>
                                         </div>
                                     </div>
                                 </a>
@@ -25,7 +25,7 @@
                                     <div class="card-box widget-user">
                                         <div class="text-center">
                                             <h2 class="text-danger" data-plugin="counterup">{{ number_format($blockedCount) }}</h2>
-                                            <h5 style="color: #f9f9f9;">Blocked Files</h5>
+                                            <h5 style="color: #f9f9f9;">Total Blocked Files</h5>
                                         </div>
                                     </div>
                                 </a>
@@ -36,7 +36,7 @@
                                     <div class="card-box widget-user">
                                         <div class="text-center">
                                             <h2 class="text-warning" data-plugin="counterup">{{ number_format($foldersCount) }}</h2>
-                                            <h5 style="color: #f9f9f9;">Total Folders Scanned</h5>
+                                            <h5 style="color: #f9f9f9;">Total Folders</h5>
                                         </div>
                                     </div>
                                 </a>
@@ -46,8 +46,8 @@
                                 <a href="#">
                                     <div class="card-box widget-user">
                                         <div class="text-center">
-                                            <h2 class="text-success" data-plugin="counterup">Active</h2>
-                                            <h5 style="color: #f9f9f9;">Google Drive API Status</h5>
+                                            <h2 class="text-success" data-plugin="counterup">Protected</h2>
+                                            <h5 style="color: #f9f9f9;">Folder Scan Shield</h5>
                                         </div>
                                     </div>
                                 </a>
@@ -56,6 +56,18 @@
 
                         <!-- Main Table Card Box -->
                         <div class="card-box table-responsive">
+
+                            <div class="row mb-2">
+                                <div class="col-md-8">
+                                    <h4 class="m-t-0 header-title text-danger"><b><i class="fa fa-ban"></i> Blocked Files List</b></h4>
+                                    <p class="text-muted font-13 m-b-15">
+                                        Files in this list are blocked from import jobs. Even if you re-scan a Google Drive folder in the future, these files will remain blocked automatically.
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <a href="{{ route('admin.drive-files.index') }}" class="btn btn-primary btn-sm waves-effect waves-light"><i class="fa fa-arrow-left"></i> Back to Scanned Files</a>
+                                </div>
+                            </div>
 
                             @if (Session::has('flash_message'))
                                 <div class="alert alert-success">
@@ -73,25 +85,11 @@
                                 </div>
                             @endif
 
-                            <!-- Scan Folder Form -->
-                            <div class="p-3 mb-4" style="background-color: #212529; border-radius: 5px; border: 1px solid #32383e;">
-                                {!! Form::open(['route' => 'admin.drive-files.scan', 'class' => 'form-inline', 'role' => 'form', 'method' => 'post']) !!}
-                                <div class="input-group w-100">
-                                    <input type="text" name="folder_input" id="folder_input" class="form-control"
-                                        placeholder="Paste Google Drive Folder URL or Folder ID (e.g. 1Q7N29v4hu63jsk0_5GhjuMpOykBw6akf)..."
-                                        value="{{ request('folder_id', '1Q7N29v4hu63jsk0_5GhjuMpOykBw6akf') }}" required>
-                                    <div class="input-group-append">
-                                        <button type="submit" class="btn btn-danger waves-effect waves-light"><i class="fa fa-refresh"></i> Scan & Sync Folder Files</button>
-                                    </div>
-                                </div>
-                                {!! Form::close() !!}
-                            </div>
-
                             <!-- Search Form -->
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    {!! Form::open(['route' => 'admin.drive-files.index', 'class' => 'app-search', 'id' => 'search', 'role' => 'form', 'method' => 'get']) !!}
-                                    <input type="text" name="s" placeholder="Search scanned files by name, file ID, or folder ID..." value="{{ request('s') }}" class="form-control">
+                                    {!! Form::open(['route' => 'admin.drive-files.blocked', 'class' => 'app-search', 'id' => 'search', 'role' => 'form', 'method' => 'get']) !!}
+                                    <input type="text" name="s" placeholder="Search blocked files by name, file ID, or folder ID..." value="{{ request('s') }}" class="form-control">
                                     <button type="submit"><i class="fa fa-search"></i></button>
                                     {!! Form::close() !!}
                                 </div>
@@ -105,7 +103,7 @@
                                             <th>File Name</th>
                                             <th>File Size</th>
                                             <th>Direct Download URL</th>
-                                            <th>Import Status</th>
+                                            <th>Status</th>
                                             <th class="text-center" width="15%">Action</th>
                                         </tr>
                                     </thead>
@@ -131,25 +129,11 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    @if ($file->status === 'imported' || $file->effect_id)
-                                                        <span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Imported</span>
-                                                    @else
-                                                        <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;">Scanned</span>
-                                                    @endif
+                                                    <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-ban"></i> Blocked</span>
                                                 </td>
                                                 <td class="text-center">
-                                                    @if ($file->status === 'imported' || $file->effect_id)
-                                                        @if ($file->effect_id)
-                                                            <a href="{{ route('admin.effects.edit', $file->effect_id) }}" class="btn btn-icon waves-effect waves-light btn-info btn-xs m-r-5" data-toggle="tooltip" title="View/Edit Effect"><i class="fa fa-eye"></i> View</a>
-                                                        @endif
-                                                    @else
-                                                        {!! Form::open(['route' => ['admin.drive-files.import', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
-                                                        <button type="submit" class="btn btn-xs btn-success waves-effect waves-light m-r-5" data-toggle="tooltip" title="Import as Effect and start background processing"><i class="fa fa-download"></i> Import</button>
-                                                        {!! Form::close() !!}
-                                                    @endif
-
-                                                    {!! Form::open(['route' => ['admin.drive-files.block', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
-                                                    <button type="submit" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" data-toggle="tooltip" title="Block file from import"><i class="fa fa-ban"></i></button>
+                                                    {!! Form::open(['route' => ['admin.drive-files.unblock', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
+                                                    <button type="submit" class="btn btn-xs btn-success waves-effect waves-light m-r-5" data-toggle="tooltip" title="Unblock File"><i class="fa fa-unlock"></i> Unblock</button>
                                                     {!! Form::close() !!}
 
                                                     {!! Form::open(['route' => ['admin.drive-files.destroy', $file->id], 'method' => 'DELETE', 'id' => 'delete-form-'.$file->id, 'style' => 'display:inline-block;']) !!}
@@ -159,7 +143,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="6" class="text-center p-4">No scanned files found. Enter a Google Drive Folder ID above and click "Scan & Sync Folder Files".</td>
+                                                <td colspan="6" class="text-center p-4">No blocked files found.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
