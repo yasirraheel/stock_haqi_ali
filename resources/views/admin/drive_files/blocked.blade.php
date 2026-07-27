@@ -64,7 +64,10 @@
                                         Files in this list are blocked from import jobs. Even if you re-scan a Google Drive folder in the future, these files will remain blocked automatically.
                                     </p>
                                 </div>
-                                <div class="col-md-4 text-right">
+                                <div class="col-md-6 text-right">
+                                    {!! Form::open(['route' => 'admin.drive-files.clear-blocked', 'method' => 'POST', 'id' => 'clear-blocked-form', 'style' => 'display:inline-block;']) !!}
+                                        <button type="button" class="btn btn-danger btn-sm waves-effect waves-light m-r-5" onclick="confirmClearBlocked()"><i class="fa fa-trash"></i> Delete All Blocked Files</button>
+                                    {!! Form::close() !!}
                                     <a href="{{ route('admin.drive-files.index') }}" class="btn btn-primary btn-sm waves-effect waves-light"><i class="fa fa-arrow-left"></i> Back to Scanned Files</a>
                                 </div>
                             </div>
@@ -241,6 +244,29 @@
             } else {
                 if (confirm("Are you sure you want to remove this record?")) {
                     document.getElementById('delete-form-' + fileId).submit();
+                }
+            }
+        function confirmClearBlocked() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Delete All Blocked Files?',
+                    text: 'This will permanently remove all blocked file records from your database.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, Delete All Blocked',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('clear-blocked-form').submit();
+                    }
+                });
+            } else {
+                if (confirm("Are you sure you want to permanently delete all blocked file records?")) {
+                    document.getElementById('clear-blocked-form').submit();
                 }
             }
         }

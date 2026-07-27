@@ -313,6 +313,20 @@ class GoogleDriveScannerController extends Controller
     }
 
     /**
+     * Delete all blocked file records from database.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function clearBlocked()
+    {
+        $count = GoogleDriveFile::where('status', 'blocked')->count();
+        GoogleDriveFile::where('status', 'blocked')->delete();
+
+        Session::flash('flash_message', "Successfully deleted {$count} blocked file records.");
+        return redirect()->back();
+    }
+
+    /**
      * Helper to extract Google Drive Folder ID from raw input or URL.
      *
      * @param string $input
