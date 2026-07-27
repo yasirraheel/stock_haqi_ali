@@ -241,12 +241,10 @@
                         document.getElementById('delete-form-' + fileId).submit();
                     }
                 });
-            } else {
-                if (confirm("Are you sure you want to remove this record?")) {
-                    document.getElementById('delete-form-' + fileId).submit();
-                }
             }
-        function confirmClearBlocked() {
+        }
+
+        window.confirmClearBlocked = function() {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     title: 'Delete All Blocked Files?',
@@ -269,6 +267,6 @@
                     document.getElementById('clear-blocked-form').submit();
                 }
             }
-        }
+        };
     </script>
 @endsection
