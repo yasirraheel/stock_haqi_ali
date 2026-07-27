@@ -102,28 +102,30 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>File Name</th>
-                                            <th>File Size</th>
+                                            <th style="min-width: 200px;">File Name</th>
+                                            <th style="white-space: nowrap;">File Size</th>
                                             <th>Direct Download URL</th>
-                                            <th>Import Status</th>
-                                            <th class="text-center" width="15%">Action</th>
+                                            <th style="min-width: 160px;">Import Status</th>
+                                            <th class="text-center" width="120">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse ($files as $i => $file)
                                             <tr id="drive_file_id_{{ $file->id }}">
                                                 <td>{{ $files->firstItem() + $i }}</td>
-                                                <td>
-                                                    <strong>{{ $file->name }}</strong>
+                                                <td style="max-width: 240px;">
+                                                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $file->name }}">
+                                                        <strong>{{ $file->name }}</strong>
+                                                    </div>
                                                     @if ($file->mime_type)
-                                                        <br><small style="color: #aaa;">{{ $file->mime_type }}</small>
+                                                        <small style="color: #aaa; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $file->mime_type }}">{{ $file->mime_type }}</small>
                                                     @endif
                                                 </td>
-                                                <td>{{ $file->formatted_size }}</td>
+                                                <td style="white-space: nowrap;">{{ $file->formatted_size }}</td>
                                                 <td>
-                                                    <div class="input-group input-group-sm" style="min-width: 420px;">
+                                                    <div class="input-group input-group-sm" style="max-width: 450px;">
                                                         <input type="text" class="form-control form-control-sm" id="url_{{ $file->id }}" value="{{ $file->url }}" readonly>
-                                                        <div class="input-group-append">
+                                                        <div class="input-group-append" id="action_append_{{ $file->id }}">
                                                             <button class="btn btn-sm btn-info" type="button" onclick="previewDriveFile('{{ $file->file_id }}', '{{ addslashes($file->name) }}')" data-toggle="tooltip" title="Preview File"><i class="fa fa-play-circle"></i> Preview</button>
                                                             <button class="btn btn-sm btn-secondary" type="button" onclick="copyUrl('url_{{ $file->id }}')" data-toggle="tooltip" title="Copy Direct URL"><i class="fa fa-copy"></i> Copy</button>
                                                             <a href="{{ $file->url }}" target="_blank" class="btn btn-sm btn-primary" data-toggle="tooltip" title="Open Link"><i class="fa fa-external-link"></i> Open</a>
@@ -132,19 +134,14 @@
                                                                     <a href="{{ route('admin.effects.edit', $file->effect_id) }}" class="btn btn-sm btn-success" data-toggle="tooltip" title="View Imported Effect"><i class="fa fa-eye"></i> View</a>
                                                                 @endif
                                                             @else
-                                                                <button type="button" class="btn btn-sm btn-success" onclick="document.getElementById('import-form-{{ $file->id }}').submit();" data-toggle="tooltip" title="Import as Effect and start background processing"><i class="fa fa-download"></i> Import</button>
+                                                                <button type="button" class="btn btn-sm btn-success import-btn-{{ $file->id }}" onclick="importDriveFile({{ $file->id }}, this)" data-toggle="tooltip" title="Import as Effect and start background processing"><i class="fa fa-download"></i> Import</button>
                                                             @endif
                                                         </div>
                                                     </div>
-
-                                                    @if (!($file->status === 'imported' || $file->effect_id))
-                                                        {!! Form::open(['route' => ['admin.drive-files.import', $file->id], 'method' => 'POST', 'id' => 'import-form-'.$file->id, 'style' => 'display:none;']) !!}
-                                                        {!! Form::close() !!}
-                                                    @endif
                                                 </td>
-                                                <td>
+                                                <td class="status-cell" id="status_cell_{{ $file->id }}" data-file-id="{{ $file->id }}" data-effect-id="{{ $file->effect_id ?? '' }}">
                                                     @if ($file->status === 'imported' || $file->effect_id)
-                                                        <span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Imported</span>
+                                                        <span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>
                                                     @else
                                                         <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;">Scanned</span>
                                                     @endif
@@ -260,5 +257,104 @@
                 }
             }
         }
+
+        function importDriveFile(fileId, btn) {
+            var $btn = $(btn);
+            $btn.prop('disabled', true).html('<i class="fa fa-spin fa-circle-o-notch"></i> Importing...');
+
+            $.ajax({
+                url: '{{ url("admin/drive-files") }}/' + fileId + '/import',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(res) {
+                    if (res.success) {
+                        var $statusCell = $('#status_cell_' + fileId);
+                        $statusCell.attr('data-effect-id', res.effect_id);
+                        $statusCell.html('<span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>');
+
+                        $btn.replaceWith('<a href="' + res.effect_url + '" class="btn btn-sm btn-success" data-toggle="tooltip" title="View Imported Effect"><i class="fa fa-eye"></i> View</a>');
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                position: 'top-end',
+                                icon: 'success',
+                                title: 'Import Queued!',
+                                text: res.message,
+                                showConfirmButton: false,
+                                timer: 2000,
+                                toast: true,
+                                background: "#1a2234",
+                                color: "#fff"
+                            });
+                        }
+
+                        pollDriveFileStatuses();
+                    } else {
+                        $btn.prop('disabled', false).html('<i class="fa fa-download"></i> Import');
+                        alert(res.message || 'Import failed.');
+                    }
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).html('<i class="fa fa-download"></i> Import');
+                    var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Error importing file.';
+                    alert(msg);
+                }
+            });
+        }
+
+        function pollDriveFileStatuses() {
+            var pendingEffectIds = [];
+            $('.status-cell').each(function() {
+                var effectId = $(this).attr('data-effect-id');
+                if (effectId && effectId !== '') {
+                    var currentText = $(this).text().toLowerCase();
+                    if (!currentText.includes('ready') && !currentText.includes('failed')) {
+                        pendingEffectIds.push(effectId);
+                    }
+                }
+            });
+
+            if (pendingEffectIds.length === 0) return;
+
+            $.ajax({
+                url: '{{ route("admin.effects.check-status") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    ids: pendingEffectIds.join(',')
+                },
+                success: function(data) {
+                    $.each(data, function(effectId, effect) {
+                        var $cell = $('.status-cell[data-effect-id="' + effectId + '"]');
+                        if ($cell.length) {
+                            var currentStatus = effect.status;
+                            var stepText = effect.process_step || '';
+                            var html = '';
+
+                            if (currentStatus === 'ready') {
+                                html = '<span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready' + (effect.converted_mb ? ' (' + effect.converted_mb + ')' : '') + '</span>';
+                            } else if (currentStatus === 'downloading') {
+                                html = '<span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + (stepText || 'Downloading...') + '</span>';
+                            } else if (currentStatus === 'processing') {
+                                html = '<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cogs fa-spin"></i> ' + (stepText || 'Compressing MP4...') + '</span>';
+                            } else if (currentStatus === 'failed') {
+                                html = '<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-triangle"></i> Failed</span>';
+                            } else {
+                                html = '<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>';
+                            }
+
+                            $cell.html(html);
+                        }
+                    });
+                }
+            });
+        }
+
+        setInterval(pollDriveFileStatuses, 3000);
+        $(document).ready(function() {
+            pollDriveFileStatuses();
+        });
     </script>
 @endsection

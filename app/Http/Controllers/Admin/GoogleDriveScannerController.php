@@ -195,11 +195,14 @@ class GoogleDriveScannerController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function importFile($id)
+    public function importFile(Request $request, $id)
     {
         $driveFile = GoogleDriveFile::findOrFail($id);
 
         if ($driveFile->status === 'blocked') {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => "File '{$driveFile->name}' is BLOCKED and cannot be imported!"], 400);
+            }
             Session::flash('error_message', "File '{$driveFile->name}' is BLOCKED and cannot be imported! Unblock it first if needed.");
             return redirect()->back();
         }
@@ -208,6 +211,14 @@ class GoogleDriveScannerController extends Controller
         if ($driveFile->status === 'imported' && $driveFile->effect_id) {
             $existingEffect = \App\Models\Effect::find($driveFile->effect_id);
             if ($existingEffect) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "File '{$driveFile->name}' is already imported as Effect #{$existingEffect->id}!",
+                        'effect_id' => $existingEffect->id,
+                        'effect_url' => route('admin.effects.edit', $existingEffect->id)
+                    ]);
+                }
                 Session::flash('error_message', "File '{$driveFile->name}' is already imported as Effect #{$existingEffect->id}!");
                 return redirect()->back();
             }
@@ -240,6 +251,15 @@ class GoogleDriveScannerController extends Controller
         $driveFile->status = 'imported';
         $driveFile->effect_id = $effect->id;
         $driveFile->save();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully imported '{$cleanTitle}' as Effect #{$effect->id}!",
+                'effect_id' => $effect->id,
+                'effect_url' => route('admin.effects.edit', $effect->id)
+            ]);
+        }
 
         Session::flash('flash_message', "Successfully imported '{$cleanTitle}' as Effect #{$effect->id}! It is queued for background processing.");
         return redirect()->back();

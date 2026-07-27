@@ -100,24 +100,26 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>File Name</th>
-                                            <th>File Size</th>
+                                            <th style="min-width: 200px;">File Name</th>
+                                            <th style="white-space: nowrap;">File Size</th>
                                             <th>Direct Download URL</th>
                                             <th>Status</th>
-                                            <th class="text-center" width="15%">Action</th>
+                                            <th class="text-center" width="120">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse ($files as $i => $file)
                                             <tr id="drive_file_id_{{ $file->id }}">
                                                 <td>{{ $files->firstItem() + $i }}</td>
-                                                <td>
-                                                    <strong>{{ $file->name }}</strong>
+                                                <td style="max-width: 240px;">
+                                                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $file->name }}">
+                                                        <strong>{{ $file->name }}</strong>
+                                                    </div>
                                                     @if ($file->mime_type)
-                                                        <br><small style="color: #aaa;">{{ $file->mime_type }}</small>
+                                                        <small style="color: #aaa; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $file->mime_type }}">{{ $file->mime_type }}</small>
                                                     @endif
                                                 </td>
-                                                <td>{{ $file->formatted_size }}</td>
+                                                <td style="white-space: nowrap;">{{ $file->formatted_size }}</td>
                                                 <td>
                                                     <div class="input-group input-group-sm" style="min-width: 320px;">
                                                         <input type="text" class="form-control form-control-sm" id="url_{{ $file->id }}" value="{{ $file->url }}" readonly>
