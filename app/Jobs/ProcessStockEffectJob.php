@@ -16,6 +16,20 @@ class ProcessStockEffectJob implements ShouldQueue
     protected $effectId;
 
     /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 600;
+
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 3;
+
+    /**
      * Create a new job instance.
      *
      * @return void
@@ -32,6 +46,8 @@ class ProcessStockEffectJob implements ShouldQueue
      */
     public function handle()
     {
+        @set_time_limit(600);
+        @ini_set('memory_limit', '512M');
         $effect = DB::table('effects')->where('id', $this->effectId)->first();
         
         if (!$effect || $effect->status === 'ready') {
