@@ -137,6 +137,8 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-center">
+                                                    <button type="button" class="btn btn-xs btn-info waves-effect waves-light m-r-5" onclick="previewDriveFile('{{ $file->file_id }}', '{{ addslashes($file->name) }}')" data-toggle="tooltip" title="Preview File in Modal"><i class="fa fa-play-circle"></i> Preview</button>
+
                                                     @if ($file->status === 'imported' || $file->effect_id)
                                                         @if ($file->effect_id)
                                                             <a href="{{ route('admin.effects.edit', $file->effect_id) }}" class="btn btn-icon waves-effect waves-light btn-info btn-xs m-r-5" data-toggle="tooltip" title="View/Edit Effect"><i class="fa fa-eye"></i> View</a>
@@ -173,7 +175,40 @@
         </div>
     </div>
 
+    <!-- Google Drive File Preview Modal -->
+    <div id="driveFilePreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 900px;">
+            <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 8px;">
+                <div class="modal-header" style="border-bottom: 1px solid #32383e; padding: 15px 20px;">
+                    <h5 class="modal-title mt-0" id="previewModalTitle"><i class="fa fa-play-circle text-info"></i> File Preview</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeDrivePreview()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0 text-center" style="background: #000; min-height: 500px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                    <iframe id="previewIframe" src="" style="width: 100%; height: 500px; border: 0;" allow="autoplay"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function previewDriveFile(fileId, fileName) {
+            document.getElementById('previewModalTitle').innerHTML = '<i class="fa fa-play-circle text-info"></i> Preview: ' + fileName;
+            var iframe = document.getElementById('previewIframe');
+            iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+            $('#driveFilePreviewModal').modal('show');
+        }
+
+        function closeDrivePreview() {
+            var iframe = document.getElementById('previewIframe');
+            iframe.src = '';
+        }
+
+        $('#driveFilePreviewModal').on('hidden.bs.modal', function () {
+            closeDrivePreview();
+        });
+
         function copyUrl(elementId) {
             var copyText = document.getElementById(elementId);
             copyText.select();
