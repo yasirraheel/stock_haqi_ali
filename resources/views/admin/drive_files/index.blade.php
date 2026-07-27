@@ -14,7 +14,18 @@
                                     <div class="card-box widget-user">
                                         <div class="text-center">
                                             <h2 class="text-primary" data-plugin="counterup">{{ number_format($totalFiles) }}</h2>
-                                            <h5 style="color: #f9f9f9;">Total Synced Files</h5>
+                                            <h5 style="color: #f9f9f9;">Pending Scanned Files</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6">
+                                <a href="{{ route('admin.effects.index') }}">
+                                    <div class="card-box widget-user">
+                                        <div class="text-center">
+                                            <h2 class="text-success" data-plugin="counterup">{{ number_format($importedCount ?? 0) }}</h2>
+                                            <h5 style="color: #f9f9f9;">Imported Effects</h5>
                                         </div>
                                     </div>
                                 </a>
@@ -36,18 +47,7 @@
                                     <div class="card-box widget-user">
                                         <div class="text-center">
                                             <h2 class="text-warning" data-plugin="counterup">{{ number_format($foldersCount) }}</h2>
-                                            <h5 style="color: #f9f9f9;">Total Folders Scanned</h5>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-
-                            <div class="col-xl-3 col-md-6">
-                                <a href="#">
-                                    <div class="card-box widget-user">
-                                        <div class="text-center">
-                                            <h2 class="text-success" data-plugin="counterup">Active</h2>
-                                            <h5 style="color: #f9f9f9;">Google Drive API Status</h5>
+                                            <h5 style="color: #f9f9f9;">Scanned Folders</h5>
                                         </div>
                                     </div>
                                 </a>

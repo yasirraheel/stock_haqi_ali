@@ -24,7 +24,7 @@ class GoogleDriveScannerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = GoogleDriveFile::where('status', '!=', 'blocked');
+        $query = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id');
 
         if ($request->has('s') && !empty($request->get('s'))) {
             $search = trim($request->get('s'));
@@ -40,12 +40,13 @@ class GoogleDriveScannerController extends Controller
         }
 
         $files = $query->orderBy('id', 'DESC')->paginate(20);
-        $totalFiles = GoogleDriveFile::where('status', '!=', 'blocked')->count();
+        $totalFiles = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->count();
+        $importedCount = GoogleDriveFile::where('status', 'imported')->orWhereNotNull('effect_id')->count();
         $blockedCount = GoogleDriveFile::where('status', 'blocked')->count();
-        $foldersCount = GoogleDriveFile::where('status', '!=', 'blocked')->distinct('folder_id')->count('folder_id');
+        $foldersCount = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->distinct('folder_id')->count('folder_id');
         $page_title = 'Google Drive Scanned Files';
 
-        return view('admin.drive_files.index', compact('files', 'totalFiles', 'blockedCount', 'foldersCount', 'page_title'));
+        return view('admin.drive_files.index', compact('files', 'totalFiles', 'importedCount', 'blockedCount', 'foldersCount', 'page_title'));
     }
 
     /**
