@@ -67,6 +67,13 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
         'destroy' => 'admin.effects.destroy'
     ]);
 
+    // Google Drive Scanned Files Routes
+    Route::resource('drive-files', 'GoogleDriveScannerController')->only(['index', 'destroy'])->names([
+        'index' => 'admin.drive-files.index',
+        'destroy' => 'admin.drive-files.destroy'
+    ]);
+    Route::post('drive-files/scan', 'GoogleDriveScannerController@scanFolder')->name('admin.drive-files.scan');
+
     // Photo Categories Routes
     Route::resource('photo-categories', 'PhotoCategoryController')->only(['index', 'store', 'destroy'])->names([
         'index' => 'admin.photo-categories.index',

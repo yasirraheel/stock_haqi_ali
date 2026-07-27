@@ -67,7 +67,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('effects') }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('effects') }} {{ classActivePath('drive-files') }}">
                             <i class="fa fa-magic"></i>
                             <span>Effects</span>
                             <span class="menu-arrow"></span>
@@ -76,6 +76,9 @@
                             <li class="{{ classActivePath('effects') }}"><a href="{{ route('admin.effects.index') }}"
                                     class="{{ classActivePath('effects') }}"><i
                                         class="fa fa-magic"></i><span>All Effects</span></a></li>
+                            <li class="{{ classActivePath('drive-files') }}"><a href="{{ route('admin.drive-files.index') }}"
+                                    class="{{ classActivePath('drive-files') }}"><i
+                                        class="fa fa-google"></i><span>GDrive Scanned Files</span></a></li>
                         </ul>
                     </li>
 
