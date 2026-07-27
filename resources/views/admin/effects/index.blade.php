@@ -226,72 +226,85 @@
         }
 
         // Auto-poll effect processing status via AJAX every 3 seconds
-        $(document).ready(function() {
-            function checkPendingStatus() {
-                var pendingIds = [];
-                $('tr[data-effect-id]').each(function() {
-                    var status = (($(this).attr('data-status') || '') + '').toLowerCase().trim();
-                    if (status !== 'ready' && status !== 'error' && status !== 'failed') {
-                        pendingIds.push($(this).attr('data-effect-id'));
-                    }
-                });
-
-                if (pendingIds.length === 0) {
+        (function() {
+            function initPoller() {
+                if (typeof jQuery === 'undefined') {
+                    setTimeout(initPoller, 100);
                     return;
                 }
+                var $ = jQuery;
 
-                $.ajax({
-                    url: '{{ route("admin.effects.check-status") }}',
-                    type: 'GET',
-                    data: {
-                        ids: pendingIds.join(',')
-                    },
-                    success: function(data) {
-                        $.each(data, function(id, item) {
-                            var tr = $('#card_box_id_' + id);
-                            if (tr.length) {
-                                var currentStatus = item.status ? item.status.toLowerCase() : 'pending';
-                                tr.attr('data-status', currentStatus);
-                                var statusCell = tr.find('.status-cell');
-                                
-                                if (currentStatus === 'ready') {
-                                    var html = '<span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>';
-                                    if (item.converted_mb) {
-                                        html += '<br><small style="color: #aaa;">' + item.converted_mb + '</small>';
-                                    }
-                                    statusCell.html(html);
+                function checkPendingStatus() {
+                    var pendingIds = [];
+                    $('tr[data-effect-id]').each(function() {
+                        var status = (($(this).attr('data-status') || '') + '').toLowerCase().trim();
+                        if (status !== 'ready' && status !== 'error' && status !== 'failed') {
+                            pendingIds.push($(this).attr('data-effect-id'));
+                        }
+                    });
 
-                                    // Auto-inject Preview button into URL input group append if not present
-                                    var appendGroup = tr.find('.input-group-append');
-                                    if (item.processed_url && appendGroup.find('.btn-preview-processed').length === 0) {
-                                        var previewBtn = '<button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview(\'' + item.processed_url + '\')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>';
-                                        appendGroup.prepend(previewBtn);
-                                    }
-                                } else if (currentStatus === 'downloading') {
-                                    var stepText = item.process_step || 'Downloading...';
-                                    statusCell.html('<span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + stepText + '</span>');
-                                } else if (currentStatus === 'processing') {
-                                    var stepText = item.process_step || 'Converting MP4...';
-                                    statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
-                                } else if (currentStatus === 'error' || currentStatus === 'failed') {
-                                    var stepText = item.process_step || 'Failed';
-                                    statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-circle"></i> ' + stepText + '</span>');
-                                } else {
-                                    statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>');
-                                }
-                            }
-                        });
-                    },
-                    error: function(xhr, status, error) {
-                        console.warn("Status check AJAX error:", error);
+                    if (pendingIds.length === 0) {
+                        return;
                     }
-                });
+
+                    $.ajax({
+                        url: '{{ route("admin.effects.check-status") }}',
+                        type: 'GET',
+                        data: {
+                            ids: pendingIds.join(',')
+                        },
+                        success: function(data) {
+                            $.each(data, function(id, item) {
+                                var tr = $('#card_box_id_' + id);
+                                if (tr.length) {
+                                    var currentStatus = item.status ? item.status.toLowerCase() : 'pending';
+                                    tr.attr('data-status', currentStatus);
+                                    var statusCell = tr.find('.status-cell');
+                                    
+                                    if (currentStatus === 'ready') {
+                                        var html = '<span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>';
+                                        if (item.converted_mb) {
+                                            html += '<br><small style="color: #aaa;">' + item.converted_mb + '</small>';
+                                        }
+                                        statusCell.html(html);
+
+                                        // Auto-inject Preview button into URL input group append if not present
+                                        var appendGroup = tr.find('.input-group-append');
+                                        if (item.processed_url && appendGroup.find('.btn-preview-processed').length === 0) {
+                                            var previewBtn = '<button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview(\'' + item.processed_url + '\')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>';
+                                            appendGroup.prepend(previewBtn);
+                                        }
+                                    } else if (currentStatus === 'downloading') {
+                                        var stepText = item.process_step || 'Downloading...';
+                                        statusCell.html('<span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + stepText + '</span>');
+                                    } else if (currentStatus === 'processing') {
+                                        var stepText = item.process_step || 'Converting MP4...';
+                                        statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
+                                    } else if (currentStatus === 'error' || currentStatus === 'failed') {
+                                        var stepText = item.process_step || 'Failed';
+                                        statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-circle"></i> ' + stepText + '</span>');
+                                    } else {
+                                        statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>');
+                                    }
+                                }
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            console.warn("Status check AJAX error:", error);
+                        }
+                    });
+                }
+
+                checkPendingStatus();
+                setInterval(checkPendingStatus, 3000);
             }
 
-            // Execute immediately on load, then poll every 3 seconds
-            checkPendingStatus();
-            setInterval(checkPendingStatus, 3000);
-        });
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPoller);
+            } else {
+                initPoller();
+            }
+        })();
 
         // Also stop video if modal is closed by clicking outside
         $('#videoPreviewModal').on('hidden.bs.modal', function () {

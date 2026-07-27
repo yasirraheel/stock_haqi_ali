@@ -351,9 +351,21 @@
             });
         }
 
-        setInterval(pollDriveFileStatuses, 3000);
-        $(document).ready(function() {
-            pollDriveFileStatuses();
-        });
+        (function() {
+            function initDrivePoller() {
+                if (typeof jQuery === 'undefined') {
+                    setTimeout(initDrivePoller, 100);
+                    return;
+                }
+                pollDriveFileStatuses();
+                setInterval(pollDriveFileStatuses, 3000);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initDrivePoller);
+            } else {
+                initDrivePoller();
+            }
+        })();
     </script>
 @endsection
