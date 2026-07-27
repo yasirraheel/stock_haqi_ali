@@ -121,14 +121,26 @@
                                                 </td>
                                                 <td>{{ $file->formatted_size }}</td>
                                                 <td>
-                                                    <div class="input-group input-group-sm" style="min-width: 320px;">
+                                                    <div class="input-group input-group-sm" style="min-width: 420px;">
                                                         <input type="text" class="form-control form-control-sm" id="url_{{ $file->id }}" value="{{ $file->url }}" readonly>
                                                         <div class="input-group-append">
                                                             <button class="btn btn-sm btn-info" type="button" onclick="previewDriveFile('{{ $file->file_id }}', '{{ addslashes($file->name) }}')" data-toggle="tooltip" title="Preview File"><i class="fa fa-play-circle"></i> Preview</button>
                                                             <button class="btn btn-sm btn-secondary" type="button" onclick="copyUrl('url_{{ $file->id }}')" data-toggle="tooltip" title="Copy Direct URL"><i class="fa fa-copy"></i> Copy</button>
                                                             <a href="{{ $file->url }}" target="_blank" class="btn btn-sm btn-primary" data-toggle="tooltip" title="Open Link"><i class="fa fa-external-link"></i> Open</a>
+                                                            @if ($file->status === 'imported' || $file->effect_id)
+                                                                @if ($file->effect_id)
+                                                                    <a href="{{ route('admin.effects.edit', $file->effect_id) }}" class="btn btn-sm btn-success" data-toggle="tooltip" title="View Imported Effect"><i class="fa fa-eye"></i> View</a>
+                                                                @endif
+                                                            @else
+                                                                <button type="button" class="btn btn-sm btn-success" onclick="document.getElementById('import-form-{{ $file->id }}').submit();" data-toggle="tooltip" title="Import as Effect and start background processing"><i class="fa fa-download"></i> Import</button>
+                                                            @endif
                                                         </div>
                                                     </div>
+
+                                                    @if (!($file->status === 'imported' || $file->effect_id))
+                                                        {!! Form::open(['route' => ['admin.drive-files.import', $file->id], 'method' => 'POST', 'id' => 'import-form-'.$file->id, 'style' => 'display:none;']) !!}
+                                                        {!! Form::close() !!}
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     @if ($file->status === 'imported' || $file->effect_id)
@@ -137,17 +149,7 @@
                                                         <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;">Scanned</span>
                                                     @endif
                                                 </td>
-                                                <td class="text-center">
-                                                    @if ($file->status === 'imported' || $file->effect_id)
-                                                        @if ($file->effect_id)
-                                                            <a href="{{ route('admin.effects.edit', $file->effect_id) }}" class="btn btn-icon waves-effect waves-light btn-info btn-xs m-r-5" data-toggle="tooltip" title="View/Edit Effect"><i class="fa fa-eye"></i> View</a>
-                                                        @endif
-                                                    @else
-                                                        {!! Form::open(['route' => ['admin.drive-files.import', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
-                                                        <button type="submit" class="btn btn-xs btn-success waves-effect waves-light m-r-5" data-toggle="tooltip" title="Import as Effect and start background processing"><i class="fa fa-download"></i> Import</button>
-                                                        {!! Form::close() !!}
-                                                    @endif
-
+                                                <td class="text-center" style="white-space: nowrap;">
                                                     {!! Form::open(['route' => ['admin.drive-files.block', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
                                                     <button type="submit" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" data-toggle="tooltip" title="Block file from import"><i class="fa fa-ban"></i></button>
                                                     {!! Form::close() !!}
