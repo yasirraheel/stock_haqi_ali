@@ -26,7 +26,20 @@
                         copyText.select();
                         copyText.setSelectionRange(0, 99999);
                         document.execCommand("copy");
-                        alert("Cron command copied to clipboard!");
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                position: 'center',
+                                icon: 'success',
+                                title: 'Copied!',
+                                text: 'Cron command copied to clipboard.',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                background: '#1a2234',
+                                color: '#fff'
+                            });
+                        } else {
+                            alert("Cron command copied to clipboard!");
+                        }
                     }
                 </script>
 
@@ -105,10 +118,10 @@
                       </td>
                       <td>
                         <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-icon waves-effect waves-light btn-success m-b-5 m-r-5" data-toggle="tooltip" title="Edit"> <i class="fa fa-edit"></i> </a>
-                        <form action="{{ route('admin.effects.destroy', $effect->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this effect?');">
+                        <form action="{{ route('admin.effects.destroy', $effect->id) }}" method="POST" id="delete-form-{{ $effect->id }}" style="display:inline-block;">
                           @csrf
                           @method('DELETE')
-                          <button type="submit" class="btn btn-icon waves-effect waves-light btn-danger m-b-5" data-toggle="tooltip" title="Remove"> <i class="fa fa-remove"></i> </button>
+                          <button type="button" class="btn btn-icon waves-effect waves-light btn-danger m-b-5" onclick="confirmDeleteEffect({{ $effect->id }})" data-toggle="tooltip" title="Remove"> <i class="fa fa-remove"></i> </button>
                         </form>
                       </td>
                     </tr>
@@ -148,6 +161,31 @@
     </div>
 
     <script>
+        function confirmDeleteEffect(id) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '{{ trans("words.dlt_warning") }}',
+                    text: '{{ trans("words.dlt_warning_text") }}',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '{{ trans("words.dlt_confirm") }}',
+                    cancelButtonText: '{{ trans("words.btn_cancel") }}',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('delete-form-' + id).submit();
+                    }
+                });
+            } else {
+                if (confirm("Are you sure you want to delete this effect?")) {
+                    document.getElementById('delete-form-' + id).submit();
+                }
+            }
+        }
+
         function showPreview(url) {
             var player = document.getElementById('previewPlayer');
             player.src = url;
