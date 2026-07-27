@@ -37,8 +37,16 @@ class EffectsController extends Controller
 
     public function checkStatus(Request $request)
     {
-        $ids = $request->input('ids', []);
-        if (empty($ids) || !is_array($ids)) {
+        $idsRaw = $request->input('ids');
+        if (is_array($idsRaw)) {
+            $ids = $idsRaw;
+        } elseif (is_string($idsRaw) && strlen(trim($idsRaw)) > 0) {
+            $ids = array_filter(explode(',', $idsRaw));
+        } else {
+            $ids = [];
+        }
+
+        if (empty($ids)) {
             return response()->json([]);
         }
 

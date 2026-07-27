@@ -245,7 +245,7 @@
                     type: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}',
-                        ids: pendingIds
+                        ids: pendingIds.join(',')
                     },
                     success: function(data) {
                         $.each(data, function(id, item) {
@@ -281,6 +281,9 @@
                                 }
                             }
                         });
+                    },
+                    error: function(xhr, status, error) {
+                        console.warn("Status check AJAX error:", error);
                     }
                 });
             }
