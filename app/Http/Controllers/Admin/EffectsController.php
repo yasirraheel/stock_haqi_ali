@@ -12,7 +12,7 @@ class EffectsController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except(['checkStatus']);
     }
 
     public function index(Request $request)
