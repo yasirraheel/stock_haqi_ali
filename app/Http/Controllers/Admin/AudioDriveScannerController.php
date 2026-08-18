@@ -230,13 +230,13 @@ class AudioDriveScannerController extends Controller
 
         // Create new Audio record
         $audio = new Audio();
-        $audio->audio_title = $cleanTitle;
-        $audio->audio_slug = Str::slug($cleanTitle) . '-' . time();
-        $audio->audio_url = $driveFile->url;
-        $audio->audio_type = 'url';
-        $audio->audio_duration = '0:00';
-        $audio->audio_size = $driveFile->formatted_size;
-        $audio->status = 1;
+        $audio->title = $cleanTitle;
+        $audio->audio_path = $driveFile->url;
+        $audio->duration = '0:00';
+        $audio->file_size = $driveFile->formatted_size;
+        $audio->format = pathinfo($driveFile->name, PATHINFO_EXTENSION) ?: 'mp3';
+        $audio->genre = 'GDrive Stock';
+        $audio->is_active = true;
         $audio->save();
 
         // Update audio_drive_files table link
