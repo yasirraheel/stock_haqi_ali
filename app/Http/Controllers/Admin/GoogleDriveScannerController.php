@@ -24,7 +24,16 @@ class GoogleDriveScannerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id');
+        $query = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])
+            ->whereNull('effect_id')
+            ->where('mime_type', 'NOT LIKE', 'audio/%')
+            ->where('name', 'NOT LIKE', '%.mp3')
+            ->where('name', 'NOT LIKE', '%.wav')
+            ->where('name', 'NOT LIKE', '%.flac')
+            ->where('name', 'NOT LIKE', '%.aac')
+            ->where('name', 'NOT LIKE', '%.ogg')
+            ->where('name', 'NOT LIKE', '%.m4a')
+            ->where('name', 'NOT LIKE', '%.wma');
 
         if ($request->has('s') && !empty($request->get('s'))) {
             $search = trim($request->get('s'));
@@ -39,8 +48,8 @@ class GoogleDriveScannerController extends Controller
             $query->where('folder_id', $request->get('folder_id'));
         }
 
-        $files = $query->orderBy('id', 'DESC')->paginate(20);
-        $totalFiles = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->count();
+        $files = $query->orderBy('id', 'DESC')->paginate(20)->appends($request->query());
+        $totalFiles = (clone $query)->count();
         $importedCount = GoogleDriveFile::where('status', 'imported')->orWhereNotNull('effect_id')->count();
         $blockedCount = GoogleDriveFile::where('status', 'blocked')->count();
         $foldersCount = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->distinct('folder_id')->count('folder_id');
@@ -146,6 +155,14 @@ class GoogleDriveScannerController extends Controller
 
                     // Check if file is a ZIP archive or non-video compressed file
                     $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+                    // Skip audio files in Effects Scanner
+                    $audioExtensions = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'aiff'];
+                    $isAudio = in_array($ext, $audioExtensions) || strpos(strtolower($mimeType), 'audio') !== false;
+                    if ($isAudio) {
+                        continue;
+                    }
+
                     $isArchive = in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'iso'])
                         || strpos(strtolower($mimeType), 'zip') !== false
                         || strpos(strtolower($mimeType), 'compressed') !== false;
