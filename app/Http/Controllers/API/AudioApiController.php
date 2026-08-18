@@ -97,8 +97,9 @@ class AudioApiController extends Controller
         if ($id > 10000) {
             $driveFileId = $id - 10000;
             $driveRecord = AudioDriveFile::find($driveFileId);
-            if ($driveRecord && $driveRecord->url) {
-                return redirect($driveRecord->url)->header('Access-Control-Allow-Origin', '*');
+            if ($driveRecord) {
+                $openUrl = "https://drive.google.com/uc?export=open&id={$driveRecord->file_id}";
+                return redirect($openUrl)->header('Access-Control-Allow-Origin', '*');
             }
         }
 
@@ -106,7 +107,13 @@ class AudioApiController extends Controller
         if ($audio) {
             $audioUrl = $audio->audio_url ?: $audio->audio_path;
             if ($audioUrl) {
-                return redirect($audioUrl)->header('Access-Control-Allow-Origin', '*');
+                if (filter_var($audioUrl, FILTER_VALIDATE_URL)) {
+                    $openUrl = str_replace('export=download', 'export=open', $audioUrl);
+                    return redirect($openUrl)->header('Access-Control-Allow-Origin', '*');
+                }
+                return response()->file(public_path('storage/' . $audio->audio_path), [
+                    'Access-Control-Allow-Origin' => '*'
+                ]);
             }
         }
 

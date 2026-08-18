@@ -269,7 +269,7 @@ class AudioDriveScannerController extends Controller
             ]);
         }
 
-        return redirect("https://drive.google.com/uc?export=download&id={$file_id}");
+        return redirect("https://drive.google.com/uc?export=open&id={$file_id}");
     }
 
     /**
