@@ -169,6 +169,16 @@
     </div>
 
     <script>
+        // Pause any currently playing audio when another audio starts playing
+        document.addEventListener('play', function (e) {
+            var audios = document.getElementsByTagName('audio');
+            for (var i = 0; i < audios.length; i++) {
+                if (audios[i] !== e.target) {
+                    audios[i].pause();
+                }
+            }
+        }, true);
+
         function confirmDelete(fileId) {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
