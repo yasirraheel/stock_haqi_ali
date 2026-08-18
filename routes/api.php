@@ -50,3 +50,14 @@ Route::group(['prefix' => 'v1','namespace' => 'API', 'middleware' => 'app.key'],
     Route::post('movies/add_edit_movie', 'AndroidApiController@addnew');
     Route::post('movies/generate_description', 'AndroidApiController@generateDescription');
 });
+
+// Public Audio API routes for Reel2Reel & frontend apps (CORS enabled)
+Route::options('v1/audio', function() {
+    return response('', 200, [
+        'Access-Control-Allow-Origin' => '*',
+        'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+        'Access-Control-Allow-Headers' => 'Content-Type, X-API-KEY, Authorization'
+    ]);
+});
+Route::get('v1/audio', 'API\AudioApiController@index')->name('api.v1.audio.index');
+Route::get('v1/audio/{id}/stream', 'API\AudioApiController@stream')->name('api.v1.audio.stream');
