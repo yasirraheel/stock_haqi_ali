@@ -320,6 +320,19 @@ class AudioDriveScannerController extends Controller
     }
 
     /**
+     * Remove all scanned (non-imported) Audio drive file records.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function clearAllScanned()
+    {
+        $count = AudioDriveFile::whereNotIn('status', ['imported'])->whereNull('audio_id')->delete();
+
+        Session::flash('flash_message', "Successfully removed {$count} scanned audio records.");
+        return redirect()->route('admin.audio-drive-files.index');
+    }
+
+    /**
      * Helper to extract Google Drive Folder ID from input string or URL.
      *
      * @param string $input

@@ -91,6 +91,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     Route::post('audio-drive-files/{id}/import', 'AudioDriveScannerController@importAudioFile')->name('admin.audio-drive-files.import');
     Route::post('audio-drive-files/{id}/block', 'AudioDriveScannerController@block')->name('admin.audio-drive-files.block');
     Route::post('audio-drive-files/{id}/unblock', 'AudioDriveScannerController@unblock')->name('admin.audio-drive-files.unblock');
+    Route::post('audio-drive-files/clear-all', 'AudioDriveScannerController@clearAllScanned')->name('admin.audio-drive-files.clear-all');
     Route::get('audio-drive-files/{file_id}/stream', 'AudioDriveScannerController@streamAudioPreview')->name('admin.audio-drive-files.stream');
 
     // Photo Categories Routes

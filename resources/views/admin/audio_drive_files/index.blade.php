@@ -76,13 +76,20 @@
                                 {!! Form::close() !!}
                             </div>
 
-                            <!-- Search Form -->
-                            <div class="row mb-3">
+                            <!-- Search Form & Clear All Controls -->
+                            <div class="row mb-3 align-items-center">
                                 <div class="col-md-6">
                                     {!! Form::open(['route' => 'admin.audio-drive-files.index', 'class' => 'app-search', 'id' => 'search', 'role' => 'form', 'method' => 'get']) !!}
                                     <input type="text" name="s" placeholder="Search scanned audio tracks by name, file ID, or folder ID..." value="{{ request('s') }}" class="form-control">
                                     <button type="submit"><i class="fa fa-search"></i></button>
                                     {!! Form::close() !!}
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    @if ($totalFiles > 0)
+                                        {!! Form::open(['route' => 'admin.audio-drive-files.clear-all', 'method' => 'POST', 'id' => 'clear-all-scanned-form', 'style' => 'display:inline-block;']) !!}
+                                        <button type="button" class="btn btn-danger waves-effect waves-light" onclick="confirmClearAllScanned()"><i class="fa fa-trash"></i> Remove All Scanned Audio Records</button>
+                                        {!! Form::close() !!}
+                                    @endif
                                 </div>
                             </div>
 
@@ -200,6 +207,31 @@
             } else {
                 if (confirm("Are you sure you want to remove this record?")) {
                     document.getElementById('delete-form-' + fileId).submit();
+                }
+            }
+        }
+
+        function confirmClearAllScanned() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Remove All Scanned Audios?',
+                    text: 'Are you sure you want to remove all pending scanned audio records from the database?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, Remove All',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('clear-all-scanned-form').submit();
+                    }
+                });
+            } else {
+                if (confirm('Are you sure you want to remove all pending scanned audio records from the database?')) {
+                    document.getElementById('clear-all-scanned-form').submit();
                 }
             }
         }
