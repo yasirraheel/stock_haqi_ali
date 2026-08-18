@@ -68,7 +68,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
         'destroy' => 'admin.effects.destroy'
     ]);
 
-    // Google Drive Scanned Files Routes
+    // Google Drive Scanned Files Routes (For Effects)
     Route::resource('drive-files', 'GoogleDriveScannerController')->only(['index', 'destroy'])->names([
         'index' => 'admin.drive-files.index',
         'destroy' => 'admin.drive-files.destroy'
@@ -80,6 +80,18 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     Route::post('drive-files/{id}/block', 'GoogleDriveScannerController@blockFile')->name('admin.drive-files.block');
     Route::post('drive-files/{id}/unblock', 'GoogleDriveScannerController@unblockFile')->name('admin.drive-files.unblock');
     Route::post('drive-files/clear-blocked', 'GoogleDriveScannerController@clearBlocked')->name('admin.drive-files.clear-blocked');
+
+    // Google Drive Audio Scanned Files Routes (Dedicated for Audio)
+    Route::resource('audio-drive-files', 'AudioDriveScannerController')->only(['index', 'destroy'])->names([
+        'index' => 'admin.audio-drive-files.index',
+        'destroy' => 'admin.audio-drive-files.destroy'
+    ]);
+    Route::get('audio-blocked-files', 'AudioDriveScannerController@blocked')->name('admin.audio-drive-files.blocked');
+    Route::post('audio-drive-files/scan', 'AudioDriveScannerController@scanFolder')->name('admin.audio-drive-files.scan');
+    Route::post('audio-drive-files/{id}/import', 'AudioDriveScannerController@importAudioFile')->name('admin.audio-drive-files.import');
+    Route::post('audio-drive-files/{id}/block', 'AudioDriveScannerController@block')->name('admin.audio-drive-files.block');
+    Route::post('audio-drive-files/{id}/unblock', 'AudioDriveScannerController@unblock')->name('admin.audio-drive-files.unblock');
+    Route::get('audio-drive-files/{file_id}/stream', 'AudioDriveScannerController@streamAudioPreview')->name('admin.audio-drive-files.stream');
 
     // Photo Categories Routes
     Route::resource('photo-categories', 'PhotoCategoryController')->only(['index', 'store', 'destroy'])->names([

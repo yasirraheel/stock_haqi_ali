@@ -54,7 +54,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('audio') }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('audio') }} {{ classActivePath('audio-drive-files') }} {{ classActivePath('audio-blocked-files') }}">
                             <i class="fa fa-music"></i>
                             <span>Audio</span>
                             <span class="menu-arrow"></span>
@@ -63,6 +63,9 @@
                             <li class="{{ classActivePath('audio') }}"><a href="{{ route('admin.audio.index') }}"
                                     class="{{ classActivePath('audio') }}"><i
                                         class="fa fa-music"></i><span>All Audio</span></a></li>
+                            <li class="{{ classActivePath('audio-drive-files') }}"><a href="{{ route('admin.audio-drive-files.index') }}"
+                                    class="{{ classActivePath('audio-drive-files') }}"><i
+                                        class="fa fa-google"></i><span>GDrive Audio Scanner</span></a></li>
                         </ul>
                     </li>
 
