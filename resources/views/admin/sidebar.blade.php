@@ -78,7 +78,10 @@
                         <ul class="list-unstyled">
                             <li class="{{ classActivePath('film-stock-drive-files') }}"><a href="{{ route('admin.film-stock-drive-files.index') }}"
                                     class="{{ classActivePath('film-stock-drive-files') }}"><i
-                                        class="fa fa-google"></i><span>GDrive Film Stock Scanner</span></a></li>
+                                        class="fa fa-film"></i><span>All Film Stock</span></a></li>
+                            <li class="{{ classActivePath('film-stock-drive-files') }}"><a href="{{ route('admin.film-stock-drive-files.index') }}"
+                                    class="{{ classActivePath('film-stock-drive-files') }}"><i
+                                        class="fa fa-google"></i><span>GDrive Film Stock</span></a></li>
                         </ul>
                     </li>
 
