@@ -94,6 +94,18 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     Route::post('audio-drive-files/clear-all', 'AudioDriveScannerController@clearAllScanned')->name('admin.audio-drive-files.clear-all');
     Route::get('audio-drive-files/{file_id}/stream', 'AudioDriveScannerController@streamAudioPreview')->name('admin.audio-drive-files.stream');
 
+    // Google Drive Film Stock Scanned Files Routes (Dedicated for Film Stock)
+    Route::resource('film-stock-drive-files', 'FilmStockDriveScannerController')->only(['index', 'destroy'])->names([
+        'index' => 'admin.film-stock-drive-files.index',
+        'destroy' => 'admin.film-stock-drive-files.destroy'
+    ]);
+    Route::get('film-stock-blocked-files', 'FilmStockDriveScannerController@blocked')->name('admin.film-stock-drive-files.blocked');
+    Route::post('film-stock-drive-files/scan', 'FilmStockDriveScannerController@scanFolder')->name('admin.film-stock-drive-files.scan');
+    Route::post('film-stock-drive-files/{id}/block', 'FilmStockDriveScannerController@blockFile')->name('admin.film-stock-drive-files.block');
+    Route::post('film-stock-drive-files/{id}/unblock', 'FilmStockDriveScannerController@unblockFile')->name('admin.film-stock-drive-files.unblock');
+    Route::post('film-stock-drive-files/{id}/delete', 'FilmStockDriveScannerController@deleteFile')->name('admin.film-stock-drive-files.delete');
+    Route::post('film-stock-drive-files/clear-all', 'FilmStockDriveScannerController@clearAllScanned')->name('admin.film-stock-drive-files.clear-all');
+
     // Photo Categories Routes
     Route::resource('photo-categories', 'PhotoCategoryController')->only(['index', 'store', 'destroy'])->names([
         'index' => 'admin.photo-categories.index',

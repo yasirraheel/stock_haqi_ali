@@ -70,6 +70,19 @@
                     </li>
 
                     <li class="has_sub">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('film-stock-drive-files') }}">
+                            <i class="fa fa-film"></i>
+                            <span>Film Stock</span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <ul class="list-unstyled">
+                            <li class="{{ classActivePath('film-stock-drive-files') }}"><a href="{{ route('admin.film-stock-drive-files.index') }}"
+                                    class="{{ classActivePath('film-stock-drive-files') }}"><i
+                                        class="fa fa-google"></i><span>GDrive Film Stock Scanner</span></a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has_sub">
                         <a href="javascript:void(0);" class="waves-effect {{ classActivePath('effects') }} {{ classActivePath('drive-files') }} {{ classActivePath('blocked-files') }}">
                             <i class="fa fa-magic"></i>
                             <span>Effects</span>

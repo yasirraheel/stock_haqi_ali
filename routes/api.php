@@ -61,3 +61,14 @@ Route::options('v1/audio', function() {
 });
 Route::get('v1/audio', 'API\AudioApiController@index')->name('api.v1.audio.index');
 Route::get('v1/audio/{id}/stream', 'API\AudioApiController@stream')->name('api.v1.audio.stream');
+
+// Public Film Stock API routes for Reel2Reel & frontend apps (CORS enabled)
+Route::options('v1/film-stock', function() {
+    return response('', 200, [
+        'Access-Control-Allow-Origin' => '*',
+        'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+        'Access-Control-Allow-Headers' => 'Content-Type, X-API-KEY, Authorization'
+    ]);
+});
+Route::get('v1/film-stock', 'API\FilmStockApiController@index')->name('api.v1.film-stock.index');
+Route::get('v1/film-stock/{id}/stream', 'API\FilmStockApiController@stream')->name('api.v1.film-stock.stream');
