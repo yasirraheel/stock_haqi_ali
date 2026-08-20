@@ -74,13 +74,16 @@
                                             <tr>
                                                 <td><strong>{{ $file->name }}</strong></td>
                                                 <td>
-                                                    <video src="{{ $file->stream_url }}" controls style="max-width: 140px; max-height: 80px; border-radius: 4px; background: #000;"></video>
+                                                    <button type="button" class="btn btn-sm btn-info waves-effect waves-light" onclick="previewFilmStock('{{ $file->file_id }}', '{{ $file->stream_url }}', '{{ addslashes($file->name) }}')" data-toggle="tooltip" title="Open Video Preview Popup">
+                                                        <i class="fa fa-play-circle"></i> Preview
+                                                    </button>
                                                 </td>
                                                 <td>{{ strtoupper(pathinfo($file->name, PATHINFO_EXTENSION) ?: 'mp4') }}</td>
                                                 <td><span class="badge badge-info">{{ $file->formatted_size }}</span></td>
                                                 <td><span class="badge badge-success">Active</span></td>
                                                 <td>
-                                                    <a href="{{ $file->url }}" target="_blank" class="btn btn-icon waves-effect waves-light btn-primary m-b-5 m-r-5" data-toggle="tooltip" title="View GDrive Link"> <i class="fa fa-eye"></i> </a>
+                                                    <button type="button" class="btn btn-icon waves-effect waves-light btn-info m-b-5 m-r-5" onclick="previewFilmStock('{{ $file->file_id }}', '{{ $file->stream_url }}', '{{ addslashes($file->name) }}')" data-toggle="tooltip" title="Preview Video Popup"> <i class="fa fa-play-circle"></i> </button>
+                                                    <a href="{{ $file->url }}" target="_blank" class="btn btn-icon waves-effect waves-light btn-primary m-b-5 m-r-5" data-toggle="tooltip" title="View GDrive Link"> <i class="fa fa-external-link"></i> </a>
                                                     {!! Form::open(['route' => ['admin.film-stock-drive-files.delete', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
                                                     <button type="submit" class="btn btn-icon waves-effect waves-light btn-danger m-b-5" onclick="return confirm('Remove this Film Stock record?')" data-toggle="tooltip" title="Remove"> <i class="fa fa-remove"></i> </button>
                                                     {!! Form::close() !!}
@@ -106,8 +109,63 @@
         </div>
     </div>
 
+    <!-- Film Stock Video Preview Popup Modal (Same as Effects) -->
+    <div id="filmStockPreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 900px;">
+            <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 8px;">
+                <div class="modal-header" style="border-bottom: 1px solid #32383e; padding: 15px 20px;">
+                    <h5 class="modal-title mt-0" id="previewModalTitle"><i class="fa fa-play-circle text-info"></i> Video Preview</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeFilmStockPreview()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0 text-center" style="background: #000; min-height: 480px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; position: relative;">
+                    <video id="previewVideoPlayer" controls autoplay style="width: 100%; max-height: 520px; display: none; background: #000;"></video>
+                    <iframe id="previewIframe" src="" style="width: 100%; height: 500px; border: 0; display: none;" allow="autoplay"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        function previewFilmStock(fileId, streamUrl, fileName) {
+            document.getElementById('previewModalTitle').innerHTML = '<i class="fa fa-play-circle text-info"></i> Preview: ' + fileName;
+            var videoPlayer = document.getElementById('previewVideoPlayer');
+            var iframe = document.getElementById('previewIframe');
+            
+            if (streamUrl && streamUrl !== '') {
+                videoPlayer.src = streamUrl;
+                videoPlayer.style.display = 'block';
+                iframe.style.display = 'none';
+                iframe.src = '';
+                videoPlayer.play().catch(function() {});
+            } else {
+                videoPlayer.style.display = 'none';
+                videoPlayer.src = '';
+                iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+                iframe.style.display = 'block';
+            }
+            
+            $('#filmStockPreviewModal').modal('show');
+        }
+
+        function closeFilmStockPreview() {
+            var videoPlayer = document.getElementById('previewVideoPlayer');
+            var iframe = document.getElementById('previewIframe');
+            if (videoPlayer) {
+                videoPlayer.pause();
+                videoPlayer.src = '';
+            }
+            if (iframe) {
+                iframe.src = '';
+            }
+        }
+
+        $('#filmStockPreviewModal').on('hidden.bs.modal', function () {
+            closeFilmStockPreview();
+        });
+
         function confirmClearAllScanned() {
             Swal.fire({
                 title: 'Remove All Scanned Film Stock Files?',
