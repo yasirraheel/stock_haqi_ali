@@ -70,7 +70,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('film-stock-drive-files') }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('film-stock-drive-files') }} {{ classActivePath('film-stock-blocked-files') }}">
                             <i class="fa fa-film"></i>
                             <span>Film Stock</span>
                             <span class="menu-arrow"></span>
@@ -78,10 +78,10 @@
                         <ul class="list-unstyled">
                             <li class="{{ classActivePath('film-stock-drive-files') }}"><a href="{{ route('admin.film-stock-drive-files.index') }}"
                                     class="{{ classActivePath('film-stock-drive-files') }}"><i
-                                        class="fa fa-film"></i><span>All Film Stock</span></a></li>
-                            <li class="{{ classActivePath('film-stock-drive-files') }}"><a href="{{ route('admin.film-stock-drive-files.index') }}"
-                                    class="{{ classActivePath('film-stock-drive-files') }}"><i
                                         class="fa fa-google"></i><span>GDrive Film Stock</span></a></li>
+                            <li class="{{ classActivePath('film-stock-blocked-files') }}"><a href="{{ route('admin.film-stock-drive-files.blocked') }}"
+                                    class="{{ classActivePath('film-stock-blocked-files') }}"><i
+                                        class="fa fa-ban"></i><span>Blocked Files</span></a></li>
                         </ul>
                     </li>
 
