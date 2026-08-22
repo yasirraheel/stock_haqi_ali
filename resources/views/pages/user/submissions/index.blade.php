@@ -85,27 +85,64 @@
                         </div>
                     </div>
 
+                    <style>
+                        .submission-custom-tabs {
+                            border-bottom: 2px solid #2a3447 !important;
+                            background: #121824;
+                            padding: 8px 8px 0 8px;
+                            border-radius: 10px 10px 0 0;
+                            display: flex;
+                        }
+                        .submission-custom-tabs .nav-item {
+                            margin-bottom: -2px;
+                        }
+                        .submission-custom-tabs .nav-link {
+                            color: #94a3b8 !important;
+                            background: transparent !important;
+                            border: none !important;
+                            padding: 14px 22px !important;
+                            font-weight: 600 !important;
+                            font-size: 15px !important;
+                            transition: all 0.2s ease-in-out;
+                            border-radius: 8px 8px 0 0 !important;
+                            display: block;
+                        }
+                        .submission-custom-tabs .nav-link:hover {
+                            color: #ffffff !important;
+                            background: rgba(255, 255, 255, 0.06) !important;
+                        }
+                        .submission-custom-tabs .nav-link.active {
+                            color: #ffffff !important;
+                            background: linear-gradient(135deg, #ff3366, #e6004c) !important;
+                            font-weight: 700 !important;
+                            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.35) !important;
+                        }
+                        .submission-custom-tabs .nav-link.active i {
+                            color: #ffffff !important;
+                        }
+                    </style>
+
                     <!-- Media Categories Tabs -->
                     <div class="card" style="background: #1a2234; border: 1px solid #2a3447; border-radius: 8px;">
-                        <div class="card-header p-0" style="background: #151c2b; border-bottom: 1px solid #2a3447;">
-                            <ul class="nav nav-tabs border-0" id="submissionTabs" role="tablist">
+                        <div class="card-header p-0" style="background: #121824; border-bottom: 1px solid #2a3447; border-radius: 8px 8px 0 0;">
+                            <ul class="nav nav-tabs border-0 submission-custom-tabs" id="submissionTabs" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active text-white" id="audio-tab" data-toggle="tab" href="#audio" role="tab" style="padding: 16px 24px; border: none; border-bottom: 3px solid #ff3366; background: transparent; font-weight: 600;">
+                                    <a class="nav-link active" id="audio-tab" data-toggle="tab" href="#audio" role="tab">
                                         <i class="fa fa-music mr-2"></i> Audio Tracks ({{ $audios->count() }})
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" id="film-stock-tab" data-toggle="tab" href="#film-stock" role="tab" style="padding: 16px 24px; border: none; background: transparent; font-weight: 600;">
+                                    <a class="nav-link" id="film-stock-tab" data-toggle="tab" href="#film-stock" role="tab">
                                         <i class="fa fa-film mr-2"></i> Film Stock ({{ $filmStocks->count() }})
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" id="effects-tab" data-toggle="tab" href="#effects" role="tab" style="padding: 16px 24px; border: none; background: transparent; font-weight: 600;">
+                                    <a class="nav-link" id="effects-tab" data-toggle="tab" href="#effects" role="tab">
                                         <i class="fa fa-magic mr-2"></i> Effects ({{ $effects->count() }})
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" id="photos-tab" data-toggle="tab" href="#photos" role="tab" style="padding: 16px 24px; border: none; background: transparent; font-weight: 600;">
+                                    <a class="nav-link" id="photos-tab" data-toggle="tab" href="#photos" role="tab">
                                         <i class="fa fa-camera mr-2"></i> Photos ({{ $photos->count() }})
                                     </a>
                                 </li>

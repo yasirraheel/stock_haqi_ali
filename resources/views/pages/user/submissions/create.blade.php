@@ -51,27 +51,66 @@
                         </div>
                     @endif
 
+                    <style>
+                        .submission-custom-tabs {
+                            border-bottom: 2px solid #2a3447 !important;
+                            background: #121824;
+                            padding: 8px 8px 0 8px;
+                            border-radius: 10px 10px 0 0;
+                            display: flex;
+                        }
+                        .submission-custom-tabs .nav-item {
+                            margin-bottom: -2px;
+                            flex: 1;
+                        }
+                        .submission-custom-tabs .nav-link {
+                            color: #94a3b8 !important;
+                            background: transparent !important;
+                            border: none !important;
+                            padding: 14px 16px !important;
+                            font-weight: 600 !important;
+                            font-size: 15px !important;
+                            text-align: center;
+                            transition: all 0.2s ease-in-out;
+                            border-radius: 8px 8px 0 0 !important;
+                            display: block;
+                        }
+                        .submission-custom-tabs .nav-link:hover {
+                            color: #ffffff !important;
+                            background: rgba(255, 255, 255, 0.06) !important;
+                        }
+                        .submission-custom-tabs .nav-link.active {
+                            color: #ffffff !important;
+                            background: linear-gradient(135deg, #ff3366, #e6004c) !important;
+                            font-weight: 700 !important;
+                            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.35) !important;
+                        }
+                        .submission-custom-tabs .nav-link.active i {
+                            color: #ffffff !important;
+                        }
+                    </style>
+
                     <!-- Submission Box with Tabs -->
                     <div class="card" style="background: #1a2234; border: 1px solid #2a3447; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-                        <div class="card-header p-0" style="background: #151c2b; border-bottom: 1px solid #2a3447;">
-                            <ul class="nav nav-tabs border-0 nav-justified" id="submitFormTabs" role="tablist">
+                        <div class="card-header p-0" style="background: #121824; border-bottom: 1px solid #2a3447; border-radius: 10px 10px 0 0;">
+                            <ul class="nav nav-tabs border-0 nav-justified submission-custom-tabs" id="submitFormTabs" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active text-white" id="tab-audio" data-toggle="tab" href="#form-audio" role="tab" style="padding: 16px; border: none; font-weight: 600;">
+                                    <a class="nav-link active" id="tab-audio" data-toggle="tab" href="#form-audio" role="tab">
                                         <i class="fa fa-music mr-2"></i> Audio Track
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" id="tab-film" data-toggle="tab" href="#form-film" role="tab" style="padding: 16px; border: none; font-weight: 600;">
+                                    <a class="nav-link" id="tab-film" data-toggle="tab" href="#form-film" role="tab">
                                         <i class="fa fa-film mr-2"></i> Film Stock
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" id="tab-effect" data-toggle="tab" href="#form-effect" role="tab" style="padding: 16px; border: none; font-weight: 600;">
+                                    <a class="nav-link" id="tab-effect" data-toggle="tab" href="#form-effect" role="tab">
                                         <i class="fa fa-magic mr-2"></i> Effect
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" id="tab-photo" data-toggle="tab" href="#form-photo" role="tab" style="padding: 16px; border: none; font-weight: 600;">
+                                    <a class="nav-link" id="tab-photo" data-toggle="tab" href="#form-photo" role="tab">
                                         <i class="fa fa-camera mr-2"></i> Photo
                                     </a>
                                 </li>
