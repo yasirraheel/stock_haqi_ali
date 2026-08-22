@@ -470,23 +470,29 @@ function scanGoogleDriveLink(type) {
         // 2. Show file info badge
         badgeInfo.innerText = (data.formatted_size !== 'Unknown' ? data.formatted_size + ' • ' : '') + (data.mime_type ? data.mime_type.split('/')[1].toUpperCase() : 'Ready');
 
-        // 3. Render type-specific preview player
+        // 3. Render type-specific preview player (fitted responsive container)
         playerContainer.innerHTML = '';
         if (type === 'audio') {
             playerContainer.innerHTML = `
-                <iframe src="${data.preview_url}" style="width: 100%; height: 90px; border: 0; border-radius: 6px; background: #000;" allow="autoplay"></iframe>
+                <div style="width: 100%; background: #0b0f19; border-radius: 8px; overflow: hidden; padding: 6px; border: 1px solid #1e2838;">
+                    <iframe src="${data.preview_url}" style="width: 100%; height: 110px; border: 0; border-radius: 6px; display: block;" allow="autoplay"></iframe>
+                </div>
             `;
         } else if (type === 'film' || type === 'effect') {
             playerContainer.innerHTML = `
-                <iframe src="${data.preview_url}" style="width: 100%; height: 260px; border: 0; border-radius: 6px; background: #000;" allow="autoplay" allowfullscreen></iframe>
+                <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; box-shadow: 0 6px 20px rgba(0,0,0,0.6); border: 1px solid #1e2838;">
+                    <iframe src="${data.preview_url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: 8px;" allow="autoplay" allowfullscreen></iframe>
+                </div>
             `;
         } else if (type === 'photo') {
             playerContainer.innerHTML = `
-                <img src="${data.thumbnail_url}" style="max-height: 240px; max-width: 100%; border-radius: 6px; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" alt="Preview">
+                <div style="width: 100%; background: #0b0f19; border-radius: 8px; padding: 12px; text-align: center; border: 1px solid #1e2838;">
+                    <img src="${data.thumbnail_url}" style="max-height: 380px; max-width: 100%; border-radius: 6px; object-fit: contain; box-shadow: 0 4px 15px rgba(0,0,0,0.5);" alt="Preview">
+                </div>
             `;
         }
 
-        // 4. Reveal preview box with smooth animation
+        // 4. Reveal preview box with smooth display
         previewBox.style.display = 'block';
     })
     .catch(err => {
