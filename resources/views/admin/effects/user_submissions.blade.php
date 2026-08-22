@@ -2,6 +2,38 @@
 
 @section("content")
 
+<style>
+    .custom-dark-table {
+        background-color: #1a2234 !important;
+        border: 1px solid #2a3447 !important;
+        color: #ffffff !important;
+    }
+    .custom-dark-table thead th {
+        background-color: #121824 !important;
+        border-color: #2a3447 !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+    }
+    .custom-dark-table tbody tr {
+        background-color: #1a2234 !important;
+        border-color: #2a3447 !important;
+        color: #ffffff !important;
+    }
+    .custom-dark-table tbody tr:hover {
+        background-color: #222c42 !important;
+    }
+    .custom-dark-table tbody tr td {
+        background-color: transparent !important;
+        border-color: #2a3447 !important;
+        color: #ffffff !important;
+        vertical-align: middle !important;
+    }
+    .card-box {
+        background-color: #1a2234 !important;
+        border: 1px solid #2a3447 !important;
+    }
+</style>
+
 <div class="content-page">
     <div class="content">
         <div class="container-fluid">
@@ -26,7 +58,7 @@
                                 <form method="GET" action="{{ route('admin.effects.user-submissions') }}" class="form-inline">
                                     <div class="form-group mr-2">
                                         <label class="mr-2 text-white">Status:</label>
-                                        <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                        <select name="status" class="form-control form-control-sm" onchange="this.form.submit()" style="background: #121824; border: 1px solid #2a3447; color: #fff;">
                                             <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Statuses</option>
                                             <option value="pending" {{ request('status') == 'pending' || !request()->has('status') ? 'selected' : '' }}>Pending Review</option>
                                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Approved & Active</option>
@@ -34,7 +66,7 @@
                                         </select>
                                     </div>
                                     <div class="input-group">
-                                        <input type="text" name="s" class="form-control form-control-sm" placeholder="Search effect or user..." value="{{ request('s') }}">
+                                        <input type="text" name="s" class="form-control form-control-sm" placeholder="Search effect or user..." value="{{ request('s') }}" style="background: #121824; border: 1px solid #2a3447; color: #fff;">
                                         <div class="input-group-append">
                                             <button class="btn btn-sm btn-primary" type="submit"><i class="fa fa-search"></i></button>
                                         </div>
@@ -43,15 +75,8 @@
                             </div>
                         </div>
 
-                        @if(Session::has('flash_message'))
-                            <div class="alert alert-success">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                {{ Session::get('flash_message') }}
-                            </div>
-                        @endif
-
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
+                            <table class="table table-bordered custom-dark-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -70,7 +95,7 @@
                                         <tr>
                                             <td>{{ $effects->firstItem() + $i }}</td>
                                             <td>
-                                                <strong style="color: #fff;">{{ $effect->title }}</strong>
+                                                <strong class="text-white">{{ $effect->title }}</strong>
                                                 @if($effect->description)
                                                     <small class="text-muted d-block" style="max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $effect->description }}</small>
                                                 @endif
@@ -100,25 +125,27 @@
                                             </td>
                                             <td>
                                                 @if($effect->status === 'pending')
-                                                    <span class="badge badge-warning"><i class="fa fa-clock-o"></i> Pending</span>
+                                                    <span class="badge badge-warning" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>
                                                 @elseif($effect->status === 'rejected')
-                                                    <span class="badge badge-danger"><i class="fa fa-times-circle"></i> Rejected</span>
+                                                    <span class="badge badge-danger" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-times-circle"></i> Rejected</span>
                                                 @else
-                                                    <span class="badge badge-success"><i class="fa fa-check-circle"></i> Approved</span>
+                                                    <span class="badge badge-success" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Approved</span>
                                                 @endif
                                             </td>
                                             <td>{{ $effect->created_at->format('M d, Y') }}</td>
                                             <td class="text-center" style="white-space: nowrap;">
                                                 @if($effect->status !== 'active')
-                                                    <a href="{{ route('admin.effects.user-submissions.approve', $effect->id) }}" class="btn btn-sm btn-success m-r-5" data-toggle="tooltip" title="Approve & Publish Live" onclick="return confirm('Approve this effect and publish to library?')">
+                                                    <button type="button" class="btn btn-sm btn-success m-r-5" data-toggle="tooltip" title="Approve & Publish Live"
+                                                        onclick="confirmApprove('{{ route('admin.effects.user-submissions.approve', $effect->id) }}', '{{ addslashes($effect->title) }}')">
                                                         <i class="fa fa-check"></i> Approve
-                                                    </a>
+                                                    </button>
                                                 @endif
 
                                                 @if($effect->status !== 'rejected')
-                                                    <a href="{{ route('admin.effects.user-submissions.reject', $effect->id) }}" class="btn btn-sm btn-warning m-r-5" data-toggle="tooltip" title="Reject Submission" onclick="return confirm('Reject this effect submission?')">
+                                                    <button type="button" class="btn btn-sm btn-warning m-r-5" data-toggle="tooltip" title="Reject Submission"
+                                                        onclick="confirmReject('{{ route('admin.effects.user-submissions.reject', $effect->id) }}', '{{ addslashes($effect->title) }}')">
                                                         <i class="fa fa-ban"></i> Reject
-                                                    </a>
+                                                    </button>
                                                 @endif
 
                                                 <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-sm btn-primary" data-toggle="tooltip" title="Edit Details">
@@ -128,7 +155,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="text-center py-4">No user-submitted effects found.</td>
+                                            <td colspan="9" class="text-center py-4 text-muted">No user-submitted effects found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -159,7 +186,7 @@
             </div>
             <div class="modal-body p-3 text-center" style="background: #0d1117;">
                 <div id="effectPlayerWrapper" style="width: 100%; height: 420px; display: none;">
-                    <video id="modalEffectVideoPlayer" controls autoplay style="width: 100%; height: 100%; border-radius: 6px; background: #000; outline: none;"></video>
+                    <video id="modalEffectPlayer" controls autoplay style="width: 100%; height: 100%; border-radius: 6px; background: #000; outline: none;"></video>
                 </div>
                 <div id="effectIframeWrapper" style="width: 100%; height: 420px; display: none;">
                     <iframe id="modalEffectIframe" src="" style="width: 100%; height: 100%; border: 0; border-radius: 6px;" allow="autoplay" allowfullscreen></iframe>
@@ -169,28 +196,29 @@
     </div>
 </div>
 
-<script src="{{ URL::asset('admin_assets/js/jquery.min.js') }}"></script>
+@endsection
 
+@section('javascript')
 <script type="text/javascript">
-    function previewEffect(driveFileId, effectUrl, title) {
+    function previewEffect(fileId, directUrl, title) {
         document.getElementById('effectModalTitle').innerText = title ? title : 'Effect Preview';
-        var videoPlayer = document.getElementById('modalEffectVideoPlayer');
+        var videoPlayer = document.getElementById('modalEffectPlayer');
         var playerWrapper = document.getElementById('effectPlayerWrapper');
         var iframeWrapper = document.getElementById('effectIframeWrapper');
         var iframe = document.getElementById('modalEffectIframe');
 
-        if (driveFileId && driveFileId !== '') {
+        if (fileId && fileId !== '') {
             if (videoPlayer) {
                 videoPlayer.pause();
                 videoPlayer.src = '';
             }
             playerWrapper.style.display = 'none';
-            iframe.src = 'https://drive.google.com/file/d/' + driveFileId + '/preview';
+            iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
             iframeWrapper.style.display = 'block';
-        } else if (effectUrl && effectUrl !== '') {
+        } else if (directUrl && directUrl !== '') {
             iframe.src = '';
             iframeWrapper.style.display = 'none';
-            videoPlayer.src = effectUrl;
+            videoPlayer.src = directUrl;
             playerWrapper.style.display = 'block';
             videoPlayer.play().catch(function() {});
         }
@@ -199,7 +227,7 @@
     }
 
     function closeEffectPreview() {
-        var videoPlayer = document.getElementById('modalEffectVideoPlayer');
+        var videoPlayer = document.getElementById('modalEffectPlayer');
         var iframe = document.getElementById('modalEffectIframe');
         if (videoPlayer) {
             videoPlayer.pause();
@@ -213,6 +241,55 @@
     $('#effectPreviewModal').on('hidden.bs.modal', function () {
         closeEffectPreview();
     });
-</script>
 
+    function confirmApprove(url, title) {
+        Swal.fire({
+            title: 'Approve Effect?',
+            text: 'Are you sure you want to approve "' + title + '" and publish it to the library?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10c469',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa fa-check"></i> Yes, Approve',
+            cancelButtonText: 'Cancel',
+            background: '#1a2234',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    function confirmReject(url, title) {
+        Swal.fire({
+            title: 'Reject Submission?',
+            text: 'Are you sure you want to reject "' + title + '"?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f34943',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa fa-ban"></i> Yes, Reject',
+            cancelButtonText: 'Cancel',
+            background: '#1a2234',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    @if(Session::has('flash_message'))
+        Swal.fire({
+            position: 'center',
+            icon: 'success',
+            title: "{{ Session::get('flash_message') }}",
+            showConfirmButton: true,
+            confirmButtonColor: '#10c469',
+            background: '#1a2234',
+            color: '#fff'
+        });
+    @endif
+</script>
 @endsection

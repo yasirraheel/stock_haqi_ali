@@ -2,6 +2,38 @@
 
 @section("content")
 
+<style>
+    .custom-dark-table {
+        background-color: #1a2234 !important;
+        border: 1px solid #2a3447 !important;
+        color: #ffffff !important;
+    }
+    .custom-dark-table thead th {
+        background-color: #121824 !important;
+        border-color: #2a3447 !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+    }
+    .custom-dark-table tbody tr {
+        background-color: #1a2234 !important;
+        border-color: #2a3447 !important;
+        color: #ffffff !important;
+    }
+    .custom-dark-table tbody tr:hover {
+        background-color: #222c42 !important;
+    }
+    .custom-dark-table tbody tr td {
+        background-color: transparent !important;
+        border-color: #2a3447 !important;
+        color: #ffffff !important;
+        vertical-align: middle !important;
+    }
+    .card-box {
+        background-color: #1a2234 !important;
+        border: 1px solid #2a3447 !important;
+    }
+</style>
+
 <div class="content-page">
     <div class="content">
         <div class="container-fluid">
@@ -26,7 +58,7 @@
                                 <form method="GET" action="{{ route('admin.film-stock.user-submissions') }}" class="form-inline">
                                     <div class="form-group mr-2">
                                         <label class="mr-2 text-white">Status:</label>
-                                        <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                        <select name="status" class="form-control form-control-sm" onchange="this.form.submit()" style="background: #121824; border: 1px solid #2a3447; color: #fff;">
                                             <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Statuses</option>
                                             <option value="pending" {{ request('status') == 'pending' || !request()->has('status') ? 'selected' : '' }}>Pending Review</option>
                                             <option value="imported" {{ request('status') == 'imported' ? 'selected' : '' }}>Approved & Active</option>
@@ -34,7 +66,7 @@
                                         </select>
                                     </div>
                                     <div class="input-group">
-                                        <input type="text" name="s" class="form-control form-control-sm" placeholder="Search title or user..." value="{{ request('s') }}">
+                                        <input type="text" name="s" class="form-control form-control-sm" placeholder="Search title or user..." value="{{ request('s') }}" style="background: #121824; border: 1px solid #2a3447; color: #fff;">
                                         <div class="input-group-append">
                                             <button class="btn btn-sm btn-primary" type="submit"><i class="fa fa-search"></i></button>
                                         </div>
@@ -43,15 +75,8 @@
                             </div>
                         </div>
 
-                        @if(Session::has('flash_message'))
-                            <div class="alert alert-success">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                {{ Session::get('flash_message') }}
-                            </div>
-                        @endif
-
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
+                            <table class="table table-bordered custom-dark-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -69,7 +94,7 @@
                                         <tr>
                                             <td>{{ $files->firstItem() + $i }}</td>
                                             <td>
-                                                <strong style="color: #fff;">{{ $file->name }}</strong>
+                                                <strong class="text-white">{{ $file->name }}</strong>
                                             </td>
                                             <td>
                                                 @if($file->user)
@@ -86,34 +111,36 @@
                                                     <i class="fa fa-play-circle"></i> Preview
                                                 </button>
                                             </td>
-                                            <td><code style="background: #1e2838; color: #35b8e0; padding: 2px 6px; border-radius: 4px;">{{ $file->file_id }}</code></td>
+                                            <td><code style="background: #121824; color: #35b8e0; padding: 3px 8px; border-radius: 4px; border: 1px solid #2a3447;">{{ $file->file_id }}</code></td>
                                             <td>
                                                 @if($file->status === 'pending')
-                                                    <span class="badge badge-warning"><i class="fa fa-clock-o"></i> Pending</span>
+                                                    <span class="badge badge-warning" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>
                                                 @elseif($file->status === 'blocked')
-                                                    <span class="badge badge-danger"><i class="fa fa-ban"></i> Rejected</span>
+                                                    <span class="badge badge-danger" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-ban"></i> Rejected</span>
                                                 @else
-                                                    <span class="badge badge-success"><i class="fa fa-check-circle"></i> Approved</span>
+                                                    <span class="badge badge-success" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Approved</span>
                                                 @endif
                                             </td>
                                             <td>{{ $file->created_at->format('M d, Y') }}</td>
                                             <td class="text-center" style="white-space: nowrap;">
                                                 @if($file->status !== 'imported')
-                                                    <a href="{{ route('admin.film-stock.user-submissions.approve', $file->id) }}" class="btn btn-sm btn-success m-r-5" data-toggle="tooltip" title="Approve Video" onclick="return confirm('Approve this film stock video and add to library?')">
+                                                    <button type="button" class="btn btn-sm btn-success m-r-5" data-toggle="tooltip" title="Approve Video"
+                                                        onclick="confirmApprove('{{ route('admin.film-stock.user-submissions.approve', $file->id) }}', '{{ addslashes($file->name) }}')">
                                                         <i class="fa fa-check"></i> Approve
-                                                    </a>
+                                                    </button>
                                                 @endif
 
                                                 @if($file->status !== 'blocked')
-                                                    <a href="{{ route('admin.film-stock.user-submissions.reject', $file->id) }}" class="btn btn-sm btn-warning m-r-5" data-toggle="tooltip" title="Reject Video" onclick="return confirm('Reject this user-submitted video?')">
+                                                    <button type="button" class="btn btn-sm btn-warning m-r-5" data-toggle="tooltip" title="Reject Video"
+                                                        onclick="confirmReject('{{ route('admin.film-stock.user-submissions.reject', $file->id) }}', '{{ addslashes($file->name) }}')">
                                                         <i class="fa fa-ban"></i> Reject
-                                                    </a>
+                                                    </button>
                                                 @endif
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="text-center py-4">No user-submitted Film Stock videos found.</td>
+                                            <td colspan="8" class="text-center py-4 text-muted">No user-submitted Film Stock videos found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -154,8 +181,9 @@
     </div>
 </div>
 
-<script src="{{ URL::asset('admin_assets/js/jquery.min.js') }}"></script>
+@endsection
 
+@section('javascript')
 <script type="text/javascript">
     function previewFilmStock(fileId, streamUrl, fileName) {
         document.getElementById('previewModalTitle').innerText = fileName ? fileName : 'Film Stock Video Preview';
@@ -198,6 +226,55 @@
     $('#filmStockPreviewModal').on('hidden.bs.modal', function () {
         closeFilmStockPreview();
     });
-</script>
 
+    function confirmApprove(url, title) {
+        Swal.fire({
+            title: 'Approve Submission?',
+            text: 'Are you sure you want to approve "' + title + '" and add it to the library?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10c469',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa fa-check"></i> Yes, Approve',
+            cancelButtonText: 'Cancel',
+            background: '#1a2234',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    function confirmReject(url, title) {
+        Swal.fire({
+            title: 'Reject Submission?',
+            text: 'Are you sure you want to reject "' + title + '"?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f34943',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa fa-ban"></i> Yes, Reject',
+            cancelButtonText: 'Cancel',
+            background: '#1a2234',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    @if(Session::has('flash_message'))
+        Swal.fire({
+            position: 'center',
+            icon: 'success',
+            title: "{{ Session::get('flash_message') }}",
+            showConfirmButton: true,
+            confirmButtonColor: '#10c469',
+            background: '#1a2234',
+            color: '#fff'
+        });
+    @endif
+</script>
 @endsection

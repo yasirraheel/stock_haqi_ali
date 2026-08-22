@@ -416,6 +416,7 @@
         </div>
     </div>
 
+<script src="{{ URL::asset('admin_assets/js/sweetalert2@11.js') }}"></script>
 <script>
 /**
  * AJAX Google Drive Link Scanner
@@ -431,7 +432,18 @@ function scanGoogleDriveLink(type) {
 
     const driveUrl = urlInput.value.trim();
     if (!driveUrl) {
-        alert('Please enter a Google Drive link first.');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Link Required',
+                text: 'Please enter a Google Drive link first.',
+                confirmButtonColor: '#ff3366',
+                background: '#1a2234',
+                color: '#fff'
+            });
+        } else {
+            alert('Please enter a Google Drive link first.');
+        }
         urlInput.focus();
         return;
     }
@@ -456,7 +468,18 @@ function scanGoogleDriveLink(type) {
         btnScan.innerHTML = origBtnHtml;
 
         if (!data.success) {
-            alert(data.message || 'Could not scan Google Drive link. Please verify the URL.');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Scan Error',
+                    text: data.message || 'Could not scan Google Drive link. Please verify the URL.',
+                    confirmButtonColor: '#ff3366',
+                    background: '#1a2234',
+                    color: '#fff'
+                });
+            } else {
+                alert(data.message || 'Could not scan Google Drive link.');
+            }
             return;
         }
 
@@ -498,7 +521,18 @@ function scanGoogleDriveLink(type) {
     .catch(err => {
         btnScan.disabled = false;
         btnScan.innerHTML = origBtnHtml;
-        alert('Failed to connect to scanner service. Please check your link.');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: 'Failed to connect to scanner service. Please check your link.',
+                confirmButtonColor: '#ff3366',
+                background: '#1a2234',
+                color: '#fff'
+            });
+        } else {
+            alert('Failed to connect to scanner service. Please check your link.');
+        }
     });
 }
 

@@ -2,6 +2,38 @@
 
 @section("content")
 
+<style>
+    .custom-dark-table {
+        background-color: #1a2234 !important;
+        border: 1px solid #2a3447 !important;
+        color: #ffffff !important;
+    }
+    .custom-dark-table thead th {
+        background-color: #121824 !important;
+        border-color: #2a3447 !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+    }
+    .custom-dark-table tbody tr {
+        background-color: #1a2234 !important;
+        border-color: #2a3447 !important;
+        color: #ffffff !important;
+    }
+    .custom-dark-table tbody tr:hover {
+        background-color: #222c42 !important;
+    }
+    .custom-dark-table tbody tr td {
+        background-color: transparent !important;
+        border-color: #2a3447 !important;
+        color: #ffffff !important;
+        vertical-align: middle !important;
+    }
+    .card-box {
+        background-color: #1a2234 !important;
+        border: 1px solid #2a3447 !important;
+    }
+</style>
+
 <div class="content-page">
     <div class="content">
         <div class="container-fluid">
@@ -26,7 +58,7 @@
                                 <form method="GET" action="{{ route('admin.audio.user-submissions') }}" class="form-inline">
                                     <div class="form-group mr-2">
                                         <label class="mr-2 text-white">Status:</label>
-                                        <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                        <select name="status" class="form-control form-control-sm" onchange="this.form.submit()" style="background: #121824; border: 1px solid #2a3447; color: #fff;">
                                             <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Statuses</option>
                                             <option value="pending" {{ request('status') == 'pending' || !request()->has('status') ? 'selected' : '' }}>Pending Review</option>
                                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Approved & Active</option>
@@ -34,7 +66,7 @@
                                         </select>
                                     </div>
                                     <div class="input-group">
-                                        <input type="text" name="s" class="form-control form-control-sm" placeholder="Search track or user..." value="{{ request('s') }}">
+                                        <input type="text" name="s" class="form-control form-control-sm" placeholder="Search track or user..." value="{{ request('s') }}" style="background: #121824; border: 1px solid #2a3447; color: #fff;">
                                         <div class="input-group-append">
                                             <button class="btn btn-sm btn-primary" type="submit"><i class="fa fa-search"></i></button>
                                         </div>
@@ -43,15 +75,8 @@
                             </div>
                         </div>
 
-                        @if(Session::has('flash_message'))
-                            <div class="alert alert-success">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                {{ Session::get('flash_message') }}
-                            </div>
-                        @endif
-
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
+                            <table class="table table-bordered custom-dark-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -70,7 +95,7 @@
                                         <tr>
                                             <td>{{ $audios->firstItem() + $i }}</td>
                                             <td>
-                                                <strong style="color: #fff;">{{ $audio->title }}</strong>
+                                                <strong class="text-white">{{ $audio->title }}</strong>
                                                 @if($audio->description)
                                                     <small class="text-muted d-block" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $audio->description }}</small>
                                                 @endif
@@ -100,25 +125,27 @@
                                             </td>
                                             <td>
                                                 @if($audio->status === 'pending')
-                                                    <span class="badge badge-warning"><i class="fa fa-clock-o"></i> Pending</span>
+                                                    <span class="badge badge-warning" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>
                                                 @elseif($audio->status === 'rejected')
-                                                    <span class="badge badge-danger"><i class="fa fa-times-circle"></i> Rejected</span>
+                                                    <span class="badge badge-danger" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-times-circle"></i> Rejected</span>
                                                 @else
-                                                    <span class="badge badge-success"><i class="fa fa-check-circle"></i> Approved</span>
+                                                    <span class="badge badge-success" style="padding: 5px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Approved</span>
                                                 @endif
                                             </td>
                                             <td>{{ $audio->created_at->format('M d, Y') }}</td>
                                             <td class="text-center" style="white-space: nowrap;">
                                                 @if($audio->status !== 'active')
-                                                    <a href="{{ route('admin.audio.user-submissions.approve', $audio->id) }}" class="btn btn-sm btn-success m-r-5" data-toggle="tooltip" title="Approve & Publish Live" onclick="return confirm('Approve this audio track and publish to stock library?')">
+                                                    <button type="button" class="btn btn-sm btn-success m-r-5" data-toggle="tooltip" title="Approve & Publish Live"
+                                                        onclick="confirmApprove('{{ route('admin.audio.user-submissions.approve', $audio->id) }}', '{{ addslashes($audio->title) }}')">
                                                         <i class="fa fa-check"></i> Approve
-                                                    </a>
+                                                    </button>
                                                 @endif
 
                                                 @if($audio->status !== 'rejected')
-                                                    <a href="{{ route('admin.audio.user-submissions.reject', $audio->id) }}" class="btn btn-sm btn-warning m-r-5" data-toggle="tooltip" title="Reject Submission" onclick="return confirm('Reject this user submission?')">
+                                                    <button type="button" class="btn btn-sm btn-warning m-r-5" data-toggle="tooltip" title="Reject Submission"
+                                                        onclick="confirmReject('{{ route('admin.audio.user-submissions.reject', $audio->id) }}', '{{ addslashes($audio->title) }}')">
                                                         <i class="fa fa-ban"></i> Reject
-                                                    </a>
+                                                    </button>
                                                 @endif
 
                                                 <a href="{{ route('admin.audio.edit', $audio->id) }}" class="btn btn-sm btn-primary" data-toggle="tooltip" title="Edit Audio Details">
@@ -128,7 +155,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="text-center py-4">No user-submitted audio tracks found.</td>
+                                            <td colspan="9" class="text-center py-4 text-muted">No user-submitted audio tracks found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -152,85 +179,115 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width: 540px;">
         <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <div class="modal-header" style="border-bottom: 1px solid #2a3447; padding: 14px 20px; background: #151c2b;">
-                <h5 class="modal-title mt-0" id="audioPreviewModalTitle" style="font-size: 15px; font-weight: 600;">
+                <h5 class="modal-title mt-0" id="audioPreviewModalTitle" style="font-size: 15px; font-weight: 600; overflow-wrap: anywhere; word-break: break-word;">
                     <i class="fa fa-music text-info mr-1"></i> Audio Track Preview
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeAudioPreview()" style="outline: none; opacity: 0.8;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body p-4 text-center" style="background: #121824;">
-                <div class="m-b-20">
-                    <div style="width: 70px; height: 70px; margin: 0 auto; background: linear-gradient(135deg, #10c469, #35b8e0); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(16, 196, 105, 0.3);">
-                        <i class="fa fa-headphones" style="font-size: 32px; color: #fff;"></i>
-                    </div>
-                    <h4 id="audioModalTrackTitle" class="text-white mt-3 mb-2" style="font-size: 15px; font-weight: 600; word-break: break-word; overflow-wrap: anywhere; white-space: normal; line-height: 1.4; padding: 0 10px;">Track Title</h4>
-                    <p class="text-muted mb-0" style="font-size: 13px;"><i class="fa fa-play-circle-o"></i> User Audio Preview</p>
+            <div class="modal-body p-4 text-center" style="background: #0d1117;">
+                <div id="modalGDriveAudioContainer" style="display: none;">
+                    <iframe id="modalGDriveAudioIframe" src="" style="width: 100%; height: 90px; border: 0; border-radius: 6px; background: #000;" allow="autoplay"></iframe>
                 </div>
-
-                <!-- Single Player Container -->
-                <div id="audioPlayerWrapper" class="p-2" style="background: #1e2838; border-radius: 8px; border: 1px solid #32383e; display: none;">
-                    <audio id="modalAudioPlayer" controls style="width: 100%; outline: none;"></audio>
-                </div>
-
-                <div id="audioIframeWrapper" style="display: none;">
-                    <iframe id="modalAudioIframe" src="" style="width: 100%; height: 110px; border: 0; border-radius: 8px; background: #1e2838;" allow="autoplay"></iframe>
+                <div id="modalHtmlAudioContainer" style="display: none;">
+                    <audio id="modalHtmlAudioPlayer" controls style="width: 100%; outline: none; border-radius: 6px;"></audio>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="{{ URL::asset('admin_assets/js/jquery.min.js') }}"></script>
+@endsection
 
+@section('javascript')
 <script type="text/javascript">
-  function openAudioPreview(title, audioUrl, driveFileId) {
-    document.getElementById('audioModalTrackTitle').innerText = title;
-    var audioPlayer = document.getElementById('modalAudioPlayer');
-    var audioPlayerWrapper = document.getElementById('audioPlayerWrapper');
-    var iframeWrapper = document.getElementById('audioIframeWrapper');
-    var iframe = document.getElementById('modalAudioIframe');
+    function openAudioPreview(title, audioUrl, driveFileId) {
+        document.getElementById('audioPreviewModalTitle').innerHTML = '<i class="fa fa-music text-info mr-1"></i> ' + title;
+        var gdriveContainer = document.getElementById('modalGDriveAudioContainer');
+        var gdriveIframe = document.getElementById('modalGDriveAudioIframe');
+        var htmlContainer = document.getElementById('modalHtmlAudioContainer');
+        var htmlPlayer = document.getElementById('modalHtmlAudioPlayer');
 
-    // Reset previous audio
-    if (audioPlayer) {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        audioPlayer.src = '';
-    }
-    if (iframe) {
-        iframe.src = '';
-    }
+        if (driveFileId && driveFileId !== '') {
+            htmlContainer.style.display = 'none';
+            htmlPlayer.pause();
+            htmlPlayer.src = '';
+            gdriveIframe.src = 'https://drive.google.com/file/d/' + driveFileId + '/preview';
+            gdriveContainer.style.display = 'block';
+        } else if (audioUrl && audioUrl !== '') {
+            gdriveContainer.style.display = 'none';
+            gdriveIframe.src = '';
+            htmlPlayer.src = audioUrl;
+            htmlContainer.style.display = 'block';
+            htmlPlayer.play().catch(function() {});
+        }
 
-    if (driveFileId && driveFileId !== '') {
-        audioPlayerWrapper.style.display = 'none';
-        iframe.src = 'https://drive.google.com/file/d/' + driveFileId + '/preview';
-        iframeWrapper.style.display = 'block';
-    } else if (audioUrl && audioUrl !== '') {
-        iframeWrapper.style.display = 'none';
-        audioPlayer.src = audioUrl;
-        audioPlayerWrapper.style.display = 'block';
-        audioPlayer.play().catch(function() {});
+        $('#audioPreviewModal').modal('show');
     }
 
-    $('#audioPreviewModal').modal('show');
-  }
-
-  function closeAudioPreview() {
-    var audioPlayer = document.getElementById('modalAudioPlayer');
-    var iframe = document.getElementById('modalAudioIframe');
-    if (audioPlayer) {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        audioPlayer.src = '';
+    function closeAudioPreview() {
+        var gdriveIframe = document.getElementById('modalGDriveAudioIframe');
+        var htmlPlayer = document.getElementById('modalHtmlAudioPlayer');
+        if (gdriveIframe) gdriveIframe.src = '';
+        if (htmlPlayer) {
+            htmlPlayer.pause();
+            htmlPlayer.src = '';
+        }
     }
-    if (iframe) {
-        iframe.src = '';
-    }
-  }
 
-  $('#audioPreviewModal').on('hidden.bs.modal', function () {
-    closeAudioPreview();
-  });
+    $('#audioPreviewModal').on('hidden.bs.modal', function () {
+        closeAudioPreview();
+    });
+
+    function confirmApprove(url, title) {
+        Swal.fire({
+            title: 'Approve Audio Track?',
+            text: 'Are you sure you want to approve "' + title + '" and publish it to the library?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10c469',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa fa-check"></i> Yes, Approve',
+            cancelButtonText: 'Cancel',
+            background: '#1a2234',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    function confirmReject(url, title) {
+        Swal.fire({
+            title: 'Reject Submission?',
+            text: 'Are you sure you want to reject "' + title + '"?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f34943',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa fa-ban"></i> Yes, Reject',
+            cancelButtonText: 'Cancel',
+            background: '#1a2234',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    @if(Session::has('flash_message'))
+        Swal.fire({
+            position: 'center',
+            icon: 'success',
+            title: "{{ Session::get('flash_message') }}",
+            showConfirmButton: true,
+            confirmButtonColor: '#10c469',
+            background: '#1a2234',
+            color: '#fff'
+        });
+    @endif
 </script>
-
 @endsection
