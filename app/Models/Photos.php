@@ -58,6 +58,26 @@ class Photos extends Model
     }
 
     /**
+     * Extract Google Drive File ID if image_path points to Google Drive.
+     */
+    public function getDriveFileIdAttribute()
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+
+        if (preg_match('/[?&]id=([a-zA-Z0-9_-]+)/', $this->image_path, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $this->image_path, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    /**
      * Get formatted file size
      */
     public function getFormattedFileSizeAttribute()

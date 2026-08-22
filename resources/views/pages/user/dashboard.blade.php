@@ -58,15 +58,21 @@
                             <!-- Add/Upload Video, Licenses, and Stats -->
                             <div class="col-lg-9 col-md-8 col-sm-12 col-xs-12">
                                 <div class="row">
-                                    <!-- Add/Upload Video -->
-                                    <div class="col-lg-6 col-md-6 col-sm-12">
+                                    <!-- Submit Stock Media -->
+                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                         <div class="member-ship-option">
-                                            <h5 class="color-up">Add/Upload Video</h5>
-                                            <div class="mt-3">
-                                                <a href="{{ URL::to('admin/movies/add_movie') }}"
+                                            <h5 class="color-up">Stock Media Submissions</h5>
+                                            <p class="text-muted mb-2 font-13">Submit Audio, Film Stock, Effects & Photos via Google Drive link.</p>
+                                            <div class="d-flex" style="gap: 10px;">
+                                                <a href="{{ route('user.submissions.create') }}"
                                                     class="vfx-item-btn-danger text-uppercase"
-                                                    style="display: block; width: 100%; text-align: center; padding: 12px; box-sizing: border-box; text-decoration: none;">
-                                                    Add Video
+                                                    style="flex: 1; text-align: center; padding: 10px; box-sizing: border-box; text-decoration: none; font-size: 13px;">
+                                                    <i class="fa fa-plus-circle"></i> Submit Media
+                                                </a>
+                                                <a href="{{ route('user.submissions.index') }}"
+                                                    class="btn btn-secondary text-uppercase"
+                                                    style="flex: 1; text-align: center; padding: 10px; box-sizing: border-box; text-decoration: none; font-size: 13px; background: #2a3447; border: 1px solid #3c4858; color: #fff;">
+                                                    <i class="fa fa-list"></i> My Submissions
                                                 </a>
                                             </div>
                                         </div>

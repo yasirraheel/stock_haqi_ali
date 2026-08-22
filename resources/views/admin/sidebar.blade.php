@@ -47,6 +47,8 @@
                             <li class="{{ classActivePath('photos') }}"><a href="{{ route('admin.photos.index') }}"
                                     class="{{ classActivePath('photos') }}"><i
                                         class="fa fa-image"></i><span>All Photos</span></a></li>
+                            <li><a href="{{ route('admin.photos.user-submissions') }}"><i
+                                        class="fa fa-user"></i><span>Photos by User</span></a></li>
                             <li class="{{ classActivePath('photo-categories') }}"><a href="{{ route('admin.photo-categories.index') }}"
                                     class="{{ classActivePath('photo-categories') }}"><i
                                         class="fa fa-tags"></i><span>Categories</span></a></li>
@@ -63,6 +65,8 @@
                             <li class="{{ classActivePath('audio') }}"><a href="{{ route('admin.audio.index') }}"
                                     class="{{ classActivePath('audio') }}"><i
                                         class="fa fa-music"></i><span>All Audio</span></a></li>
+                            <li><a href="{{ route('admin.audio.user-submissions') }}"><i
+                                        class="fa fa-user"></i><span>Audio by User</span></a></li>
                             <li class="{{ classActivePath('audio-drive-files') }}"><a href="{{ route('admin.audio-drive-files.index') }}"
                                     class="{{ classActivePath('audio-drive-files') }}"><i
                                         class="fa fa-google"></i><span>GDrive Audio Scanner</span></a></li>
@@ -79,6 +83,8 @@
                             <li class="{{ classActivePath('film-stock-drive-files') }}"><a href="{{ route('admin.film-stock-drive-files.index') }}"
                                     class="{{ classActivePath('film-stock-drive-files') }}"><i
                                         class="fa fa-google"></i><span>GDrive Film Stock</span></a></li>
+                            <li><a href="{{ route('admin.film-stock.user-submissions') }}"><i
+                                        class="fa fa-user"></i><span>Film Stock by User</span></a></li>
                             <li class="{{ classActivePath('film-stock-blocked-files') }}"><a href="{{ route('admin.film-stock-drive-files.blocked') }}"
                                     class="{{ classActivePath('film-stock-blocked-files') }}"><i
                                         class="fa fa-ban"></i><span>Blocked Files</span></a></li>
@@ -95,6 +101,8 @@
                             <li class="{{ classActivePath('effects') }}"><a href="{{ route('admin.effects.index') }}"
                                     class="{{ classActivePath('effects') }}"><i
                                         class="fa fa-magic"></i><span>All Effects</span></a></li>
+                            <li><a href="{{ route('admin.effects.user-submissions') }}"><i
+                                        class="fa fa-user"></i><span>Effects by User</span></a></li>
                             <li class="{{ classActivePath('drive-files') }}"><a href="{{ route('admin.drive-files.index') }}"
                                     class="{{ classActivePath('drive-files') }}"><i
                                         class="fa fa-google"></i><span>GDrive Scanned Files</span></a></li>

@@ -113,6 +113,23 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
         'destroy' => 'admin.photo-categories.destroy'
     ]);
 
+    // User Submissions Review & Approval Routes
+    Route::get('audio-user-submissions', 'UserSubmissionsAdminController@audioSubmissions')->name('admin.audio.user-submissions');
+    Route::get('audio-user-submissions/approve/{id}', 'UserSubmissionsAdminController@approveAudio')->name('admin.audio.user-submissions.approve');
+    Route::get('audio-user-submissions/reject/{id}', 'UserSubmissionsAdminController@rejectAudio')->name('admin.audio.user-submissions.reject');
+
+    Route::get('film-stock-user-submissions', 'UserSubmissionsAdminController@filmStockSubmissions')->name('admin.film-stock.user-submissions');
+    Route::get('film-stock-user-submissions/approve/{id}', 'UserSubmissionsAdminController@approveFilmStock')->name('admin.film-stock.user-submissions.approve');
+    Route::get('film-stock-user-submissions/reject/{id}', 'UserSubmissionsAdminController@rejectFilmStock')->name('admin.film-stock.user-submissions.reject');
+
+    Route::get('effects-user-submissions', 'UserSubmissionsAdminController@effectsSubmissions')->name('admin.effects.user-submissions');
+    Route::get('effects-user-submissions/approve/{id}', 'UserSubmissionsAdminController@approveEffect')->name('admin.effects.user-submissions.approve');
+    Route::get('effects-user-submissions/reject/{id}', 'UserSubmissionsAdminController@rejectEffect')->name('admin.effects.user-submissions.reject');
+
+    Route::get('photos-user-submissions', 'UserSubmissionsAdminController@photosSubmissions')->name('admin.photos.user-submissions');
+    Route::get('photos-user-submissions/approve/{id}', 'UserSubmissionsAdminController@approvePhoto')->name('admin.photos.user-submissions.approve');
+    Route::get('photos-user-submissions/reject/{id}', 'UserSubmissionsAdminController@rejectPhoto')->name('admin.photos.user-submissions.reject');
+
     Route::get('dashboard', 'DashboardController@index');
     Route::get('login', ['as' => 'login', 'uses' => 'IndexController@index']);
 
@@ -439,6 +456,16 @@ Route::post('profile', 'UserController@editprofile');
 Route::post('phone_update', 'UserController@phone_update');
 Route::get('watchlist', 'UserController@my_watchlist');
 Route::get('account_delete', 'UserController@account_delete');
+
+// User Stock Media Submissions (Audio, Film Stock, Effects, Photos via single Google Drive link)
+Route::group(['middleware' => 'auth', 'prefix' => 'user/submissions', 'as' => 'user.submissions.'], function () {
+    Route::get('/', 'UserSubmissionController@index')->name('index');
+    Route::get('/create', 'UserSubmissionController@create')->name('create');
+    Route::post('/audio', 'UserSubmissionController@storeAudio')->name('audio.store');
+    Route::post('/film-stock', 'UserSubmissionController@storeFilmStock')->name('film-stock.store');
+    Route::post('/effect', 'UserSubmissionController@storeEffect')->name('effect.store');
+    Route::post('/photo', 'UserSubmissionController@storePhoto')->name('photo.store');
+});
 
 
 

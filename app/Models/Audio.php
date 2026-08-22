@@ -23,9 +23,19 @@ class Audio extends Model
         'mood',
         'tags',
         'is_active',
+        'status',
+        'added_by',
         'downloads_count',
         'views_count'
     ];
+
+    /**
+     * User who submitted/uploaded this audio.
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\User::class, 'added_by');
+    }
 
     protected $casts = [
         'license_price' => 'decimal:2',

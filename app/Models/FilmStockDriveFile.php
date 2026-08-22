@@ -19,8 +19,17 @@ class FilmStockDriveFile extends Model
         'size',
         'url',
         'film_stock_id',
+        'added_by',
         'status'
     ];
+
+    /**
+     * User who submitted this film stock.
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\User::class, 'added_by');
+    }
 
     /**
      * Get human-readable file size.
