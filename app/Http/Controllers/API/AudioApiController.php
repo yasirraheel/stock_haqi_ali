@@ -91,32 +91,42 @@ class AudioApiController extends Controller
     /**
      * High-performance audio stream using Google Drive API media endpoint & local disk caching.
      */
+    /**
+     * High-performance audio stream using Google Drive API media endpoint & local disk caching.
+     */
     public function stream($id)
     {
         $id = (int)$id;
         $fileId = null;
+        $format = 'mp3';
+        $driveRecord = null;
+        $audio = null;
 
         if ($id > 10000) {
             $driveFileId = $id - 10000;
             $driveRecord = AudioDriveFile::find($driveFileId);
             if ($driveRecord && $driveRecord->file_id) {
                 $fileId = $driveRecord->file_id;
+                $format = pathinfo($driveRecord->name, PATHINFO_EXTENSION) ?: 'mp3';
             }
         } else {
             $audio = Audio::find($id);
             if ($audio) {
+                $format = $audio->format ?: 'mp3';
                 if ($audio->audio_path) {
-                    if (preg_match('/id=([a-zA-Z0-9_-]+)/', $audio->audio_path, $matches)) {
+                    if (preg_match('/[?&]id=([a-zA-Z0-9_-]+)/', $audio->audio_path, $matches)) {
                         $fileId = $matches[1];
-                    } elseif (filter_var($audio->audio_path, FILTER_VALIDATE_URL)) {
-                        return redirect($audio->audio_path)->header('Access-Control-Allow-Origin', '*');
-                    } else {
+                    } elseif (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $audio->audio_path, $matches)) {
+                        $fileId = $matches[1];
+                    } elseif (!filter_var($audio->audio_path, FILTER_VALIDATE_URL)) {
                         $localPath = public_path('storage/' . $audio->audio_path);
                         if (file_exists($localPath)) {
+                            $mime = (strtolower($format) === 'wav') ? 'audio/wav' : 'audio/mpeg';
                             return response()->file($localPath, [
-                                'Content-Type' => 'audio/mpeg',
+                                'Content-Type' => $mime,
                                 'Accept-Ranges' => 'bytes',
-                                'Access-Control-Allow-Origin' => '*'
+                                'Access-Control-Allow-Origin' => '*',
+                                'Access-Control-Allow-Methods' => 'GET, OPTIONS'
                             ]);
                         }
                     }
@@ -130,25 +140,45 @@ class AudioApiController extends Controller
             ]);
         }
 
+        $format = strtolower($format);
+        $mimeType = 'audio/mpeg';
+        if ($format === 'wav') {
+            $mimeType = 'audio/wav';
+        } elseif ($format === 'ogg') {
+            $mimeType = 'audio/ogg';
+        } elseif ($format === 'aac' || $format === 'm4a') {
+            $mimeType = 'audio/mp4';
+        }
+
         // Check if cached locally on disk
         $cacheDir = public_path('audio_previews');
         if (!file_exists($cacheDir)) {
             @mkdir($cacheDir, 0755, true);
         }
-        $cacheFile = $cacheDir . '/' . $fileId . '.mp3';
 
-        if (file_exists($cacheFile) && filesize($cacheFile) > 1000) {
-            return response()->file($cacheFile, [
-                'Content-Type' => 'audio/mpeg',
-                'Accept-Ranges' => 'bytes',
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-                'Cache-Control' => 'public, max-age=31536000'
-            ]);
+        $possibleCacheFiles = [
+            $cacheDir . '/' . $fileId . '.' . $format,
+            $cacheDir . '/' . $fileId . '.mp3',
+            $cacheDir . '/' . $fileId . '.wav',
+            $cacheDir . '/' . $fileId . '.audio'
+        ];
+
+        foreach ($possibleCacheFiles as $cached) {
+            if (file_exists($cached) && filesize($cached) > 1000) {
+                return response()->file($cached, [
+                    'Content-Type' => $mimeType,
+                    'Accept-Ranges' => 'bytes',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+                    'Cache-Control' => 'public, max-age=31536000'
+                ]);
+            }
         }
 
+        $saveCachePath = $cacheDir . '/' . $fileId . '.' . ($format ?: 'mp3');
+
         // Fetch via Google Drive API Key if available
-        $apiRecord = GoogleDriveApi::inRandomOrder()->first();
+        $apiRecord = GoogleDriveApi::whereNotNull('api_key')->where('api_key', '!=', '')->inRandomOrder()->first();
         if ($apiRecord && !empty($apiRecord->api_key)) {
             $gdriveApiUrl = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$apiRecord->api_key}";
 
@@ -164,10 +194,10 @@ class AudioApiController extends Controller
 
                 header("Access-Control-Allow-Origin: *");
                 header("Access-Control-Allow-Methods: GET, OPTIONS");
-                header("Content-Type: audio/mpeg");
+                header("Content-Type: {$mimeType}");
                 header("Accept-Ranges: bytes");
 
-                $fp = fopen($cacheFile, 'w+');
+                $fp = fopen($saveCachePath, 'w+');
                 curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $chunk) use ($fp) {
                     if ($fp) fwrite($fp, $chunk);
                     echo $chunk;
@@ -182,12 +212,41 @@ class AudioApiController extends Controller
                 exit;
 
             } catch (\Exception $e) {
-                // Fallback to direct export=open redirect
+                // Fallback
             }
         }
 
-        // Fallback redirect if API key is not configured
-        $fallbackUrl = "https://drive.google.com/uc?export=open&id={$fileId}";
-        return redirect($fallbackUrl)->header('Access-Control-Allow-Origin', '*');
+        // Direct stream fallback via Google Drive download
+        try {
+            $downloadUrl = "https://drive.google.com/uc?export=download&id={$fileId}&confirm=t";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+
+            header("Access-Control-Allow-Origin: *");
+            header("Access-Control-Allow-Methods: GET, OPTIONS");
+            header("Content-Type: {$mimeType}");
+            header("Accept-Ranges: bytes");
+
+            $fp = fopen($saveCachePath, 'w+');
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $chunk) use ($fp) {
+                if ($fp) fwrite($fp, $chunk);
+                echo $chunk;
+                if (ob_get_level()) ob_flush();
+                flush();
+                return strlen($chunk);
+            });
+
+            curl_exec($ch);
+            curl_close($ch);
+            if ($fp) fclose($fp);
+            exit;
+        } catch (\Exception $e) {
+            return redirect("https://drive.google.com/uc?export=open&id={$fileId}")->header('Access-Control-Allow-Origin', '*');
+        }
     }
 }

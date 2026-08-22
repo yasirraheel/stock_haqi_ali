@@ -181,32 +181,32 @@
 
     <!-- Audio Drive Preview Popup Modal -->
     <div id="audioDrivePreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
-            <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 8px;">
-                <div class="modal-header" style="border-bottom: 1px solid #32383e; padding: 15px 20px;">
-                    <h5 class="modal-title mt-0" id="audioDriveModalTitle"><i class="fa fa-music text-info"></i> Audio File Preview</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeAudioDrivePreview()">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 540px;">
+            <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div class="modal-header" style="border-bottom: 1px solid #2a3447; padding: 14px 20px; background: #151c2b;">
+                    <h5 class="modal-title mt-0" id="audioDriveModalTitle" style="font-size: 15px; font-weight: 600;">
+                        <i class="fa fa-music text-info mr-1"></i> Audio File Preview
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeAudioDrivePreview()" style="outline: none; opacity: 0.8;">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body p-4 text-center" style="background: #121824; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                <div class="modal-body p-4 text-center" style="background: #121824;">
                     <div class="m-b-20">
-                        <div style="width: 75px; height: 75px; margin: 0 auto; background: linear-gradient(135deg, #10c469, #35b8e0); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                            <i class="fa fa-headphones" style="font-size: 34px; color: #fff;"></i>
+                        <div style="width: 70px; height: 70px; margin: 0 auto; background: linear-gradient(135deg, #10c469, #35b8e0); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(16, 196, 105, 0.3);">
+                            <i class="fa fa-headphones" style="font-size: 32px; color: #fff;"></i>
                         </div>
-                        <h4 id="audioDriveTrackTitle" class="text-white mt-3 mb-1" style="font-size: 17px; font-weight: 600;">Track Name</h4>
-                        <p class="text-muted mb-0">GDrive Audio Stream & Preview</p>
+                        <h4 id="audioDriveTrackTitle" class="text-white mt-3 mb-2" style="font-size: 15px; font-weight: 600; word-break: break-word; overflow-wrap: anywhere; white-space: normal; line-height: 1.4; padding: 0 10px;">Track Name</h4>
+                        <p class="text-muted mb-0" style="font-size: 13px;"><i class="fa fa-play-circle-o"></i> GDrive Audio Stream & Preview</p>
                     </div>
 
-                    <!-- Direct HTML5 Audio Player -->
-                    <div id="driveAudioPlayerWrapper" class="p-2" style="background: #1e2838; border-radius: 8px; border: 1px solid #32383e;">
-                        <audio id="modalDriveAudioPlayer" controls autoplay style="width: 100%; outline: none;"></audio>
+                    <!-- Single Player Container (Only ONE player shown, never dual) -->
+                    <div id="driveAudioPlayerWrapper" class="p-2" style="background: #1e2838; border-radius: 8px; border: 1px solid #32383e; display: none;">
+                        <audio id="modalDriveAudioPlayer" controls style="width: 100%; outline: none;"></audio>
                     </div>
 
-                    <!-- GDrive iframe preview fallback -->
-                    <div id="driveAudioIframeWrapper" style="display: none; margin-top: 15px;">
-                        <iframe id="modalDriveAudioIframe" src="" style="width: 100%; height: 120px; border: 0; border-radius: 8px;" allow="autoplay"></iframe>
-                        <small class="text-muted d-block mt-1"><i class="fa fa-google"></i> Google Drive Streaming Player</small>
+                    <div id="driveAudioIframeWrapper" style="display: none;">
+                        <iframe id="modalDriveAudioIframe" src="" style="width: 100%; height: 110px; border: 0; border-radius: 8px; background: #1e2838;" allow="autoplay"></iframe>
                     </div>
                 </div>
             </div>
@@ -217,34 +217,32 @@
         function openAudioDrivePreview(fileName, streamUrl, fileId) {
             document.getElementById('audioDriveTrackTitle').innerText = fileName;
             var audioPlayer = document.getElementById('modalDriveAudioPlayer');
+            var audioPlayerWrapper = document.getElementById('driveAudioPlayerWrapper');
             var iframeWrapper = document.getElementById('driveAudioIframeWrapper');
             var iframe = document.getElementById('modalDriveAudioIframe');
 
             // Pause all other inline audio elements
             var allAudios = document.getElementsByTagName('audio');
             for (var i = 0; i < allAudios.length; i++) {
-                if (allAudios[i] !== audioPlayer) {
-                    allAudios[i].pause();
-                }
+                allAudios[i].pause();
             }
 
-            if (streamUrl && streamUrl !== '') {
-                audioPlayer.src = streamUrl;
-                audioPlayer.style.display = 'block';
-                audioPlayer.play().catch(function() {});
-
-                if (fileId && fileId !== '') {
-                    iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
-                    iframeWrapper.style.display = 'block';
-                } else {
-                    iframe.src = '';
-                    iframeWrapper.style.display = 'none';
-                }
-            } else if (fileId && fileId !== '') {
+            if (fileId && fileId !== '') {
+                // For Google Drive audio, show ONLY the GDrive player (never dual)
+                audioPlayer.pause();
                 audioPlayer.src = '';
-                audioPlayer.style.display = 'none';
+                audioPlayerWrapper.style.display = 'none';
+
                 iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
                 iframeWrapper.style.display = 'block';
+            } else if (streamUrl && streamUrl !== '') {
+                // For local/direct stream, show ONLY the HTML5 player
+                iframe.src = '';
+                iframeWrapper.style.display = 'none';
+
+                audioPlayer.src = streamUrl;
+                audioPlayerWrapper.style.display = 'block';
+                audioPlayer.play().catch(function() {});
             }
 
             $('#audioDrivePreviewModal').modal('show');

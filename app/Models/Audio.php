@@ -36,15 +36,17 @@ class Audio extends Model
         'sample_rate' => 'integer'
     ];
 
-    // Accessor to generate the audio URL dynamically (same as web version)
+    // Accessor to generate the audio URL dynamically (with CORS-enabled streaming proxy for GDrive)
     public function getAudioUrlAttribute()
     {
         if ($this->audio_path) {
-            // If audio_path is already an absolute URL, return as is
+            // If it's a Google Drive file, use our non-blocking streaming proxy
+            if ($this->drive_file_id || strpos($this->audio_path, 'drive.google.com') !== false) {
+                return route('api.v1.audio.stream', $this->id);
+            }
             if (filter_var($this->audio_path, FILTER_VALIDATE_URL)) {
                 return $this->audio_path;
             }
-            // Use the same URL building method as the web version
             return asset('storage/' . $this->audio_path);
         }
         return null;

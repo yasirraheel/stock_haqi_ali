@@ -55,10 +55,6 @@ class AudioDriveFile extends Model
      */
     public function getStreamUrlAttribute()
     {
-        $cachedFile = public_path('audio_previews/' . $this->file_id . '.mp3');
-        if (file_exists($cachedFile) && filesize($cachedFile) > 1000) {
-            return asset('audio_previews/' . $this->file_id . '.mp3');
-        }
-        return route('admin.audio-drive-files.stream', $this->file_id);
+        return route('api.v1.audio.stream', 10000 + $this->id);
     }
 }
