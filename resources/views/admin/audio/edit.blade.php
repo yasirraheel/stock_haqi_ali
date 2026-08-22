@@ -74,10 +74,10 @@
                                                         </div>
                                                     </div>
                                                     <audio id="current_audio_player" preload="metadata" style="display: none;">
-                                                        <source src="{{ asset('storage/' . $audio->audio_path) }}" type="audio/mpeg">
-                                                        <source src="{{ asset('storage/' . $audio->audio_path) }}" type="audio/wav">
-                                                        <source src="{{ asset('storage/' . $audio->audio_path) }}" type="audio/ogg">
-                                                        <source src="{{ asset('storage/' . $audio->audio_path) }}" type="audio/mp4">
+                                                        <source src="{{ $audio->audio_url }}" type="audio/mpeg">
+                                                        <source src="{{ $audio->audio_url }}" type="audio/wav">
+                                                        <source src="{{ $audio->audio_url }}" type="audio/ogg">
+                                                        <source src="{{ $audio->audio_url }}" type="audio/mp4">
                                                         Your browser does not support the audio element.
                                                     </audio>
                                                 </div>

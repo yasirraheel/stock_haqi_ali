@@ -50,6 +50,28 @@ class Audio extends Model
         return null;
     }
 
+    /**
+     * Extract Google Drive File ID if audio_path points to Google Drive.
+     *
+     * @return string|null
+     */
+    public function getDriveFileIdAttribute()
+    {
+        if (!$this->audio_path) {
+            return null;
+        }
+
+        if (preg_match('/[?&]id=([a-zA-Z0-9_-]+)/', $this->audio_path, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $this->audio_path, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
     // Scope for active audios
     public function scopeActive($query)
     {

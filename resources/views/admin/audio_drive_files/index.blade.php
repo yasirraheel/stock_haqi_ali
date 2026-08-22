@@ -119,18 +119,22 @@
                                                 </td>
                                                 <td style="white-space: nowrap;">{{ $file->formatted_size }}</td>
                                                 <td>
-                                                    <!-- Direct Inline Audio Player in Table Row -->
-                                                    <div class="d-flex align-items-center" style="gap: 10px;">
-                                                        <audio controls preload="none" style="height: 32px; width: 250px; outline: none;">
+                                                    <!-- Direct Inline Audio Player & Popup Preview in Table Row -->
+                                                    <div class="d-flex align-items-center" style="gap: 8px;">
+                                                        <audio controls preload="none" style="height: 32px; width: 200px; outline: none;">
                                                             <source src="{{ $file->stream_url }}" type="audio/mpeg">
                                                             Your browser does not support HTML5 audio preview.
                                                         </audio>
+
+                                                        <button type="button" class="btn btn-sm btn-primary waves-effect waves-light" onclick="openAudioDrivePreview('{{ addslashes($file->name) }}', '{{ $file->stream_url }}', '{{ $file->file_id }}')" data-toggle="tooltip" title="Open Audio Preview Popup">
+                                                            <i class="fa fa-play-circle"></i> Preview
+                                                        </button>
 
                                                         <div id="action_append_{{ $file->id }}" style="display: inline-block;">
                                                             @if ($file->status === 'imported' || $file->audio_id)
                                                                 <a href="{{ route('admin.audio.edit', $file->audio_id ?: $file->id) }}" class="btn btn-sm btn-info" data-toggle="tooltip" title="View Imported Audio Track"><i class="fa fa-music"></i> Audio Track</a>
                                                             @else
-                                                                <button type="button" class="btn btn-sm btn-success import-audio-btn-{{ $file->id }}" onclick="importDriveAudioFile({{ $file->id }}, this)" data-toggle="tooltip" title="Import directly into Audio library"><i class="fa fa-download"></i> Import Audio</button>
+                                                                <button type="button" class="btn btn-sm btn-success import-audio-btn-{{ $file->id }}" onclick="importDriveAudioFile({{ $file->id }}, this)" data-toggle="tooltip" title="Import directly into Audio library"><i class="fa fa-download"></i> Import</button>
                                                             @endif
                                                         </div>
                                                     </div>
@@ -175,7 +179,93 @@
         </div>
     </div>
 
+    <!-- Audio Drive Preview Popup Modal -->
+    <div id="audioDrivePreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
+            <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 8px;">
+                <div class="modal-header" style="border-bottom: 1px solid #32383e; padding: 15px 20px;">
+                    <h5 class="modal-title mt-0" id="audioDriveModalTitle"><i class="fa fa-music text-info"></i> Audio File Preview</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeAudioDrivePreview()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4 text-center" style="background: #121824; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                    <div class="m-b-20">
+                        <div style="width: 75px; height: 75px; margin: 0 auto; background: linear-gradient(135deg, #10c469, #35b8e0); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            <i class="fa fa-headphones" style="font-size: 34px; color: #fff;"></i>
+                        </div>
+                        <h4 id="audioDriveTrackTitle" class="text-white mt-3 mb-1" style="font-size: 17px; font-weight: 600;">Track Name</h4>
+                        <p class="text-muted mb-0">GDrive Audio Stream & Preview</p>
+                    </div>
+
+                    <!-- Direct HTML5 Audio Player -->
+                    <div id="driveAudioPlayerWrapper" class="p-2" style="background: #1e2838; border-radius: 8px; border: 1px solid #32383e;">
+                        <audio id="modalDriveAudioPlayer" controls autoplay style="width: 100%; outline: none;"></audio>
+                    </div>
+
+                    <!-- GDrive iframe preview fallback -->
+                    <div id="driveAudioIframeWrapper" style="display: none; margin-top: 15px;">
+                        <iframe id="modalDriveAudioIframe" src="" style="width: 100%; height: 120px; border: 0; border-radius: 8px;" allow="autoplay"></iframe>
+                        <small class="text-muted d-block mt-1"><i class="fa fa-google"></i> Google Drive Streaming Player</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function openAudioDrivePreview(fileName, streamUrl, fileId) {
+            document.getElementById('audioDriveTrackTitle').innerText = fileName;
+            var audioPlayer = document.getElementById('modalDriveAudioPlayer');
+            var iframeWrapper = document.getElementById('driveAudioIframeWrapper');
+            var iframe = document.getElementById('modalDriveAudioIframe');
+
+            // Pause all other inline audio elements
+            var allAudios = document.getElementsByTagName('audio');
+            for (var i = 0; i < allAudios.length; i++) {
+                if (allAudios[i] !== audioPlayer) {
+                    allAudios[i].pause();
+                }
+            }
+
+            if (streamUrl && streamUrl !== '') {
+                audioPlayer.src = streamUrl;
+                audioPlayer.style.display = 'block';
+                audioPlayer.play().catch(function() {});
+
+                if (fileId && fileId !== '') {
+                    iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+                    iframeWrapper.style.display = 'block';
+                } else {
+                    iframe.src = '';
+                    iframeWrapper.style.display = 'none';
+                }
+            } else if (fileId && fileId !== '') {
+                audioPlayer.src = '';
+                audioPlayer.style.display = 'none';
+                iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+                iframeWrapper.style.display = 'block';
+            }
+
+            $('#audioDrivePreviewModal').modal('show');
+        }
+
+        function closeAudioDrivePreview() {
+            var audioPlayer = document.getElementById('modalDriveAudioPlayer');
+            var iframe = document.getElementById('modalDriveAudioIframe');
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.src = '';
+            }
+            if (iframe) {
+                iframe.src = '';
+            }
+        }
+
+        $('#audioDrivePreviewModal').on('hidden.bs.modal', function () {
+            closeAudioDrivePreview();
+        });
+
         // Pause any currently playing audio when another audio starts playing
         document.addEventListener('play', function (e) {
             var audios = document.getElementsByTagName('audio');

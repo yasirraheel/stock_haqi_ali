@@ -37,6 +37,7 @@
                   <thead>
                     <tr>
                       <th>Title</th>
+                      <th style="min-width: 270px;">Audio Preview</th>
                       <th>Duration</th>
                       <th>Format</th>
                       <th>License Price</th>
@@ -47,7 +48,29 @@
                   <tbody>
                    @foreach($audios as $i => $audio)
                     <tr id="card_box_id_{{$audio->id}}">
-                      <td>{{ $audio->title }}</td>
+                      <td style="max-width: 220px;">
+                        <strong style="color: #fff;">{{ $audio->title }}</strong>
+                        @if($audio->genre)
+                            <small class="text-muted d-block">{{ $audio->genre }}</small>
+                        @endif
+                      </td>
+                      <td>
+                        @if ($audio->audio_url)
+                            <div class="d-flex align-items-center" style="gap: 8px;">
+                                <audio controls preload="none" style="height: 32px; width: 180px; outline: none;">
+                                    <source src="{{ $audio->audio_url }}" type="audio/mpeg">
+                                    Your browser does not support HTML5 audio.
+                                </audio>
+                                <button type="button" class="btn btn-sm btn-primary waves-effect waves-light"
+                                    onclick="openAudioPreview('{{ addslashes($audio->title) }}', '{{ $audio->audio_url }}', '{{ $audio->drive_file_id ?? '' }}')"
+                                    data-toggle="tooltip" title="Listen in Popup Player">
+                                    <i class="fa fa-play-circle"></i> Preview
+                                </button>
+                            </div>
+                        @else
+                            <span class="text-muted"><i class="fa fa-ban"></i> No Audio File</span>
+                        @endif
+                      </td>
                       <td>{{ $audio->duration ?? 'N/A' }}</td>
                       <td>{{ $audio->format ?? 'N/A' }}</td>
                       <td>
@@ -83,84 +106,165 @@
       @include("admin.copyright")
     </div>
 
+    <!-- Audio Preview Popup Modal -->
+    <div id="audioPreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
+            <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 8px;">
+                <div class="modal-header" style="border-bottom: 1px solid #32383e; padding: 15px 20px;">
+                    <h5 class="modal-title mt-0" id="audioPreviewModalTitle"><i class="fa fa-music text-info"></i> Audio Track Preview</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeAudioPreview()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4 text-center" style="background: #121824; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                    <div class="m-b-20">
+                        <div style="width: 75px; height: 75px; margin: 0 auto; background: linear-gradient(135deg, #10c469, #35b8e0); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            <i class="fa fa-headphones" style="font-size: 34px; color: #fff;"></i>
+                        </div>
+                        <h4 id="audioModalTrackTitle" class="text-white mt-3 mb-1" style="font-size: 17px; font-weight: 600;">Track Title</h4>
+                        <p class="text-muted mb-0">Audio Playback & Preview</p>
+                    </div>
+
+                    <!-- Direct HTML5 Audio Player -->
+                    <div id="audioPlayerWrapper" class="p-2" style="background: #1e2838; border-radius: 8px; border: 1px solid #32383e;">
+                        <audio id="modalAudioPlayer" controls autoplay style="width: 100%; outline: none;"></audio>
+                    </div>
+
+                    <!-- GDrive iframe preview fallback -->
+                    <div id="audioIframeWrapper" style="display: none; margin-top: 15px;">
+                        <iframe id="modalAudioIframe" src="" style="width: 100%; height: 120px; border: 0; border-radius: 8px;" allow="autoplay"></iframe>
+                        <small class="text-muted d-block mt-1"><i class="fa fa-google"></i> Google Drive Streaming Player</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ URL::asset('admin_assets/js/jquery.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
  <script type="text/javascript">
+  function openAudioPreview(title, audioUrl, driveFileId) {
+    document.getElementById('audioModalTrackTitle').innerText = title;
+    var audioPlayer = document.getElementById('modalAudioPlayer');
+    var iframeWrapper = document.getElementById('audioIframeWrapper');
+    var iframe = document.getElementById('modalAudioIframe');
 
- $(".data_remove").click(function () {
+    // Pause all other inline audios
+    var allAudios = document.getElementsByTagName('audio');
+    for (var i = 0; i < allAudios.length; i++) {
+        if (allAudios[i] !== audioPlayer) {
+            allAudios[i].pause();
+        }
+    }
 
-   var post_id = $(this).data("id");
-   var action_name='audio_delete';
+    if (audioUrl && audioUrl !== '') {
+        audioPlayer.src = audioUrl;
+        audioPlayer.style.display = 'block';
+        audioPlayer.play().catch(function() {});
+        
+        if (driveFileId && driveFileId !== '') {
+            iframe.src = 'https://drive.google.com/file/d/' + driveFileId + '/preview';
+            iframeWrapper.style.display = 'block';
+        } else {
+            iframe.src = '';
+            iframeWrapper.style.display = 'none';
+        }
+    } else if (driveFileId && driveFileId !== '') {
+        audioPlayer.src = '';
+        audioPlayer.style.display = 'none';
+        iframe.src = 'https://drive.google.com/file/d/' + driveFileId + '/preview';
+        iframeWrapper.style.display = 'block';
+    }
 
-   Swal.fire({
-     title: 'Are you sure?',
-   text: "You won't be able to revert this!",
-   icon: 'warning',
-   showCancelButton: true,
-   confirmButtonColor: '#3085d6',
-   cancelButtonColor: '#d33',
-   confirmButtonText: 'Yes, delete it!',
-   cancelButtonText: "Cancel",
-   background:"#1a2234",
-   color:"#fff"
+    $('#audioPreviewModal').modal('show');
+  }
 
- }).then((result) => {
+  function closeAudioPreview() {
+    var audioPlayer = document.getElementById('modalAudioPlayer');
+    var iframe = document.getElementById('modalAudioIframe');
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.src = '';
+    }
+    if (iframe) {
+        iframe.src = '';
+    }
+  }
 
-   //alert(post_id);
+  $('#audioPreviewModal').on('hidden.bs.modal', function () {
+    closeAudioPreview();
+  });
 
-   //alert(JSON.stringify(result));
+  // Pause other audios when any audio starts playing
+  document.addEventListener('play', function (e) {
+    var audios = document.getElementsByTagName('audio');
+    for (var i = 0; i < audios.length; i++) {
+        if (audios[i] !== e.target) {
+            audios[i].pause();
+        }
+    }
+  }, true);
 
-     if(result.isConfirmed) {
+  $(".data_remove").click(function () {
 
-         $.ajax({
-             type: 'post',
-             url: "{{ URL::to('admin/ajax_delete') }}",
-             dataType: 'json',
-             data: {"_token": "{{ csrf_token() }}",id: post_id, action_for: action_name},
-             success: function(res) {
+    var post_id = $(this).data("id");
+    var action_name='audio_delete';
 
-               if(res.status=='1')
-               {
+    Swal.fire({
+      title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+    cancelButtonText: "Cancel",
+    background:"#1a2234",
+    color:"#fff"
 
-                   var selector = "#card_box_id_"+post_id;
-                     $(selector ).fadeOut(1000);
-                     setTimeout(function(){
-                             $(selector ).remove()
-                         }, 1000);
+  }).then((result) => {
+      if(result.isConfirmed) {
+          $.ajax({
+              type: 'post',
+              url: "{{ URL::to('admin/ajax_delete') }}",
+              dataType: 'json',
+              data: {"_token": "{{ csrf_token() }}",id: post_id, action_for: action_name},
+              success: function(res) {
+                if(res.status=='1')
+                {
+                    var selector = "#card_box_id_"+post_id;
+                      $(selector ).fadeOut(1000);
+                      setTimeout(function(){
+                              $(selector ).remove()
+                          }, 1000);
 
-                   Swal.fire({
-                     position: 'center',
-                     icon: 'success',
-                     title: 'Deleted!',
-                     showConfirmButton: true,
-                     confirmButtonColor: '#10c469',
-                     background:"#1a2234",
-                     color:"#fff"
-                   })
-
-               }
-               else
-               {
-                 Swal.fire({
-                         position: 'center',
-                         icon: 'error',
-                         title: 'Something went wrong!',
-                         showConfirmButton: true,
-                         confirmButtonColor: '#10c469',
-                         background:"#1a2234",
-                         color:"#fff"
-                        })
-               }
-
-             }
-         });
-     }
-
- })
-
- });
-
+                    Swal.fire({
+                      position: 'center',
+                      icon: 'success',
+                      title: 'Deleted!',
+                      showConfirmButton: true,
+                      confirmButtonColor: '#10c469',
+                      background:"#1a2234",
+                      color:"#fff"
+                    })
+                }
+                else
+                {
+                  Swal.fire({
+                          position: 'center',
+                          icon: 'error',
+                          title: 'Something went wrong!',
+                          showConfirmButton: true,
+                          confirmButtonColor: '#10c469',
+                          background:"#1a2234",
+                          color:"#fff"
+                         })
+                }
+              }
+          });
+      }
+  })
+  });
  </script>
-
-
 @endsection

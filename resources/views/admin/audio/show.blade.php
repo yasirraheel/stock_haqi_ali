@@ -50,14 +50,14 @@
                                     <strong>Audio File:</strong>
                                 </div>
                                 <div class="col-sm-9">
-                                    @if($audio->audio_path)
+                                    @if($audio->audio_url)
                                         <audio controls class="w-100">
-                                            <source src="{{ asset('storage/' . $audio->audio_path) }}" type="audio/mpeg">
+                                            <source src="{{ $audio->audio_url }}" type="audio/mpeg">
                                             Your browser does not support the audio element.
                                         </audio>
                                         <br>
-                                        <a href="{{ asset('storage/' . $audio->audio_path) }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-                                            <i class="fa fa-download"></i> Download Audio
+                                        <a href="{{ $audio->audio_url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                            <i class="fa fa-download"></i> Download / Open Audio
                                         </a>
                                     @else
                                         <span class="text-muted">No audio file</span>
