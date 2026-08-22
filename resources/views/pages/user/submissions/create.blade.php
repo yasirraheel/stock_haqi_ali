@@ -88,6 +88,38 @@
                         .submission-custom-tabs .nav-link.active i {
                             color: #ffffff !important;
                         }
+
+                        /* Clean Dark Form Inputs & Select Styling */
+                        .card-body select.form-control,
+                        .card-body .form-group select {
+                            display: block !important;
+                            width: 100% !important;
+                            height: 44px !important;
+                            line-height: 1.5 !important;
+                            padding: 8px 14px !important;
+                            background-color: #121824 !important;
+                            border: 1px solid #2a3447 !important;
+                            color: #ffffff !important;
+                            border-radius: 6px !important;
+                            font-size: 14px !important;
+                            outline: none !important;
+                            cursor: pointer !important;
+                            -webkit-appearance: menulist !important;
+                            -moz-appearance: menulist !important;
+                            appearance: menulist !important;
+                        }
+
+                        .card-body select.form-control option {
+                            background-color: #1a2234 !important;
+                            color: #ffffff !important;
+                            padding: 10px !important;
+                        }
+
+                        /* Hide conflicting nice-select wrappers */
+                        .card-body .form-group .nice-select,
+                        .card-body .nice-select {
+                            display: none !important;
+                        }
                     </style>
 
                     <!-- Submission Box with Tabs -->
@@ -316,14 +348,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Default: show active pane
-    const activeTab = document.querySelector('#submitFormTabs .nav-link.active');
-    if (activeTab) {
-        const initialTarget = document.querySelector(activeTab.getAttribute('href'));
-        if (initialTarget) {
-            initialTarget.classList.add('show', 'active');
-            initialTarget.style.display = 'block';
+    // Disable niceSelect on submission forms
+    if (typeof jQuery !== 'undefined') {
+        if (typeof jQuery.fn.niceSelect !== 'undefined') {
+            jQuery('select.form-control').niceSelect('destroy');
         }
+        jQuery('.card-body .nice-select').remove();
+        jQuery('select.form-control').show();
     }
 });
 </script>
