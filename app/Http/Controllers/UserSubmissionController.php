@@ -54,7 +54,7 @@ class UserSubmissionController extends Controller
      */
     public function create()
     {
-        $photoCategories = PhotoCategory::where('status', '1')->orderBy('category_name')->get();
+        $photoCategories = PhotoCategory::where('status', 'active')->orderBy('name')->get();
         return view('pages.user.submissions.create', compact('photoCategories'));
     }
 

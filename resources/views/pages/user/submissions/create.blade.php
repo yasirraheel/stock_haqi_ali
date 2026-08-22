@@ -211,7 +211,7 @@
                                                 <select name="category" class="form-control" style="background: #121824; border: 1px solid #2a3447; color: #fff;">
                                                     <option value="General">General</option>
                                                     @foreach($photoCategories as $pcat)
-                                                        <option value="{{ $pcat->category_name }}">{{ $pcat->category_name }}</option>
+                                                        <option value="{{ $pcat->name }}">{{ $pcat->name }}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
