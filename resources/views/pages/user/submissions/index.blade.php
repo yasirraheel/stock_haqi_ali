@@ -321,4 +321,52 @@
         </div>
     </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabLinks = document.querySelectorAll('#submissionTabs .nav-link');
+    const tabPanes = document.querySelectorAll('#submissionTabsContent .tab-pane');
+
+    tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active from all tabs
+            tabLinks.forEach(t => t.classList.remove('active'));
+            tabPanes.forEach(p => {
+                p.classList.remove('show', 'active');
+                p.style.display = 'none';
+            });
+
+            // Activate clicked tab
+            this.classList.add('active');
+            const targetId = this.getAttribute('href');
+            const targetPane = document.querySelector(targetId);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+                targetPane.style.display = 'block';
+            }
+        });
+    });
+
+    // Check if URL hash matches any tab
+    if (window.location.hash) {
+        const hashLink = document.querySelector('#submissionTabs .nav-link[href="' + window.location.hash + '"]');
+        if (hashLink) {
+            hashLink.click();
+            return;
+        }
+    }
+
+    // Default: show active pane
+    const activeTab = document.querySelector('#submissionTabs .nav-link.active');
+    if (activeTab) {
+        const initialTarget = document.querySelector(activeTab.getAttribute('href'));
+        if (initialTarget) {
+            initialTarget.classList.add('show', 'active');
+            initialTarget.style.display = 'block';
+        }
+    }
+});
+</script>
+
 @endsection
