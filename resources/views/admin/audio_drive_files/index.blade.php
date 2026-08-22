@@ -100,16 +100,16 @@
                                             <th>#</th>
                                             <th style="min-width: 220px;">Audio Track Name</th>
                                             <th style="white-space: nowrap;">File Size</th>
-                                            <th style="min-width: 380px;">Audio Direct Preview</th>
-                                            <th style="min-width: 140px;">Status</th>
-                                            <th class="text-center" width="100">Action</th>
+                                            <th class="text-center" style="width: 110px;">Preview</th>
+                                            <th style="min-width: 130px;">Status</th>
+                                            <th class="text-center" style="min-width: 160px;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse ($files as $i => $file)
                                             <tr id="drive_file_id_{{ $file->id }}">
                                                 <td>{{ $files->firstItem() + $i }}</td>
-                                                <td style="max-width: 240px;">
+                                                <td style="max-width: 260px;">
                                                     <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $file->name }}">
                                                         <strong>{{ $file->name }}</strong>
                                                     </div>
@@ -118,26 +118,10 @@
                                                     @endif
                                                 </td>
                                                 <td style="white-space: nowrap;">{{ $file->formatted_size }}</td>
-                                                <td>
-                                                    <!-- Direct Inline Audio Player & Popup Preview in Table Row -->
-                                                    <div class="d-flex align-items-center" style="gap: 8px;">
-                                                        <audio controls preload="none" style="height: 32px; width: 200px; outline: none;">
-                                                            <source src="{{ $file->stream_url }}" type="audio/mpeg">
-                                                            Your browser does not support HTML5 audio preview.
-                                                        </audio>
-
-                                                        <button type="button" class="btn btn-sm btn-primary waves-effect waves-light" onclick="openAudioDrivePreview('{{ addslashes($file->name) }}', '{{ $file->stream_url }}', '{{ $file->file_id }}')" data-toggle="tooltip" title="Open Audio Preview Popup">
-                                                            <i class="fa fa-play-circle"></i> Preview
-                                                        </button>
-
-                                                        <div id="action_append_{{ $file->id }}" style="display: inline-block;">
-                                                            @if ($file->status === 'imported' || $file->audio_id)
-                                                                <a href="{{ route('admin.audio.edit', $file->audio_id ?: $file->id) }}" class="btn btn-sm btn-info" data-toggle="tooltip" title="View Imported Audio Track"><i class="fa fa-music"></i> Audio Track</a>
-                                                            @else
-                                                                <button type="button" class="btn btn-sm btn-success import-audio-btn-{{ $file->id }}" onclick="importDriveAudioFile({{ $file->id }}, this)" data-toggle="tooltip" title="Import directly into Audio library"><i class="fa fa-download"></i> Import</button>
-                                                            @endif
-                                                        </div>
-                                                    </div>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-danger waves-effect waves-light" onclick="openAudioDrivePreview('{{ addslashes($file->name) }}', '{{ $file->stream_url }}', '{{ $file->file_id }}')" data-toggle="tooltip" title="Open Audio Preview Popup">
+                                                        <i class="fa fa-play-circle"></i> Preview
+                                                    </button>
                                                 </td>
                                                 <td class="status-cell" id="status_cell_{{ $file->id }}" data-file-id="{{ $file->id }}" data-audio-id="{{ $file->audio_id ?? '' }}">
                                                     @if ($file->audio_id)
@@ -149,6 +133,14 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-center" style="white-space: nowrap;">
+                                                    <div id="action_append_{{ $file->id }}" style="display: inline-block; margin-right: 5px;">
+                                                        @if ($file->status === 'imported' || $file->audio_id)
+                                                            <a href="{{ route('admin.audio.edit', $file->audio_id ?: $file->id) }}" class="btn btn-xs btn-info" data-toggle="tooltip" title="View Imported Audio Track"><i class="fa fa-music"></i> Track</a>
+                                                        @else
+                                                            <button type="button" class="btn btn-xs btn-success import-audio-btn-{{ $file->id }}" onclick="importDriveAudioFile({{ $file->id }}, this)" data-toggle="tooltip" title="Import directly into Audio library"><i class="fa fa-download"></i> Import</button>
+                                                        @endif
+                                                    </div>
+
                                                     {!! Form::open(['route' => ['admin.audio-drive-files.block', $file->id], 'method' => 'POST', 'style' => 'display:inline-block;']) !!}
                                                     <button type="submit" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" data-toggle="tooltip" title="Block file from import"><i class="fa fa-ban"></i></button>
                                                     {!! Form::close() !!}
@@ -221,25 +213,24 @@
             var iframeWrapper = document.getElementById('driveAudioIframeWrapper');
             var iframe = document.getElementById('modalDriveAudioIframe');
 
-            // Pause all other inline audio elements
-            var allAudios = document.getElementsByTagName('audio');
-            for (var i = 0; i < allAudios.length; i++) {
-                allAudios[i].pause();
+            // Immediately stop & clear any previous playback
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+                audioPlayer.src = '';
+            }
+            if (iframe) {
+                iframe.src = '';
             }
 
             if (fileId && fileId !== '') {
-                // For Google Drive audio, show ONLY the GDrive player (never dual)
-                audioPlayer.pause();
-                audioPlayer.src = '';
+                // For Google Drive audio, show ONLY the GDrive player
                 audioPlayerWrapper.style.display = 'none';
-
                 iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
                 iframeWrapper.style.display = 'block';
             } else if (streamUrl && streamUrl !== '') {
                 // For local/direct stream, show ONLY the HTML5 player
-                iframe.src = '';
                 iframeWrapper.style.display = 'none';
-
                 audioPlayer.src = streamUrl;
                 audioPlayerWrapper.style.display = 'block';
                 audioPlayer.play().catch(function() {});
@@ -253,6 +244,7 @@
             var iframe = document.getElementById('modalDriveAudioIframe');
             if (audioPlayer) {
                 audioPlayer.pause();
+                audioPlayer.currentTime = 0;
                 audioPlayer.src = '';
             }
             if (iframe) {

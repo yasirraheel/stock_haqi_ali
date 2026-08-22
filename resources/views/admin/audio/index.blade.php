@@ -37,7 +37,7 @@
                   <thead>
                     <tr>
                       <th>Title</th>
-                      <th style="min-width: 270px;">Audio Preview</th>
+                      <th class="text-center" style="width: 120px;">Preview</th>
                       <th>Duration</th>
                       <th>Format</th>
                       <th>License Price</th>
@@ -54,21 +54,15 @@
                             <small class="text-muted d-block">{{ $audio->genre }}</small>
                         @endif
                       </td>
-                      <td>
-                        @if ($audio->audio_url)
-                            <div class="d-flex align-items-center" style="gap: 8px;">
-                                <audio controls preload="none" style="height: 32px; width: 180px; outline: none;">
-                                    <source src="{{ $audio->audio_url }}" type="audio/mpeg">
-                                    Your browser does not support HTML5 audio.
-                                </audio>
-                                <button type="button" class="btn btn-sm btn-primary waves-effect waves-light"
-                                    onclick="openAudioPreview('{{ addslashes($audio->title) }}', '{{ $audio->audio_url }}', '{{ $audio->drive_file_id ?? '' }}')"
-                                    data-toggle="tooltip" title="Listen in Popup Player">
-                                    <i class="fa fa-play-circle"></i> Preview
-                                </button>
-                            </div>
+                      <td class="text-center">
+                        @if ($audio->audio_url || $audio->drive_file_id)
+                            <button type="button" class="btn btn-sm btn-danger waves-effect waves-light"
+                                onclick="openAudioPreview('{{ addslashes($audio->title) }}', '{{ $audio->audio_url }}', '{{ $audio->drive_file_id ?? '' }}')"
+                                data-toggle="tooltip" title="Open Audio Preview Popup">
+                                <i class="fa fa-play-circle"></i> Preview
+                            </button>
                         @else
-                            <span class="text-muted"><i class="fa fa-ban"></i> No Audio File</span>
+                            <span class="text-muted"><i class="fa fa-ban"></i> No Audio</span>
                         @endif
                       </td>
                       <td>{{ $audio->duration ?? 'N/A' }}</td>
@@ -151,25 +145,24 @@
     var iframeWrapper = document.getElementById('audioIframeWrapper');
     var iframe = document.getElementById('modalAudioIframe');
 
-    // Pause all other inline audios
-    var allAudios = document.getElementsByTagName('audio');
-    for (var i = 0; i < allAudios.length; i++) {
-        allAudios[i].pause();
+    // Immediately stop & clear any previous playback
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        audioPlayer.src = '';
+    }
+    if (iframe) {
+        iframe.src = '';
     }
 
     if (driveFileId && driveFileId !== '') {
-        // For Google Drive audio, show ONLY the GDrive player (never dual)
-        audioPlayer.pause();
-        audioPlayer.src = '';
+        // Show ONLY the GDrive player
         audioPlayerWrapper.style.display = 'none';
-
         iframe.src = 'https://drive.google.com/file/d/' + driveFileId + '/preview';
         iframeWrapper.style.display = 'block';
     } else if (audioUrl && audioUrl !== '') {
-        // For direct/local audio, show ONLY the HTML5 player
-        iframe.src = '';
+        // Show ONLY the HTML5 player
         iframeWrapper.style.display = 'none';
-
         audioPlayer.src = audioUrl;
         audioPlayerWrapper.style.display = 'block';
         audioPlayer.play().catch(function() {});
@@ -183,6 +176,7 @@
     var iframe = document.getElementById('modalAudioIframe');
     if (audioPlayer) {
         audioPlayer.pause();
+        audioPlayer.currentTime = 0;
         audioPlayer.src = '';
     }
     if (iframe) {
