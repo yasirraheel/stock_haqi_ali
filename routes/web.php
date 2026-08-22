@@ -461,6 +461,7 @@ Route::get('account_delete', 'UserController@account_delete');
 Route::group(['middleware' => 'auth', 'prefix' => 'user/submissions', 'as' => 'user.submissions.'], function () {
     Route::get('/', 'UserSubmissionController@index')->name('index');
     Route::get('/create', 'UserSubmissionController@create')->name('create');
+    Route::post('/scan-link', 'UserSubmissionController@scanLink')->name('scan-link');
     Route::post('/audio', 'UserSubmissionController@storeAudio')->name('audio.store');
     Route::post('/film-stock', 'UserSubmissionController@storeFilmStock')->name('film-stock.store');
     Route::post('/effect', 'UserSubmissionController@storeEffect')->name('effect.store');

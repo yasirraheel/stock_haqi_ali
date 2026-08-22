@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Audio;
 use App\Models\Effect;
 use App\Models\FilmStockDriveFile;
+use App\Models\GoogleDriveApi;
 use App\Models\PhotoCategory;
 use App\Models\Photos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
@@ -17,6 +19,85 @@ class UserSubmissionController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+    }
+
+    /**
+     * Scan a single Google Drive file link and return name, size, type, and live preview URL.
+     */
+    public function scanLink(Request $request)
+    {
+        $request->validate([
+            'drive_url' => 'required|string'
+        ]);
+
+        $input = $request->input('drive_url');
+        $fileId = $this->extractSingleDriveFileId($input);
+        if (!$fileId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Google Drive file link. Please provide a direct single file URL (folders are not allowed).'
+            ], 422);
+        }
+
+        $apiKeyRecord = GoogleDriveApi::orderBy('calls', 'ASC')->first();
+        $apiKey = $apiKeyRecord ? $apiKeyRecord->api_key : null;
+
+        $fileName = 'File ' . substr($fileId, 0, 8);
+        $mimeType = '';
+        $fileSize = 0;
+
+        if ($apiKey) {
+            try {
+                $response = Http::timeout(8)->get("https://www.googleapis.com/drive/v3/files/{$fileId}", [
+                    'fields' => 'id,name,mimeType,size',
+                    'key' => $apiKey
+                ]);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $fileName = $data['name'] ?? $fileName;
+                    $mimeType = $data['mimeType'] ?? '';
+                    $fileSize = isset($data['size']) ? (int)$data['size'] : 0;
+
+                    if ($apiKeyRecord) {
+                        $apiKeyRecord->increment('calls');
+                    }
+                }
+            } catch (\Exception $e) {
+                // Fallback gracefully
+            }
+        }
+
+        // Clean filename for title
+        $cleanTitle = pathinfo($fileName, PATHINFO_FILENAME);
+        if (empty($cleanTitle)) {
+            $cleanTitle = $fileName;
+        }
+
+        $formattedSize = 'Unknown';
+        if ($fileSize > 0) {
+            $bytes = $fileSize;
+            $units = ['B', 'KB', 'MB', 'GB'];
+            $i = 0;
+            while ($bytes > 1024 && $i < count($units) - 1) {
+                $bytes /= 1024;
+                $i++;
+            }
+            $formattedSize = round($bytes, 2) . ' ' . $units[$i];
+        }
+
+        return response()->json([
+            'success' => true,
+            'file_id' => $fileId,
+            'name' => $fileName,
+            'title' => $cleanTitle,
+            'mime_type' => $mimeType,
+            'size' => $fileSize,
+            'formatted_size' => $formattedSize,
+            'preview_url' => "https://drive.google.com/file/d/{$fileId}/preview",
+            'direct_url' => "https://drive.google.com/uc?export=download&id={$fileId}",
+            'thumbnail_url' => "https://drive.google.com/thumbnail?id={$fileId}&sz=w800"
+        ]);
     }
 
     /**
