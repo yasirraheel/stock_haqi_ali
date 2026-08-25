@@ -38,7 +38,7 @@
                     @endif
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('photos') }} {{ classActivePath('photo-categories') }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('photos') }} {{ classActivePath('photos-user-submissions') }} {{ classActivePath('photo-categories') }}">
                             <i class="fa fa-camera"></i>
                             <span>Photos</span>
                             <span class="menu-arrow"></span>
@@ -47,7 +47,8 @@
                             <li class="{{ classActivePath('photos') }}"><a href="{{ route('admin.photos.index') }}"
                                     class="{{ classActivePath('photos') }}"><i
                                         class="fa fa-image"></i><span>All Photos</span></a></li>
-                            <li><a href="{{ route('admin.photos.user-submissions') }}"><i
+                            <li class="{{ classActivePath('photos-user-submissions') }}"><a href="{{ route('admin.photos.user-submissions') }}"
+                                    class="{{ classActivePath('photos-user-submissions') }}"><i
                                         class="fa fa-user"></i><span>Photos by User</span></a></li>
                             <li class="{{ classActivePath('photo-categories') }}"><a href="{{ route('admin.photo-categories.index') }}"
                                     class="{{ classActivePath('photo-categories') }}"><i
@@ -56,7 +57,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('audio') }} {{ classActivePath('audio-drive-files') }} {{ classActivePath('audio-blocked-files') }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('audio') }} {{ classActivePath('audio-user-submissions') }} {{ classActivePath('audio-drive-files') }} {{ classActivePath('audio-blocked-files') }}">
                             <i class="fa fa-music"></i>
                             <span>Audio</span>
                             <span class="menu-arrow"></span>
@@ -65,7 +66,8 @@
                             <li class="{{ classActivePath('audio') }}"><a href="{{ route('admin.audio.index') }}"
                                     class="{{ classActivePath('audio') }}"><i
                                         class="fa fa-music"></i><span>All Audio</span></a></li>
-                            <li><a href="{{ route('admin.audio.user-submissions') }}"><i
+                            <li class="{{ classActivePath('audio-user-submissions') }}"><a href="{{ route('admin.audio.user-submissions') }}"
+                                    class="{{ classActivePath('audio-user-submissions') }}"><i
                                         class="fa fa-user"></i><span>Audio by User</span></a></li>
                             <li class="{{ classActivePath('audio-drive-files') }}"><a href="{{ route('admin.audio-drive-files.index') }}"
                                     class="{{ classActivePath('audio-drive-files') }}"><i
@@ -74,7 +76,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('film-stock-drive-files') }} {{ classActivePath('film-stock-blocked-files') }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('film-stock-drive-files') }} {{ classActivePath('film-stock-user-submissions') }} {{ classActivePath('film-stock-blocked-files') }}">
                             <i class="fa fa-film"></i>
                             <span>Film Stock</span>
                             <span class="menu-arrow"></span>
@@ -83,7 +85,8 @@
                             <li class="{{ classActivePath('film-stock-drive-files') }}"><a href="{{ route('admin.film-stock-drive-files.index') }}"
                                     class="{{ classActivePath('film-stock-drive-files') }}"><i
                                         class="fa fa-google"></i><span>GDrive Film Stock</span></a></li>
-                            <li><a href="{{ route('admin.film-stock.user-submissions') }}"><i
+                            <li class="{{ classActivePath('film-stock-user-submissions') }}"><a href="{{ route('admin.film-stock.user-submissions') }}"
+                                    class="{{ classActivePath('film-stock-user-submissions') }}"><i
                                         class="fa fa-user"></i><span>Film Stock by User</span></a></li>
                             <li class="{{ classActivePath('film-stock-blocked-files') }}"><a href="{{ route('admin.film-stock-drive-files.blocked') }}"
                                     class="{{ classActivePath('film-stock-blocked-files') }}"><i
@@ -92,7 +95,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('effects') }} {{ classActivePath('drive-files') }} {{ classActivePath('blocked-files') }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('effects') }} {{ classActivePath('effects-user-submissions') }} {{ classActivePath('drive-files') }} {{ classActivePath('blocked-files') }}">
                             <i class="fa fa-magic"></i>
                             <span>Effects</span>
                             <span class="menu-arrow"></span>
@@ -101,7 +104,8 @@
                             <li class="{{ classActivePath('effects') }}"><a href="{{ route('admin.effects.index') }}"
                                     class="{{ classActivePath('effects') }}"><i
                                         class="fa fa-magic"></i><span>All Effects</span></a></li>
-                            <li><a href="{{ route('admin.effects.user-submissions') }}"><i
+                            <li class="{{ classActivePath('effects-user-submissions') }}"><a href="{{ route('admin.effects.user-submissions') }}"
+                                    class="{{ classActivePath('effects-user-submissions') }}"><i
                                         class="fa fa-user"></i><span>Effects by User</span></a></li>
                             <li class="{{ classActivePath('drive-files') }}"><a href="{{ route('admin.drive-files.index') }}"
                                     class="{{ classActivePath('drive-files') }}"><i
@@ -113,7 +117,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('sub_admin') }}">
                             <i class="fa fa-users"></i>
                             <span>{{ trans('words.users') }}</span>
                             <span class="menu-arrow"></span>
@@ -125,7 +129,7 @@
                         </ul>
                     </li>
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('paypal_dashboard') }} {{ classActivePath('paypal_payout') }} {{ classActivePath('sold_licenses') }}">
                             <i class="fa fa-money"></i>
                             <span>Sales</span>
                             <span class="menu-arrow"></span>
@@ -137,11 +141,13 @@
                                         class="fa fa-paypal"></i><span>PayPal</span></a></li>
                             <li class="{{ classActivePath('paypal_payout') }}"><a
                                     href="{{ URL::to('admin/paypal_payout') }}"
-                                    class="{{ classActivePath('paypal_payout') }}"><i class="fa fa-paypal"></i><span>
+                                    class="{{ classActivePath('paypal_payout') }}"><i
+                                        class="fa fa-paypal"></i><span>
                                         Manual Payout</span></a></li>
                             <li class="{{ classActivePath('sold_licenses') }}"><a
                                     href="{{ URL::to('admin/sold_licenses') }}"
-                                    class="{{ classActivePath('sold_licenses') }}"><i class="fa fa-paypal"></i><span>
+                                    class="{{ classActivePath('sold_licenses') }}"><i
+                                        class="fa fa-paypal"></i><span>
                                         Sold License</span></a></li>
                         </ul>
                     </li>
@@ -151,7 +157,7 @@
                                 class="fa fa-credit-card-alt"></i><span>{{ trans('words.payment_gateway') }}</span></a>
                     </li>
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect"><i
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('pages') }}"><i
                                 class="fa fa-edit"></i><span>{{ trans('words.pages') }}</span><span
                                 class="menu-arrow"></span></a>
                         <ul class="list-unstyled">
@@ -166,7 +172,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect"><i
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('player_settings') }} {{ classActivePath('player_ad_settings') }}"><i
                                 class="fa fa-play-circle"></i><span>{{ trans('words.player_settings') }}</span><span
                                 class="menu-arrow"></span></a>
                         <ul class="list-unstyled">
@@ -185,7 +191,7 @@
                     </li>
 
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect"><i
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('general_settings') }} {{ classActivePath('email_settings') }} {{ classActivePath('social_login_settings') }} {{ classActivePath('menu_settings') }} {{ classActivePath('recaptcha_settings') }} {{ classActivePath('site_maintenance') }}"><i
                                 class="fa fa-cog"></i><span>{{ trans('words.settings') }}</span><span
                                 class="menu-arrow"></span></a>
                         <ul class="list-unstyled">
