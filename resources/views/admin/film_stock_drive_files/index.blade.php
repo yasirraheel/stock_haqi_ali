@@ -44,17 +44,105 @@
                             @endif
 
                             <!-- Scan Film Stock Folder Form -->
-                            <div class="p-3 mb-4" style="background-color: #212529; border-radius: 5px; border: 1px solid #32383e;">
+                            <div class="p-3 mb-3" style="background-color: #212529; border-radius: 6px; border: 1px solid #32383e;">
                                 {!! Form::open(['route' => 'admin.film-stock-drive-files.scan', 'class' => 'form-inline', 'role' => 'form', 'method' => 'post']) !!}
                                 <div class="input-group w-100">
                                     <input type="text" name="folder_input" id="folder_input" class="form-control"
                                         placeholder="Paste Google Drive Folder URL or Folder ID to fetch Film Stock videos..."
-                                        value="{{ request('folder_id') }}" required>
+                                        value="{{ request('folder_id', '') }}" required>
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-success waves-effect waves-light"><i class="fa fa-google"></i> Scan & Fetch GDrive Film Stock</button>
                                     </div>
                                 </div>
                                 {!! Form::close() !!}
+                            </div>
+
+                            <!-- Scanned Folders List (Saved in Database) -->
+                            @if(isset($scannedFolders) && $scannedFolders->count() > 0)
+                                <div class="p-3 mb-4" style="background: #1a2234; border: 1px solid #2e384d; border-radius: 6px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="m-0 text-white font-14"><i class="fa fa-folder-open text-warning mr-1"></i> Tracked Film Stock Folders ({{ $scannedFolders->count() }})</h5>
+                                        <a href="{{ route('admin.film-stock-drive-files.index', ['tab' => $activeTab ?? 'all']) }}" class="btn btn-xs {{ empty($activeFolder) ? 'btn-primary' : 'btn-secondary' }}">
+                                            <i class="fa fa-th-list"></i> View All Folders ({{ number_format($totalFiles) }})
+                                        </a>
+                                    </div>
+                                    <div class="row">
+                                        @foreach($scannedFolders as $folder)
+                                            @php $isSelected = ($activeFolder === $folder->folder_id); @endphp
+                                            <div class="col-xl-4 col-md-6 mb-2">
+                                                <div class="p-2 d-flex flex-column justify-content-between" style="background: {{ $isSelected ? '#203254' : '#141a29' }}; border: 1px solid {{ $isSelected ? '#3b82f6' : '#2b354d' }}; border-radius: 6px; height: 100%;">
+                                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                                        <div class="text-truncate mr-2" style="max-width: 80%;">
+                                                            <strong class="text-white font-13" title="{{ $folder->folder_id }}"><i class="fa fa-film text-danger"></i> {{ $folder->folder_id }}</strong>
+                                                            @if($folder->last_scanned_at)
+                                                                <small class="text-muted d-block font-11"><i class="fa fa-clock-o"></i> {{ \Carbon\Carbon::parse($folder->last_scanned_at)->diffForHumans() }}</small>
+                                                            @endif
+                                                        </div>
+                                                        <span class="badge {{ $isSelected ? 'badge-primary' : 'badge-dark' }} font-11">{{ number_format($folder->total_files) }} clips</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-dark">
+                                                        <div class="font-11">
+                                                            <span class="text-success mr-2" title="Imported"><i class="fa fa-check"></i> {{ $folder->imported_files }}</span>
+                                                            <span class="text-info mr-2" title="Pending"><i class="fa fa-clock-o"></i> {{ $folder->pending_files }}</span>
+                                                            @if($folder->blocked_files > 0)
+                                                                <span class="text-danger" title="Blocked"><i class="fa fa-ban"></i> {{ $folder->blocked_files }}</span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ route('admin.film-stock-drive-files.index', ['folder_id' => $folder->folder_id, 'tab' => $activeTab ?? 'all']) }}" class="btn btn-xs {{ $isSelected ? 'btn-success' : 'btn-outline-info' }}" title="Filter clips by this folder">
+                                                                <i class="fa fa-filter"></i> {{ $isSelected ? 'Active' : 'Filter' }}
+                                                            </a>
+                                                            {!! Form::open(['route' => 'admin.film-stock-drive-files.scan', 'method' => 'post', 'style' => 'display:inline;']) !!}
+                                                            <input type="hidden" name="folder_input" value="{{ $folder->folder_id }}">
+                                                            <button type="submit" class="btn btn-xs btn-outline-warning" title="Re-Scan & Fetch this folder"><i class="fa fa-refresh"></i></button>
+                                                            {!! Form::close() !!}
+                                                            {!! Form::open(['route' => ['admin.film-stock-drive-files.folder.delete', $folder->folder_id], 'method' => 'post', 'style' => 'display:inline;']) !!}
+                                                            <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('Remove folder {{ $folder->folder_id }} from history?');" title="Remove from list"><i class="fa fa-trash"></i></button>
+                                                            {!! Form::close() !!}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Status Filter Tabs & Search Bar -->
+                            <div class="row align-items-center mb-3">
+                                <div class="col-lg-8 col-md-12 mb-2 mb-lg-0">
+                                    <div class="btn-group flex-wrap">
+                                        <a href="{{ route('admin.film-stock-drive-files.index', ['folder_id' => $activeFolder, 'tab' => 'all', 's' => request('s')]) }}" class="btn btn-sm {{ ($activeTab ?? 'all') === 'all' ? 'btn-primary' : 'btn-dark' }} font-12">
+                                            <i class="fa fa-list"></i> All Clips <span class="badge badge-light ml-1">{{ number_format($totalFiles) }}</span>
+                                        </a>
+                                        <a href="{{ route('admin.film-stock-drive-files.index', ['folder_id' => $activeFolder, 'tab' => 'pending', 's' => request('s')]) }}" class="btn btn-sm {{ ($activeTab ?? '') === 'pending' ? 'btn-info' : 'btn-dark' }} font-12">
+                                            <i class="fa fa-clock-o"></i> Pending <span class="badge badge-info ml-1">{{ number_format($pendingCount) }}</span>
+                                        </a>
+                                        <a href="{{ route('admin.film-stock-drive-files.index', ['folder_id' => $activeFolder, 'tab' => 'imported', 's' => request('s')]) }}" class="btn btn-sm {{ ($activeTab ?? '') === 'imported' ? 'btn-success' : 'btn-dark' }} font-12">
+                                            <i class="fa fa-check-circle"></i> Imported <span class="badge badge-success ml-1">{{ number_format($importedCount) }}</span>
+                                        </a>
+                                        <a href="{{ route('admin.film-stock-drive-files.index', ['folder_id' => $activeFolder, 'tab' => 'blocked', 's' => request('s')]) }}" class="btn btn-sm {{ ($activeTab ?? '') === 'blocked' ? 'btn-danger' : 'btn-dark' }} font-12">
+                                            <i class="fa fa-ban"></i> Blocked <span class="badge badge-danger ml-1">{{ number_format($blockedCount) }}</span>
+                                        </a>
+                                    </div>
+
+                                    @if(!empty($activeFolder))
+                                        <span class="badge badge-warning ml-2 font-12 p-1">
+                                            Folder: {{ substr($activeFolder, 0, 12) }}...
+                                            <a href="{{ route('admin.film-stock-drive-files.index', ['tab' => $activeTab ?? 'all', 's' => request('s')]) }}" class="text-white ml-1" title="Clear folder filter">&times;</a>
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="col-lg-4 col-md-12">
+                                    {!! Form::open(['route' => 'admin.film-stock-drive-files.index', 'class' => 'app-search', 'id' => 'search', 'role' => 'form', 'method' => 'get']) !!}
+                                    <input type="hidden" name="tab" value="{{ $activeTab ?? 'all' }}">
+                                    @if(!empty($activeFolder))
+                                        <input type="hidden" name="folder_id" value="{{ $activeFolder }}">
+                                    @endif
+                                    <input type="text" name="s" placeholder="Search film stock by title or ID..." value="{{ request('s') }}" class="form-control">
+                                    <button type="submit"><i class="fa fa-search"></i></button>
+                                    {!! Form::close() !!}
+                                </div>
                             </div>
 
                             <div class="table-responsive">

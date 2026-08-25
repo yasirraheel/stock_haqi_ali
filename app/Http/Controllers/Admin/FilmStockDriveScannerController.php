@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\FilmStockDriveFile;
 use App\Models\GoogleDriveApi;
+use App\Models\ScannedFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -18,6 +19,45 @@ class FilmStockDriveScannerController extends Controller
     }
 
     /**
+     * Get or sync tracked scanned folders for Film Stock from database.
+     *
+     * @param string $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    private function getScannedFolders($type = 'film_stock')
+    {
+        $existingFolderIds = FilmStockDriveFile::whereNotNull('folder_id')
+            ->where('folder_id', '!=', '')
+            ->distinct('folder_id')
+            ->pluck('folder_id');
+
+        foreach ($existingFolderIds as $fid) {
+            $total = FilmStockDriveFile::where('folder_id', $fid)->count();
+            $imported = FilmStockDriveFile::where('folder_id', $fid)->where(function($q) {
+                $q->where('status', 'imported')->orWhereNotNull('film_stock_id');
+            })->count();
+            $blocked = FilmStockDriveFile::where('folder_id', $fid)->where('status', 'blocked')->count();
+            $pending = FilmStockDriveFile::where('folder_id', $fid)->whereNotIn('status', ['blocked', 'imported'])->whereNull('film_stock_id')->count();
+            $latest = FilmStockDriveFile::where('folder_id', $fid)->max('updated_at');
+
+            ScannedFolder::updateOrCreate(
+                ['type' => $type, 'folder_id' => $fid],
+                [
+                    'folder_name' => 'Film Stock Folder ' . substr($fid, 0, 8) . '...',
+                    'folder_url' => 'https://drive.google.com/drive/folders/' . $fid,
+                    'total_files' => $total,
+                    'imported_files' => $imported,
+                    'pending_files' => $pending,
+                    'blocked_files' => $blocked,
+                    'last_scanned_at' => $latest ?? now(),
+                ]
+            );
+        }
+
+        return ScannedFolder::where('type', $type)->orderBy('last_scanned_at', 'DESC')->get();
+    }
+
+    /**
      * Display a listing of scanned Film Stock Google Drive files.
      *
      * @param Request $request
@@ -25,29 +65,59 @@ class FilmStockDriveScannerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = FilmStockDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('film_stock_id');
+        $activeTab = $request->get('tab', 'all');
+        $activeFolder = $request->get('folder_id', '');
+
+        $baseQuery = FilmStockDriveFile::query();
+
+        if (!empty($activeFolder)) {
+            $baseQuery->where('folder_id', $activeFolder);
+        }
 
         if ($request->has('s') && !empty($request->get('s'))) {
             $search = trim($request->get('s'));
-            $query->where(function ($q) use ($search) {
+            $baseQuery->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
                   ->orWhere('file_id', 'LIKE', "%{$search}%")
                   ->orWhere('folder_id', 'LIKE', "%{$search}%");
             });
         }
 
-        if ($request->has('folder_id') && !empty($request->get('folder_id'))) {
-            $query->where('folder_id', $request->get('folder_id'));
+        $totalFiles = (clone $baseQuery)->count();
+        $pendingCount = (clone $baseQuery)->whereNotIn('status', ['blocked', 'imported'])->whereNull('film_stock_id')->count();
+        $importedCount = (clone $baseQuery)->where(function($q) {
+            $q->where('status', 'imported')->orWhereNotNull('film_stock_id');
+        })->count();
+        $blockedCount = (clone $baseQuery)->where('status', 'blocked')->count();
+
+        $query = clone $baseQuery;
+        if ($activeTab === 'pending') {
+            $query->whereNotIn('status', ['blocked', 'imported'])->whereNull('film_stock_id');
+        } elseif ($activeTab === 'imported') {
+            $query->where(function($q) {
+                $q->where('status', 'imported')->orWhereNotNull('film_stock_id');
+            });
+        } elseif ($activeTab === 'blocked') {
+            $query->where('status', 'blocked');
         }
 
         $files = $query->orderBy('id', 'DESC')->paginate(20)->appends($request->query());
-        $totalFiles = FilmStockDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('film_stock_id')->count();
-        $importedCount = FilmStockDriveFile::where('status', 'imported')->orWhereNotNull('film_stock_id')->count();
-        $blockedCount = FilmStockDriveFile::where('status', 'blocked')->count();
-        $foldersCount = FilmStockDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('film_stock_id')->distinct('folder_id')->count('folder_id');
+        $scannedFolders = $this->getScannedFolders('film_stock');
+        $foldersCount = $scannedFolders->count();
         $page_title = 'Google Drive Scanned Film Stock Files';
 
-        return view('admin.film_stock_drive_files.index', compact('files', 'totalFiles', 'importedCount', 'blockedCount', 'foldersCount', 'page_title'));
+        return view('admin.film_stock_drive_files.index', compact(
+            'files',
+            'totalFiles',
+            'pendingCount',
+            'importedCount',
+            'blockedCount',
+            'foldersCount',
+            'scannedFolders',
+            'activeTab',
+            'activeFolder',
+            'page_title'
+        ));
     }
 
     /**
@@ -58,24 +128,7 @@ class FilmStockDriveScannerController extends Controller
      */
     public function blocked(Request $request)
     {
-        $query = FilmStockDriveFile::where('status', 'blocked');
-
-        if ($request->has('s') && !empty($request->get('s'))) {
-            $search = trim($request->get('s'));
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('file_id', 'LIKE', "%{$search}%")
-                  ->orWhere('folder_id', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $files = $query->orderBy('id', 'DESC')->paginate(20)->appends($request->query());
-        $totalFiles = FilmStockDriveFile::where('status', '!=', 'blocked')->count();
-        $blockedCount = FilmStockDriveFile::where('status', 'blocked')->count();
-        $foldersCount = FilmStockDriveFile::distinct('folder_id')->count('folder_id');
-        $page_title = 'Blocked Film Stock Files';
-
-        return view('admin.film_stock_drive_files.blocked', compact('files', 'totalFiles', 'blockedCount', 'foldersCount', 'page_title'));
+        return redirect()->route('admin.film-stock-drive-files.index', array_merge($request->query(), ['tab' => 'blocked']));
     }
 
     /**
@@ -186,13 +239,54 @@ class FilmStockDriveScannerController extends Controller
 
             } while ($nextPageToken);
 
+            $totalInFolder = FilmStockDriveFile::where('folder_id', $folderId)->count();
+            $importedInFolder = FilmStockDriveFile::where('folder_id', $folderId)->where(function($q) {
+                $q->where('status', 'imported')->orWhereNotNull('film_stock_id');
+            })->count();
+            $blockedInFolder = FilmStockDriveFile::where('folder_id', $folderId)->where('status', 'blocked')->count();
+            $pendingInFolder = FilmStockDriveFile::where('folder_id', $folderId)->whereNotIn('status', ['blocked', 'imported'])->whereNull('film_stock_id')->count();
+
+            ScannedFolder::updateOrCreate(
+                ['type' => 'film_stock', 'folder_id' => $folderId],
+                [
+                    'folder_name' => 'Film Stock Folder ' . substr($folderId, 0, 8) . '...',
+                    'folder_url' => $folderInput,
+                    'total_files' => $totalInFolder,
+                    'imported_files' => $importedInFolder,
+                    'pending_files' => $pendingInFolder,
+                    'blocked_files' => $blockedInFolder,
+                    'last_scanned_at' => now(),
+                ]
+            );
+
             Session::flash('flash_message', "Successfully scanned folder ID '{$folderId}'. Synced {$syncedCount} Film Stock video clips ({$newCount} new).");
-            return redirect()->route('admin.film-stock-drive-files.index', ['folder_id' => $folderId]);
+            return redirect()->route('admin.film-stock-drive-files.index', ['folder_id' => $folderId, 'tab' => 'all']);
 
         } catch (\Exception $e) {
             Session::flash('error_message', 'Error scanning Google Drive folder: ' . $e->getMessage());
             return redirect()->back();
         }
+    }
+
+    /**
+     * Delete a scanned film stock folder from history.
+     *
+     * @param Request $request
+     * @param string $folderId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function deleteFolder(Request $request, $folderId)
+    {
+        $removeFiles = (int)$request->input('remove_files', 0);
+
+        if ($removeFiles === 1) {
+            FilmStockDriveFile::where('folder_id', $folderId)->whereNull('film_stock_id')->where('status', '!=', 'imported')->delete();
+        }
+
+        ScannedFolder::where('type', 'film_stock')->where('folder_id', $folderId)->delete();
+
+        Session::flash('flash_message', "Scanned film stock folder [{$folderId}] removed from history.");
+        return redirect()->route('admin.film-stock-drive-files.index');
     }
 
     /**

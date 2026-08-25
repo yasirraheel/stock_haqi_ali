@@ -76,6 +76,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     Route::get('drive_files', 'GoogleDriveScannerController@index');
     Route::get('blocked-files', 'GoogleDriveScannerController@blocked')->name('admin.drive-files.blocked');
     Route::post('drive-files/scan', 'GoogleDriveScannerController@scanFolder')->name('admin.drive-files.scan');
+    Route::post('drive-files/folder/{folderId}/delete', 'GoogleDriveScannerController@deleteFolder')->name('admin.drive-files.folder.delete');
     Route::post('drive-files/{id}/import', 'GoogleDriveScannerController@importFile')->name('admin.drive-files.import');
     Route::post('drive-files/{id}/block', 'GoogleDriveScannerController@blockFile')->name('admin.drive-files.block');
     Route::post('drive-files/{id}/unblock', 'GoogleDriveScannerController@unblockFile')->name('admin.drive-files.unblock');
@@ -88,6 +89,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     ]);
     Route::get('audio-blocked-files', 'AudioDriveScannerController@blocked')->name('admin.audio-drive-files.blocked');
     Route::post('audio-drive-files/scan', 'AudioDriveScannerController@scanFolder')->name('admin.audio-drive-files.scan');
+    Route::post('audio-drive-files/folder/{folderId}/delete', 'AudioDriveScannerController@deleteFolder')->name('admin.audio-drive-files.folder.delete');
     Route::post('audio-drive-files/{id}/import', 'AudioDriveScannerController@importAudioFile')->name('admin.audio-drive-files.import');
     Route::post('audio-drive-files/{id}/block', 'AudioDriveScannerController@block')->name('admin.audio-drive-files.block');
     Route::post('audio-drive-files/{id}/unblock', 'AudioDriveScannerController@unblock')->name('admin.audio-drive-files.unblock');
@@ -101,6 +103,7 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     ]);
     Route::get('film-stock-blocked-files', 'FilmStockDriveScannerController@blocked')->name('admin.film-stock-drive-files.blocked');
     Route::post('film-stock-drive-files/scan', 'FilmStockDriveScannerController@scanFolder')->name('admin.film-stock-drive-files.scan');
+    Route::post('film-stock-drive-files/folder/{folderId}/delete', 'FilmStockDriveScannerController@deleteFolder')->name('admin.film-stock-drive-files.folder.delete');
     Route::post('film-stock-drive-files/{id}/block', 'FilmStockDriveScannerController@blockFile')->name('admin.film-stock-drive-files.block');
     Route::post('film-stock-drive-files/{id}/unblock', 'FilmStockDriveScannerController@unblockFile')->name('admin.film-stock-drive-files.unblock');
     Route::post('film-stock-drive-files/{id}/delete', 'FilmStockDriveScannerController@deleteFile')->name('admin.film-stock-drive-files.delete');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\GoogleDriveApi;
 use App\Models\GoogleDriveFile;
+use App\Models\ScannedFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -17,16 +18,57 @@ class GoogleDriveScannerController extends Controller
     }
 
     /**
-     * Display a listing of scanned Google Drive files (excluding blocked).
+     * Get or sync tracked scanned folders from database.
+     *
+     * @param string $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    private function getScannedFolders($type = 'effect')
+    {
+        // Auto-sync any existing distinct folders from google_drive_files
+        $existingFolderIds = GoogleDriveFile::whereNotNull('folder_id')
+            ->where('folder_id', '!=', '')
+            ->distinct('folder_id')
+            ->pluck('folder_id');
+
+        foreach ($existingFolderIds as $fid) {
+            $total = GoogleDriveFile::where('folder_id', $fid)->count();
+            $imported = GoogleDriveFile::where('folder_id', $fid)->where(function($q) {
+                $q->where('status', 'imported')->orWhereNotNull('effect_id');
+            })->count();
+            $blocked = GoogleDriveFile::where('folder_id', $fid)->where('status', 'blocked')->count();
+            $pending = GoogleDriveFile::where('folder_id', $fid)->whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->count();
+            $latest = GoogleDriveFile::where('folder_id', $fid)->max('updated_at');
+
+            ScannedFolder::updateOrCreate(
+                ['type' => $type, 'folder_id' => $fid],
+                [
+                    'folder_name' => 'Folder ' . substr($fid, 0, 8) . '...',
+                    'folder_url' => 'https://drive.google.com/drive/folders/' . $fid,
+                    'total_files' => $total,
+                    'imported_files' => $imported,
+                    'pending_files' => $pending,
+                    'blocked_files' => $blocked,
+                    'last_scanned_at' => $latest ?? now(),
+                ]
+            );
+        }
+
+        return ScannedFolder::where('type', $type)->orderBy('last_scanned_at', 'DESC')->get();
+    }
+
+    /**
+     * Display a listing of scanned Google Drive files with persistent DB storage and status tabs.
      *
      * @param Request $request
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
     {
-        $query = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])
-            ->whereNull('effect_id')
-            ->where('mime_type', 'NOT LIKE', 'audio/%')
+        $activeTab = $request->get('tab', 'all'); // 'all', 'pending', 'imported', 'blocked'
+        $activeFolder = $request->get('folder_id', '');
+
+        $baseQuery = GoogleDriveFile::where('mime_type', 'NOT LIKE', 'audio/%')
             ->where('name', 'NOT LIKE', '%.mp3')
             ->where('name', 'NOT LIKE', '%.wav')
             ->where('name', 'NOT LIKE', '%.flac')
@@ -35,27 +77,57 @@ class GoogleDriveScannerController extends Controller
             ->where('name', 'NOT LIKE', '%.m4a')
             ->where('name', 'NOT LIKE', '%.wma');
 
+        if (!empty($activeFolder)) {
+            $baseQuery->where('folder_id', $activeFolder);
+        }
+
         if ($request->has('s') && !empty($request->get('s'))) {
             $search = trim($request->get('s'));
-            $query->where(function ($q) use ($search) {
+            $baseQuery->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
                   ->orWhere('file_id', 'LIKE', "%{$search}%")
                   ->orWhere('folder_id', 'LIKE', "%{$search}%");
             });
         }
 
-        if ($request->has('folder_id') && !empty($request->get('folder_id'))) {
-            $query->where('folder_id', $request->get('folder_id'));
+        // Calculate counts for badges and tabs
+        $totalFiles = (clone $baseQuery)->count();
+        $pendingCount = (clone $baseQuery)->whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->count();
+        $importedCount = (clone $baseQuery)->where(function($q) {
+            $q->where('status', 'imported')->orWhereNotNull('effect_id');
+        })->count();
+        $blockedCount = (clone $baseQuery)->where('status', 'blocked')->count();
+
+        // Apply tab filtering to query
+        $query = clone $baseQuery;
+        if ($activeTab === 'pending') {
+            $query->whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id');
+        } elseif ($activeTab === 'imported') {
+            $query->where(function($q) {
+                $q->where('status', 'imported')->orWhereNotNull('effect_id');
+            });
+        } elseif ($activeTab === 'blocked') {
+            $query->where('status', 'blocked');
         }
+        // 'all' shows all files in database matching folder & search criteria
 
         $files = $query->orderBy('id', 'DESC')->paginate(20)->appends($request->query());
-        $totalFiles = (clone $query)->count();
-        $importedCount = GoogleDriveFile::where('status', 'imported')->orWhereNotNull('effect_id')->count();
-        $blockedCount = GoogleDriveFile::where('status', 'blocked')->count();
-        $foldersCount = GoogleDriveFile::whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->distinct('folder_id')->count('folder_id');
+        $scannedFolders = $this->getScannedFolders('effect');
+        $foldersCount = $scannedFolders->count();
         $page_title = 'Google Drive Scanned Files';
 
-        return view('admin.drive_files.index', compact('files', 'totalFiles', 'importedCount', 'blockedCount', 'foldersCount', 'page_title'));
+        return view('admin.drive_files.index', compact(
+            'files',
+            'totalFiles',
+            'pendingCount',
+            'importedCount',
+            'blockedCount',
+            'foldersCount',
+            'scannedFolders',
+            'activeTab',
+            'activeFolder',
+            'page_title'
+        ));
     }
 
     /**
@@ -66,24 +138,7 @@ class GoogleDriveScannerController extends Controller
      */
     public function blocked(Request $request)
     {
-        $query = GoogleDriveFile::where('status', 'blocked');
-
-        if ($request->has('s') && !empty($request->get('s'))) {
-            $search = trim($request->get('s'));
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('file_id', 'LIKE', "%{$search}%")
-                  ->orWhere('folder_id', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $files = $query->orderBy('id', 'DESC')->paginate(20);
-        $totalFiles = GoogleDriveFile::where('status', '!=', 'blocked')->count();
-        $blockedCount = GoogleDriveFile::where('status', 'blocked')->count();
-        $foldersCount = GoogleDriveFile::distinct('folder_id')->count('folder_id');
-        $page_title = 'Blocked Files';
-
-        return view('admin.drive_files.blocked', compact('files', 'totalFiles', 'blockedCount', 'foldersCount', 'page_title'));
+        return redirect()->route('admin.drive-files.index', array_merge($request->query(), ['tab' => 'blocked']));
     }
 
     /**
@@ -204,12 +259,54 @@ class GoogleDriveScannerController extends Controller
             // Increment API call counter
             GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
 
+            // Update ScannedFolder tracking record
+            $totalInFolder = GoogleDriveFile::where('folder_id', $folderId)->count();
+            $importedInFolder = GoogleDriveFile::where('folder_id', $folderId)->where(function($q) {
+                $q->where('status', 'imported')->orWhereNotNull('effect_id');
+            })->count();
+            $blockedInFolder = GoogleDriveFile::where('folder_id', $folderId)->where('status', 'blocked')->count();
+            $pendingInFolder = GoogleDriveFile::where('folder_id', $folderId)->whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->count();
+
+            ScannedFolder::updateOrCreate(
+                ['type' => 'effect', 'folder_id' => $folderId],
+                [
+                    'folder_name' => 'Folder ' . substr($folderId, 0, 8) . '...',
+                    'folder_url' => $folderInput,
+                    'total_files' => $totalInFolder,
+                    'imported_files' => $importedInFolder,
+                    'pending_files' => $pendingInFolder,
+                    'blocked_files' => $blockedInFolder,
+                    'last_scanned_at' => now(),
+                ]
+            );
+
             Session::flash('flash_message', "Successfully scanned folder [{$folderId}]! Synced {$syncedCount} total files ({$newCount} new added). ZIP archives were automatically blocked.");
         } catch (\Exception $e) {
             Session::flash('error_message', 'Scan Error: ' . $e->getMessage());
         }
 
-        return redirect()->route('admin.drive-files.index', ['folder_id' => $folderId]);
+        return redirect()->route('admin.drive-files.index', ['folder_id' => $folderId, 'tab' => 'all']);
+    }
+
+    /**
+     * Delete a scanned folder entry from history.
+     *
+     * @param Request $request
+     * @param string $folderId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function deleteFolder(Request $request, $folderId)
+    {
+        $removeFiles = (int)$request->input('remove_files', 0);
+
+        if ($removeFiles === 1) {
+            GoogleDriveFile::where('folder_id', $folderId)->whereNull('effect_id')->where('status', '!=', 'imported')->delete();
+        }
+
+        ScannedFolder::where('type', 'effect')->where('folder_id', $folderId)->delete();
+
+        Session::flash('flash_message', "Scanned folder [{$folderId}] removed from history.");
+        return redirect()->route('admin.drive-files.index');
     }
 
     /**
