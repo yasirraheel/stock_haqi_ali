@@ -69,7 +69,17 @@ class ProcessStockEffectJob implements ShouldQueue
             $outputPath = "{$effectsDir}/{$this->effectId}.mp4";
 
             // 1. Download file (Skip if already downloaded on disk from a previous attempt)
-            if (file_exists($tempPath) && filesize($tempPath) > 0) {
+            $isCacheValid = false;
+            if (file_exists($tempPath) && filesize($tempPath) > 50000) {
+                $headBytes = @file_get_contents($tempPath, false, null, 0, 150);
+                if (stripos($headBytes, '<html') === false && stripos($headBytes, '<!doctype') === false) {
+                    $isCacheValid = true;
+                } else {
+                    @unlink($tempPath);
+                }
+            }
+
+            if ($isCacheValid) {
                 $sourceBytes = filesize($tempPath);
                 $sourceMb = number_format($sourceBytes / 1048576, 1);
                 \Log::info("Skipping Google Drive download for Effect ID {$this->effectId} - local file already cached ({$sourceMb} MB)");
@@ -140,6 +150,13 @@ class ProcessStockEffectJob implements ShouldQueue
                 $sourceBytes = file_exists($tempPath) ? filesize($tempPath) : 0;
                 if ($sourceBytes <= 0) {
                     throw new \Exception('Downloaded Google Drive file is empty.');
+                }
+                if ($sourceBytes <= 15000) {
+                    $errSnippet = @file_get_contents($tempPath, false, null, 0, 300);
+                    if (stripos($errSnippet, '<html') !== false || stripos($errSnippet, '<!doctype') !== false) {
+                        @unlink($tempPath);
+                        throw new \Exception('Google Drive rate limit or virus scan warning page returned instead of video.');
+                    }
                 }
                 DB::table('effects')->where('id', $this->effectId)->update([
                     'source_size_bytes' => $sourceBytes,

@@ -1957,20 +1957,28 @@ class AndroidApiController extends MainAPIController
 
         $search = request()->input('search');
         $category = request()->input('category');
-        $page = (int)request()->input('page', 1);
-        $per_page = (int)request()->input('per_page', 50);
+        $page = max(1, (int)request()->input('page', 1));
+        $per_page = min(100, max(1, (int)request()->input('per_page', 60)));
         $offset = max(0, ($page - 1) * $per_page);
 
         $query = DB::table('effects')
             ->where('is_active', true)
-            ->where('status', 'ready')
-            ->whereNotNull('processed_url')
-            ->where('processed_url', 'like', '%.mp4');
+            ->where(function($q) {
+                $q->where(function($q2) {
+                    $q2->where('status', 'ready')
+                       ->whereNotNull('processed_url')
+                       ->where('processed_url', 'like', '%.mp4%');
+                })->orWhere(function($q3) {
+                    $q3->whereNotNull('effect_url')
+                       ->where('effect_url', 'like', '%.mp4%');
+                });
+            });
 
         if (!empty($search)) {
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
@@ -1988,11 +1996,12 @@ class AndroidApiController extends MainAPIController
 
         $response = array();
         foreach($effects as $effect) {
+            $effectUrl = !empty($effect->processed_url) ? $effect->processed_url : $effect->effect_url;
             $response[] = array(
                 "effect_id" => $effect->id,
                 "title" => $effect->title,
                 "description" => $effect->description,
-                "effect_url" => $effect->processed_url,
+                "effect_url" => $effectUrl,
                 "category" => $effect->category ?? 'General',
                 "license_price" => $effect->license_price ?? '0.00',
                 "is_premium" => ((isset($effect->is_premium) && (int)$effect->is_premium === 1) || (isset($effect->license_price) && (float)$effect->license_price > 0)) ? 'true' : 'false'
