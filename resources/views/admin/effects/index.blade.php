@@ -73,8 +73,28 @@
     .row-processing-active td:first-child {
       border-left: 4px solid #f59e0b !important;
     }
+    .row-processing-active strong {
+      color: #ffffff !important;
+      font-weight: 700 !important;
+    }
     .row-processing-active:hover td {
       background-color: rgba(245, 158, 11, 0.2) !important;
+    }
+
+    /* Active converting badge (High Contrast: Bold Black on Vibrant Amber - NO MERGING) */
+    .badge-converting-active {
+      background-color: #f59e0b !important;
+      color: #000000 !important;
+      font-weight: 800 !important;
+      padding: 6px 12px !important;
+      font-size: 11px !important;
+      border-radius: 4px !important;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4) !important;
+      display: inline-block !important;
+      letter-spacing: 0.3px !important;
+    }
+    .badge-converting-active i {
+      color: #000000 !important;
     }
 
     /* Filter tab buttons */
@@ -157,16 +177,15 @@
                 <!-- Active Processing Banner -->
                 <div id="live_processing_banner" class="d-flex justify-content-between align-items-center mb-3 py-2 px-3" 
                      style="background: {{ $activeEffect ? '#2b2314' : '#172030' }}; border: 1px solid {{ $activeEffect ? '#d97706' : '#2e3c54' }}; border-radius: 6px;">
-                  <div id="live_banner_content">
+                  <div id="live_banner_content" class="d-flex align-items-center flex-wrap">
                     @if($activeEffect)
-                      <i class="fa fa-spinner fa-spin text-warning mr-2"></i>
-                      <strong class="text-warning">Currently Processing:</strong> 
-                      <span id="active_effect_title">#{{ $activeEffect->id }} - {{ $activeEffect->title }}</span>
-                      &nbsp;|&nbsp; 
-                      <span id="active_effect_step" class="badge badge-warning font-11">{{ $activeEffect->process_step ?: 'Converting...' }}</span>
+                      <i class="fa fa-spinner fa-spin mr-2" style="color: #f59e0b; font-size: 14px;"></i>
+                      <strong class="mr-2" style="color: #f59e0b; font-weight: 800; font-size: 13px;">Currently Processing:</strong> 
+                      <span id="active_effect_title" style="color: #ffffff; font-weight: 700; font-size: 13px;" class="mr-2">#{{ $activeEffect->id }} - {{ $activeEffect->title }}</span>
+                      <span id="active_effect_step" class="badge-converting-active">{{ $activeEffect->process_step ?: 'Converting MP4...' }}</span>
                     @else
                       <i class="fa fa-check-circle text-success mr-2"></i>
-                      <span id="active_effect_title" class="text-muted">All background jobs completed or queue is idle.</span>
+                      <span id="active_effect_title" style="color: #94a3b8; font-size: 13px;">All background jobs completed or queue is idle.</span>
                     @endif
                   </div>
                   <div>
@@ -331,9 +350,9 @@
                                   <br><small style="color: #aaa;">{{ number_format($effect->converted_bytes / 1048576, 2) }} MB</small>
                               @endif
                           @elseif($effect->status == 'downloading')
-                              <span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> {{ $effect->process_step ?: 'Downloading...' }}</span>
+                              <span class="badge-converting-active"><i class="fa fa-cloud-download fa-spin mr-1"></i> {{ $effect->process_step ?: 'Downloading...' }}</span>
                           @elseif($effect->status == 'processing')
-                              <span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> {{ $effect->process_step ?: 'Converting MP4...' }}</span>
+                              <span class="badge-converting-active"><i class="fa fa-spinner fa-spin mr-1"></i> {{ $effect->process_step ?: 'Converting MP4...' }}</span>
                           @elseif($effect->status == 'error' || $effect->status == 'failed')
                               <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="{{ $effect->process_step }}"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span>
                               @if($effect->process_step)
@@ -537,11 +556,11 @@
                                         } else if (currentStatus === 'downloading') {
                                             tr.addClass('row-processing-active');
                                             var stepText = item.process_step || 'Downloading...';
-                                            statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + stepText + '</span>');
+                                            statusCell.html('<span class="badge-converting-active"><i class="fa fa-cloud-download fa-spin mr-1"></i> ' + stepText + '</span>');
                                         } else if (currentStatus === 'processing') {
                                             tr.addClass('row-processing-active');
                                             var stepText = item.process_step || 'Converting MP4...';
-                                            statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
+                                            statusCell.html('<span class="badge-converting-active"><i class="fa fa-spinner fa-spin mr-1"></i> ' + stepText + '</span>');
                                         } else if (currentStatus === 'error' || currentStatus === 'failed') {
                                             tr.removeClass('row-processing-active');
                                             var stepText = item.process_step || 'Failed';
@@ -561,7 +580,7 @@
                 }
 
                 checkPendingStatus();
-                setInterval(checkPendingStatus, 2500);
+                setInterval(checkPendingStatus, 5000);
             }
 
             if (document.readyState === 'loading') {
