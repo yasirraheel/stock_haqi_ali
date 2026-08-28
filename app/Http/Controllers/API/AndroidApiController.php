@@ -2019,7 +2019,64 @@ class AndroidApiController extends MainAPIController
                 'has_prev_page' => $page > 1
             ),
             'status_code' => 200
-        ));
+        ), 200, [
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type, X-API-KEY, Authorization'
+        ]);
+    }
+
+    public function effects_categories()
+    {
+        $baseQuery = DB::table('effects')
+            ->where('is_active', true)
+            ->where(function($q) {
+                $q->where(function($q2) {
+                    $q2->where('status', 'ready')
+                       ->whereNotNull('processed_url')
+                       ->where('processed_url', 'like', '%.mp4%');
+                })->orWhere(function($q3) {
+                    $q3->whereNotNull('effect_url')
+                       ->where('effect_url', 'like', '%.mp4%');
+                });
+            });
+
+        $totalCount = (clone $baseQuery)->count();
+
+        $categoryCounts = (clone $baseQuery)
+            ->select('category', DB::raw('count(id) as count'))
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->groupBy('category')
+            ->orderBy('count', 'desc')
+            ->get();
+
+        $categories = [
+            [
+                'id' => 'all',
+                'name' => 'All Effects',
+                'count' => $totalCount,
+            ]
+        ];
+
+        foreach ($categoryCounts as $row) {
+            $categories[] = [
+                'id' => $row->category,
+                'name' => $row->category,
+                'count' => (int) $row->count,
+            ];
+        }
+
+        return \Response::json([
+            'status' => 200,
+            'success' => true,
+            'categories' => $categories,
+            'total_effects' => $totalCount,
+        ], 200, [
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type, X-API-KEY, Authorization'
+        ]);
     }
     public function effect_download(Request $request)
     {

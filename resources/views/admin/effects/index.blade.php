@@ -221,12 +221,21 @@
                      {!! Form::open(array('url' => 'admin/effects','class'=>'form-inline justify-content-xl-end justify-content-start','id'=>'search','role'=>'form','method'=>'get')) !!}
                       <input type="hidden" name="status" value="{{ $filter }}">
                       <input type="hidden" name="sort" value="{{ $sort }}">
+
+                      <!-- Category Dropdown Filter -->
+                      <select name="category" class="form-control form-control-sm mr-2" style="background: #141b29; color: #cbd5e1; border-color: #2e3c54; max-width: 170px;" onchange="this.form.submit()">
+                        <option value="all">All Categories</option>
+                        @foreach($allCategories as $cat)
+                          <option value="{{ $cat }}" {{ $selectedCategory === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
+                      </select>
+
                       <div class="input-group input-group-sm">
-                        <input type="text" name="s" placeholder="Search title or description..." value="{{ request('s', '') }}" class="form-control form-control-sm" style="min-width: 240px; background: #141b29; color: #fff; border-color: #2e3c54;">
+                        <input type="text" name="s" placeholder="Search title..." value="{{ request('s', '') }}" class="form-control form-control-sm" style="min-width: 180px; background: #141b29; color: #fff; border-color: #2e3c54;">
                         <div class="input-group-append">
                           <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
-                          @if(request('s'))
-                            <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => $sort]) }}" class="btn btn-secondary btn-sm" title="Clear Search"><i class="fa fa-times"></i></a>
+                          @if(request('s') || ($selectedCategory && $selectedCategory !== 'all'))
+                            <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => $sort]) }}" class="btn btn-secondary btn-sm" title="Clear Filters"><i class="fa fa-times"></i></a>
                           @endif
                         </div>
                       </div>
@@ -239,23 +248,23 @@
                   
                   <!-- Filter Buttons -->
                   <div class="btn-group flex-wrap">
-                    <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'all' ? 'active' : '' }}">
+                    <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 'category' => $selectedCategory, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'all' ? 'active' : '' }}">
                       <i class="fa fa-th-list"></i> All <span class="filter-badge" id="tab_all_badge">{{ number_format($statusCounts->total ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'ready' ? 'active' : '' }}">
+                    <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 'category' => $selectedCategory, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'ready' ? 'active' : '' }}">
                       <i class="fa fa-check-circle text-success"></i> Ready <span class="filter-badge text-success" id="tab_ready_badge">{{ number_format($statusCounts->ready ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'processing' ? 'active' : '' }}">
+                    <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 'category' => $selectedCategory, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'processing' ? 'active' : '' }}">
                       <i class="fa fa-spinner fa-spin text-warning"></i> In Processing <span class="filter-badge text-warning" id="tab_processing_badge">{{ number_format($statusCounts->processing ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'pending' ? 'active' : '' }}">
+                    <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 'category' => $selectedCategory, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'pending' ? 'active' : '' }}">
                       <i class="fa fa-clock-o text-info"></i> Pending <span class="filter-badge text-info" id="tab_pending_badge">{{ number_format($statusCounts->pending ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'failed' ? 'active' : '' }}">
+                    <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 'category' => $selectedCategory, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'failed' ? 'active' : '' }}">
                       <i class="fa fa-exclamation-triangle text-danger"></i> Not In Processing <span class="filter-badge text-danger" id="tab_failed_badge">{{ number_format($statusCounts->failed ?? 0) }}</span>
                     </a>
                   </div>
@@ -264,17 +273,17 @@
                   <div class="d-flex align-items-center">
                     <span class="text-white font-12 mr-2"><i class="fa fa-sort"></i> Order:</span>
                     <div class="btn-group btn-group-sm">
-                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'processing_first', 's' => request('s')]) }}" 
+                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'processing_first', 'category' => $selectedCategory, 's' => request('s')]) }}" 
                          class="btn btn-xs {{ $sort === 'processing_first' ? 'btn-secondary active' : 'btn-outline-secondary' }}" 
                          title="Processing Order (Top to Bottom: Active first, then next in Queue)">
                         <i class="fa fa-arrow-down"></i> Processing Order (Top to Bottom)
                       </a>
-                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'asc', 's' => request('s')]) }}" 
+                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'asc', 'category' => $selectedCategory, 's' => request('s')]) }}" 
                          class="btn btn-xs {{ $sort === 'asc' ? 'btn-secondary active' : 'btn-outline-secondary' }}" 
                          title="ID Ascending (1 to 9999)">
                         <i class="fa fa-sort-numeric-asc"></i> ID (1 &rarr; End)
                       </a>
-                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'desc', 's' => request('s')]) }}" 
+                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'desc', 'category' => $selectedCategory, 's' => request('s')]) }}" 
                          class="btn btn-xs {{ $sort === 'desc' ? 'btn-secondary active' : 'btn-outline-secondary' }}" 
                          title="Newest ID first">
                         <i class="fa fa-sort-numeric-desc"></i> Newest First

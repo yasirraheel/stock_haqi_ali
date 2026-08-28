@@ -28,6 +28,7 @@ Route::group(['prefix' => 'public', 'namespace' => 'API', 'middleware' => 'app.k
     Route::match(['get', 'post', 'options'], 'audios_list', 'AndroidApiController@audios_list');
     Route::match(['get', 'post', 'options'], 'photos_list', 'AndroidApiController@photos_list');
     Route::match(['get', 'post', 'options'], 'effects_list', 'AndroidApiController@effects_list');
+    Route::match(['get', 'options'], 'effects_categories', 'AndroidApiController@effects_categories');
     Route::match(['get', 'options'], 'effect_download', 'AndroidApiController@effect_download');
     Route::match(['get', 'post', 'options'], 'effect_process', 'AndroidApiController@effect_process');
     Route::match(['get', 'post', 'options'], 'effect_progress', 'AndroidApiController@effect_progress');

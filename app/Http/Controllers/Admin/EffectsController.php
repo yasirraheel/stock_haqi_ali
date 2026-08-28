@@ -50,6 +50,12 @@ class EffectsController extends Controller
             });
         }
 
+        // Filter by category
+        $selectedCategory = $request->input('category', 'all');
+        if (!empty($selectedCategory) && $selectedCategory !== 'all') {
+            $query->where('category', $selectedCategory);
+        }
+
         // Sorting order: top to bottom processing order or newest/oldest
         if ($sort === 'asc') {
             // Queue FIFO: processing order top to bottom
@@ -89,8 +95,11 @@ class EffectsController extends Controller
         // Currently active running effect
         $activeEffect = Effect::whereIn('status', ['downloading', 'processing'])->first(['id', 'title', 'status', 'process_step', 'process_percent']);
 
+        // Distinct categories for filter dropdown
+        $allCategories = Effect::whereNotNull('category')->where('category', '!=', '')->distinct()->pluck('category')->sort()->values();
+
         $page_title = 'Effects Management';
-        return view('admin.effects.index', compact('effects', 'page_title', 'filter', 'sort', 'statusCounts', 'activeEffect'));
+        return view('admin.effects.index', compact('effects', 'page_title', 'filter', 'sort', 'statusCounts', 'activeEffect', 'allCategories', 'selectedCategory'));
     }
 
     public function checkStatus(Request $request)
