@@ -285,24 +285,39 @@ class EffectsController extends Controller
 
     public function retryFailed(Request $request)
     {
-        $failedEffects = Effect::where(function($q) {
-            $q->whereIn('status', ['failed', 'error', 'pending'])
-              ->orWhereNull('processed_url')
-              ->orWhere('processed_url', '');
-        })->where('status', '!=', 'ready')->get();
+        // STRICT: ONLY retry effects whose status is explicitly 'failed' or 'error' (NOT pending, NOT ready!)
+        $failedEffects = Effect::whereIn('status', ['failed', 'error'])
+            ->where('status', '!=', 'ready')
+            ->orderBy('id', 'asc')
+            ->limit(30) // Controlled batch size (max 30 at a time to prevent rate limits)
+            ->get();
+
+        if ($failedEffects->isEmpty()) {
+            return redirect()->back()->with('flash_message', "No failed effects found to retry.");
+        }
 
         $count = 0;
-        foreach ($failedEffects as $effect) {
+        foreach ($failedEffects as $index => $effect) {
             $effect->status = 'pending';
-            $effect->process_step = 'Queued for processing...';
+            $effect->process_step = 'Queued for retry...';
             $effect->process_percent = 0;
             $effect->save();
 
-            \App\Jobs\ProcessStockEffectJob::dispatch($effect->id);
+            // Stagger jobs with progressive delay (10s between jobs) so they never burst Google Drive API
+            $staggerSeconds = $index * 10;
+            \App\Jobs\ProcessStockEffectJob::dispatch($effect->id)
+                ->delay(now()->addSeconds($staggerSeconds));
+
             $count++;
         }
 
-        return redirect()->back()->with('flash_message', "Successfully re-queued {$count} effects for background processing!");
+        $remainingFailed = Effect::whereIn('status', ['failed', 'error'])->where('status', '!=', 'ready')->count();
+        $msg = "Re-queued {$count} failed effects with 10-second spaced delays.";
+        if ($remainingFailed > 0) {
+            $msg .= " ({$remainingFailed} more failed effects remaining for subsequent batches)";
+        }
+
+        return redirect()->back()->with('flash_message', $msg);
     }
 
     public function retrySingle($id)

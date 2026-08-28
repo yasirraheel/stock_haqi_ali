@@ -13,23 +13,21 @@ class RetryFailedEffectsCommand extends Command
 
     public function handle()
     {
-        $limit = (int)$this->option('limit');
+        $limit = (int)$this->option('limit') ?: 30;
         $force = (bool)$this->option('force');
 
         $query = Effect::where(function($q) use ($force) {
             if ($force) {
                 $q->whereNull('processed_url')->orWhere('processed_url', '');
             } else {
-                $q->whereIn('status', ['failed', 'error', 'pending'])
-                  ->where(function($q2) {
-                      $q2->whereNull('processed_url')->orWhere('processed_url', '');
-                  });
+                $q->whereIn('status', ['failed', 'error'])
+                  ->where('status', '!=', 'ready');
             }
-        });
+        })->orderBy('id', 'asc');
 
         $totalFound = $query->count();
         if ($totalFound === 0) {
-            $this->info('No failed or pending effects to retry.');
+            $this->info('No failed effects to retry.');
             return 0;
         }
 
@@ -38,24 +36,25 @@ class RetryFailedEffectsCommand extends Command
         }
 
         $effects = $query->get();
-        $this->info("Re-queueing {$effects->count()} effects (out of {$totalFound} total) for background processing...");
+        $this->info("Re-queueing {$effects->count()} failed effects (out of {$totalFound} total) with 10s staggered delays...");
 
         $bar = $this->output->createProgressBar($effects->count());
         $bar->start();
 
-        foreach ($effects as $effect) {
+        foreach ($effects as $index => $effect) {
             $effect->status = 'pending';
-            $effect->process_step = 'Queued for processing...';
+            $effect->process_step = 'Queued for retry...';
             $effect->process_percent = 0;
             $effect->save();
 
-            ProcessStockEffectJob::dispatch($effect->id);
+            $staggerSeconds = $index * 10;
+            ProcessStockEffectJob::dispatch($effect->id)->delay(now()->addSeconds($staggerSeconds));
             $bar->advance();
         }
 
         $bar->finish();
         $this->newLine();
-        $this->info("Successfully re-queued {$effects->count()} effects into the job queue!");
+        $this->info("Successfully re-queued {$effects->count()} failed effects with staggered delays!");
 
         return 0;
     }

@@ -210,10 +210,10 @@
                 <div class="row align-items-center mb-3">
                   <div class="col-xl-6 col-lg-12 mb-2 mb-xl-0">
                      <a href="{{ route('admin.effects.create') }}" class="btn btn-success btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Add Effect"><i class="fa fa-plus"></i> Add New Effect</a>
-                     <form action="{{ route('admin.effects.retry-failed') }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Re-queue all pending and failed effects for background processing?');">
+                     <form action="{{ route('admin.effects.retry-failed') }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Re-queue failed effects (batch of up to 30 with 10-second delays between jobs to prevent rate limits)?');">
                        @csrf
-                       <button type="submit" class="btn btn-warning btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Re-queue all un-converted effects">
-                         <i class="fa fa-refresh"></i> Retry All Failed / Pending
+                       <button type="submit" class="btn btn-warning btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Re-queue only failed effects (spaced 10s apart, max 30 per batch to prevent Google Drive rate limit)">
+                         <i class="fa fa-refresh"></i> Retry Failed Only (Batch of 30)
                        </button>
                      </form>
                   </div>

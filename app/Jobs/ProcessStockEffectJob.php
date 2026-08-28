@@ -94,67 +94,66 @@ class ProcessStockEffectJob implements ShouldQueue
                 $fileId = '';
                 if (preg_match('/(?:id=|file\/d\/|\/d\/)([a-zA-Z0-9_-]+)/', $sourceUrl, $driveMatch)) {
                     $fileId = $driveMatch[1];
-                    // Primary Google Drive CDN direct download URL
-                    $sourceUrl = "https://drive.usercontent.google.com/download?id={$fileId}&export=download&confirm=t";
-
-                    // Rotate and track Google Drive API key call
-                    $apiRecord = \App\Models\GoogleDriveApi::inRandomOrder()->first();
-                    if ($apiRecord && !empty($apiRecord->api_key)) {
-                        \App\Models\GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
-                    }
                 }
 
-                $ch = curl_init($sourceUrl);
-                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_HEADER, false);
-                curl_setopt($ch, CURLOPT_BUFFERSIZE, 1048576); // 1 MB buffer for high throughput
-                curl_setopt($ch, CURLOPT_TCP_NODELAY, 1);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 600);
-                
-                $effectId = $this->effectId;
-                curl_setopt($ch, CURLOPT_NOPROGRESS, false);
-                curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function($resource, $downloadSize, $downloaded) use ($effectId) {
-                    if ($downloadSize > 0) {
-                        $percent = min(99, (int)round(($downloaded / $downloadSize) * 100));
-                        $downloadedMb = number_format($downloaded / 1048576, 1);
-                        $totalMb = number_format($downloadSize / 1048576, 1);
+                $downloadSuccess = false;
+                $lastDownloadError = '';
 
-                        static $lastUpdate = 0;
-                        if (time() - $lastUpdate >= 1 || $percent == 99) {
-                            $lastUpdate = time();
-                            DB::table('effects')->where('id', $effectId)->update([
-                                'status' => 'downloading',
-                                'process_percent' => $percent,
-                                'process_step' => "Downloading {$percent}% ({$downloadedMb} MB / {$totalMb} MB)"
-                            ]);
+                // If it is a Google Drive file, rotate across all available API keys with rate-limiting backoff
+                if (!empty($fileId)) {
+                    // Respectful delay before Google Drive API request to prevent rate limiting
+                    sleep(3);
+
+                    $apiKeys = \App\Models\GoogleDriveApi::orderBy('calls', 'asc')->get();
+
+                    foreach ($apiKeys as $apiRecord) {
+                        $apiKey = trim($apiRecord->api_key);
+                        if (empty($apiKey)) continue;
+
+                        $apiUrl = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$apiKey}";
+                        
+                        $downloadRes = $this->downloadFileToPath($apiUrl, $tempPath);
+                        if ($downloadRes['success']) {
+                            \App\Models\GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
+                            $downloadSuccess = true;
+                            break;
+                        }
+
+                        $lastDownloadError = $downloadRes['error'];
+                        // If rate limited (429) or quota exceeded (403), log warning, sleep 5 seconds, and switch to next key
+                        if ($downloadRes['http_code'] == 429 || $downloadRes['http_code'] == 403) {
+                            \Log::warning("Google Drive API key ID {$apiRecord->id} rate limited (HTTP {$downloadRes['http_code']}). Backing off 5 seconds and rotating to next key...");
+                            sleep(5);
                         }
                     }
-                });
 
-                $fp = fopen($tempPath, 'w+');
-                curl_setopt($ch, CURLOPT_FILE, $fp);
-                curl_exec($ch);
-                fclose($fp);
-                
-                if (curl_errno($ch)) {
-                    throw new \Exception('Curl error: ' . curl_error($ch));
-                }
-                curl_close($ch);
-
-                $sourceBytes = file_exists($tempPath) ? filesize($tempPath) : 0;
-                if ($sourceBytes <= 0) {
-                    throw new \Exception('Downloaded Google Drive file is empty.');
-                }
-                if ($sourceBytes <= 15000) {
-                    $errSnippet = @file_get_contents($tempPath, false, null, 0, 300);
-                    if (stripos($errSnippet, '<html') !== false || stripos($errSnippet, '<!doctype') !== false) {
-                        @unlink($tempPath);
-                        throw new \Exception('Google Drive rate limit or virus scan warning page returned instead of video.');
+                    // Fallback to direct CDN if API keys didn't succeed
+                    if (!$downloadSuccess) {
+                        sleep(4);
+                        $cdnUrl = "https://drive.usercontent.google.com/download?id={$fileId}&export=download&confirm=t";
+                        $downloadRes = $this->downloadFileToPath($cdnUrl, $tempPath);
+                        if ($downloadRes['success']) {
+                            $downloadSuccess = true;
+                        } else {
+                            $lastDownloadError = $downloadRes['error'];
+                        }
+                    }
+                } else {
+                    // Non-GDrive standard URL
+                    $downloadRes = $this->downloadFileToPath($sourceUrl, $tempPath);
+                    if ($downloadRes['success']) {
+                        $downloadSuccess = true;
+                    } else {
+                        $lastDownloadError = $downloadRes['error'];
                     }
                 }
+
+                if (!$downloadSuccess) {
+                    if (file_exists($tempPath)) @unlink($tempPath);
+                    throw new \Exception($lastDownloadError ?: 'Failed to download effect video from source.');
+                }
+
+                $sourceBytes = file_exists($tempPath) ? filesize($tempPath) : 0;
                 DB::table('effects')->where('id', $this->effectId)->update([
                     'source_size_bytes' => $sourceBytes,
                     'status' => 'processing',
@@ -222,6 +221,9 @@ class ProcessStockEffectJob implements ShouldQueue
                     'converted_bytes' => $convertedBytes,
                     'converted_size_mb' => round($convertedBytes / 1048576, 2),
                 ]);
+
+                // Cool down delay between conversions to prevent rapid queue churn
+                sleep(3);
             } else {
                 throw new \Exception('FFmpeg conversion failed: ' . implode("\n", $outputLines));
             }
@@ -246,5 +248,83 @@ class ProcessStockEffectJob implements ShouldQueue
                 @unlink($cookieFile);
             }
         }
+    }
+
+    /**
+     * Download file with streaming progress and HTML/rate-limit verification.
+     */
+    protected function downloadFileToPath(string $url, string $destPath): array
+    {
+        if (file_exists($destPath)) {
+            @unlink($destPath);
+        }
+
+        $fp = fopen($destPath, 'w+');
+        if (!$fp) {
+            return ['success' => false, 'error' => 'Cannot open temp file for writing', 'http_code' => 0];
+        }
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_BUFFERSIZE, 1048576);
+        curl_setopt($ch, CURLOPT_TCP_NODELAY, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 600);
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+
+        $effectId = $this->effectId;
+        curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+        curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function($resource, $downloadSize, $downloaded) use ($effectId) {
+            if ($downloadSize > 0) {
+                $percent = min(99, (int)round(($downloaded / $downloadSize) * 100));
+                $downloadedMb = number_format($downloaded / 1048576, 1);
+                $totalMb = number_format($downloadSize / 1048576, 1);
+
+                static $lastUpdate = 0;
+                if (time() - $lastUpdate >= 1 || $percent == 99) {
+                    $lastUpdate = time();
+                    DB::table('effects')->where('id', $effectId)->update([
+                        'status' => 'downloading',
+                        'process_percent' => $percent,
+                        'process_step' => "Downloading {$percent}% ({$downloadedMb} MB / {$totalMb} MB)"
+                    ]);
+                }
+            }
+        });
+
+        $execResult = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        fclose($fp);
+        curl_close($ch);
+
+        if (!$execResult || !empty($curlError)) {
+            if (file_exists($destPath)) @unlink($destPath);
+            return ['success' => false, 'error' => "Curl error: {$curlError}", 'http_code' => $httpCode];
+        }
+
+        if ($httpCode >= 400) {
+            if (file_exists($destPath)) @unlink($destPath);
+            return ['success' => false, 'error' => "HTTP {$httpCode} error from Google Drive API", 'http_code' => $httpCode];
+        }
+
+        $size = file_exists($destPath) ? filesize($destPath) : 0;
+        if ($size <= 0) {
+            if (file_exists($destPath)) @unlink($destPath);
+            return ['success' => false, 'error' => 'Downloaded file is 0 bytes', 'http_code' => $httpCode];
+        }
+
+        // Check if Google returned an HTML error/rate limit page instead of video
+        if ($size <= 25000) {
+            $snippet = @file_get_contents($destPath, false, null, 0, 400);
+            if (stripos($snippet, '<html') !== false || stripos($snippet, '<!doctype') !== false) {
+                if (file_exists($destPath)) @unlink($destPath);
+                return ['success' => false, 'error' => 'Google Drive rate limit or virus warning HTML page returned instead of video', 'http_code' => 429];
+            }
+        }
+
+        return ['success' => true, 'error' => '', 'http_code' => $httpCode];
     }
 }
