@@ -96,6 +96,12 @@ class ProcessStockEffectJob implements ShouldQueue
                     $fileId = $driveMatch[1];
                     // Primary Google Drive CDN direct download URL
                     $sourceUrl = "https://drive.usercontent.google.com/download?id={$fileId}&export=download&confirm=t";
+
+                    // Rotate and track Google Drive API key call
+                    $apiRecord = \App\Models\GoogleDriveApi::inRandomOrder()->first();
+                    if ($apiRecord && !empty($apiRecord->api_key)) {
+                        \App\Models\GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
+                    }
                 }
 
                 $ch = curl_init($sourceUrl);

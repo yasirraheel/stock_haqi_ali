@@ -7,58 +7,174 @@
         <div class="container-fluid">
           <div class="row">
             <div class="col-12">
+
+              <!-- Top Stat Dashboard Widgets (Like Google Drive Scanned Files view) -->
+              <div class="row mb-3">
+                <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
+                  <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 's' => request('s')]) }}">
+                    <div class="card-box widget-user mb-0 {{ $filter === 'all' ? 'border border-primary' : '' }}" style="border-radius: 8px;">
+                      <div class="text-center">
+                        <h2 class="text-white font-24 mb-1" id="stat_total_count">{{ number_format($statusCounts->total ?? 0) }}</h2>
+                        <h5 class="text-muted font-13 m-0">Total Effects</h5>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+
+                <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
+                  <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 's' => request('s')]) }}">
+                    <div class="card-box widget-user mb-0 {{ $filter === 'ready' ? 'border border-success' : '' }}" style="border-radius: 8px;">
+                      <div class="text-center">
+                        <h2 class="text-success font-24 mb-1" id="stat_ready_count">{{ number_format($statusCounts->ready ?? 0) }}</h2>
+                        <h5 class="text-muted font-13 m-0"><i class="fa fa-check-circle text-success"></i> Ready (MP4)</h5>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+
+                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
+                  <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 's' => request('s')]) }}">
+                    <div class="card-box widget-user mb-0 {{ $filter === 'processing' ? 'border border-warning' : '' }}" style="border-radius: 8px;">
+                      <div class="text-center">
+                        <h2 class="text-warning font-24 mb-1" id="stat_processing_count">{{ number_format($statusCounts->processing ?? 0) }}</h2>
+                        <h5 class="text-muted font-13 m-0"><i class="fa fa-spinner fa-spin text-warning"></i> In Processing Now</h5>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+
+                <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
+                  <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 's' => request('s')]) }}">
+                    <div class="card-box widget-user mb-0 {{ $filter === 'pending' ? 'border border-info' : '' }}" style="border-radius: 8px;">
+                      <div class="text-center">
+                        <h2 class="text-info font-24 mb-1" id="stat_pending_count">{{ number_format($statusCounts->pending ?? 0) }}</h2>
+                        <h5 class="text-muted font-13 m-0"><i class="fa fa-clock-o text-info"></i> Pending in Queue</h5>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+
+                <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
+                  <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 's' => request('s')]) }}">
+                    <div class="card-box widget-user mb-0 {{ $filter === 'failed' ? 'border border-danger' : '' }}" style="border-radius: 8px;">
+                      <div class="text-center">
+                        <h2 class="text-danger font-24 mb-1" id="stat_failed_count">{{ number_format($statusCounts->failed ?? 0) }}</h2>
+                        <h5 class="text-muted font-13 m-0"><i class="fa fa-exclamation-triangle text-danger"></i> Not Processing (Failed)</h5>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Main Table Card -->
               <div class="card-box table-responsive">
 
-                <div class="alert alert-info">
-                    <strong><i class="fa fa-info-circle"></i> Background Processing Cron Job</strong><br>
-                    To ensure effects are processed continuously in the background, please add the following Cron Job in your Hostinger cPanel to run <strong>Once Per Minute (* * * * *)</strong>:
-                    <div class="input-group mt-2 mb-1" style="max-width: 700px;">
-                        <input type="text" class="form-control" id="cronCommand" value="/usr/bin/php /home/u273790872/domains/cineworm.org/public_html/stock/artisan schedule:run >> /dev/null 2>&1" readonly>
+                <!-- Active Processing Banner -->
+                <div id="live_processing_banner" class="alert {{ $activeEffect ? 'alert-warning' : 'alert-secondary' }} d-flex justify-content-between align-items-center mb-3 py-2 px-3" style="border-radius: 6px;">
+                  <div>
+                    @if($activeEffect)
+                      <i class="fa fa-spinner fa-spin mr-2"></i>
+                      <strong>Currently Processing:</strong> 
+                      <span id="active_effect_title">#{{ $activeEffect->id }} - {{ $activeEffect->title }}</span>
+                      &nbsp;|&nbsp; 
+                      <span id="active_effect_step" class="badge badge-warning font-11">{{ $activeEffect->process_step ?: 'Converting...' }}</span>
+                    @else
+                      <i class="fa fa-check-circle text-success mr-2"></i>
+                      <span id="active_effect_title">All background jobs completed or queue is idle.</span>
+                    @endif
+                  </div>
+                  <div>
+                    <span class="text-muted font-11"><i class="fa fa-refresh fa-spin text-muted mr-1"></i> Live Auto-Sync Active</span>
+                  </div>
+                </div>
+
+                <!-- Background Processing Cron Job Alert -->
+                <div class="alert alert-info py-2 mb-3">
+                    <small><strong><i class="fa fa-info-circle"></i> Background Processing Cron Job (Once Per Minute):</strong></small>
+                    <div class="input-group input-group-sm mt-1" style="max-width: 700px;">
+                        <input type="text" class="form-control form-control-sm" id="cronCommand" value="/usr/bin/php /home/u273790872/domains/cineworm.org/public_html/stock/artisan schedule:run >> /dev/null 2>&1" readonly>
                         <div class="input-group-append">
-                            <button class="btn btn-primary" type="button" onclick="copyCron()">Copy</button>
+                            <button class="btn btn-primary btn-sm" type="button" onclick="copyCron()">Copy</button>
                         </div>
                     </div>
                 </div>
 
-                <script>
-                    function copyCron() {
-                        var copyText = document.getElementById("cronCommand");
-                        copyText.select();
-                        copyText.setSelectionRange(0, 99999);
-                        document.execCommand("copy");
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                position: 'center',
-                                icon: 'success',
-                                title: 'Copied!',
-                                text: 'Cron command copied to clipboard.',
-                                showConfirmButton: false,
-                                timer: 2000,
-                                background: '#1a2234',
-                                color: '#fff'
-                            });
-                        } else {
-                            alert("Cron command copied to clipboard!");
-                        }
-                    }
-                </script>
-
-                <div class="row">
-                  <div class="col-md-6">
-                     <a href="{{ route('admin.effects.create') }}" class="btn btn-success btn-md waves-effect waves-light m-b-20 m-r-10" data-toggle="tooltip" title="Add Effect"><i class="fa fa-plus"></i> Add New Effect</a>
+                <!-- Action Controls: Buttons & Search -->
+                <div class="row align-items-center mb-3">
+                  <div class="col-xl-6 col-lg-12 mb-2 mb-xl-0">
+                     <a href="{{ route('admin.effects.create') }}" class="btn btn-success btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Add Effect"><i class="fa fa-plus"></i> Add New Effect</a>
                      <form action="{{ route('admin.effects.retry-failed') }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Re-queue all pending and failed effects for background processing?');">
                        @csrf
-                       <button type="submit" class="btn btn-warning btn-md waves-effect waves-light m-b-20" data-toggle="tooltip" title="Retry all un-converted effects">
+                       <button type="submit" class="btn btn-warning btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Re-queue all un-converted effects">
                          <i class="fa fa-refresh"></i> Retry All Failed / Pending
                        </button>
                      </form>
                   </div>
-                  <div class="col-md-6">
-                     {!! Form::open(array('url' => 'admin/effects','class'=>'app-search','id'=>'search','role'=>'form','method'=>'get')) !!}
-                      <input type="text" name="s" placeholder="Search effects by title..." class="form-control">
-                      <button type="submit"><i class="fa fa-search"></i></button>
+                  <div class="col-xl-6 col-lg-12 text-xl-right">
+                     {!! Form::open(array('url' => 'admin/effects','class'=>'form-inline justify-content-xl-end justify-content-start','id'=>'search','role'=>'form','method'=>'get')) !!}
+                      <input type="hidden" name="status" value="{{ $filter }}">
+                      <input type="hidden" name="sort" value="{{ $sort }}">
+                      <div class="input-group input-group-sm">
+                        <input type="text" name="s" placeholder="Search title or description..." value="{{ request('s', '') }}" class="form-control form-control-sm" style="min-width: 250px;">
+                        <div class="input-group-append">
+                          <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
+                          @if(request('s'))
+                            <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => $sort]) }}" class="btn btn-secondary btn-sm" title="Clear Search"><i class="fa fa-times"></i></a>
+                          @endif
+                        </div>
+                      </div>
                      {!! Form::close() !!}
                   </div>
+                </div>
+
+                <!-- Status Filter Tabs & Processing Order Bar -->
+                <div class="p-2 mb-3 d-flex flex-wrap justify-content-between align-items-center" style="background-color: #1a2234; border: 1px solid #2e384d; border-radius: 6px; gap: 8px;">
+                  
+                  <!-- Filter Buttons -->
+                  <div class="btn-group flex-wrap">
+                    <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'all' ? 'btn-primary' : 'btn-dark' }} font-12">
+                      <i class="fa fa-th-list"></i> All <span class="badge badge-light ml-1" id="tab_all_badge">{{ number_format($statusCounts->total ?? 0) }}</span>
+                    </a>
+
+                    <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'ready' ? 'btn-success' : 'btn-dark' }} font-12">
+                      <i class="fa fa-check-circle"></i> Ready <span class="badge badge-success ml-1" id="tab_ready_badge">{{ number_format($statusCounts->ready ?? 0) }}</span>
+                    </a>
+
+                    <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'processing' ? 'btn-warning' : 'btn-dark' }} font-12">
+                      <i class="fa fa-spin fa-spinner"></i> In Processing <span class="badge badge-warning ml-1" id="tab_processing_badge">{{ number_format($statusCounts->processing ?? 0) }}</span>
+                    </a>
+
+                    <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'pending' ? 'btn-info' : 'btn-dark' }} font-12">
+                      <i class="fa fa-clock-o"></i> Pending <span class="badge badge-info ml-1" id="tab_pending_badge">{{ number_format($statusCounts->pending ?? 0) }}</span>
+                    </a>
+
+                    <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'failed' ? 'btn-danger' : 'btn-dark' }} font-12">
+                      <i class="fa fa-exclamation-triangle"></i> Not In Processing <span class="badge badge-danger ml-1" id="tab_failed_badge">{{ number_format($statusCounts->failed ?? 0) }}</span>
+                    </a>
+                  </div>
+
+                  <!-- Processing Order Selector -->
+                  <div class="d-flex align-items-center">
+                    <span class="text-white font-12 mr-2"><i class="fa fa-sort"></i> Order:</span>
+                    <div class="btn-group btn-group-sm">
+                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'processing_first', 's' => request('s')]) }}" 
+                         class="btn btn-xs {{ $sort === 'processing_first' ? 'btn-secondary active' : 'btn-outline-secondary' }}" 
+                         title="Processing Order (Top to Bottom: Active first, then next in Queue)">
+                        <i class="fa fa-arrow-down"></i> Processing Order (Top to Bottom)
+                      </a>
+                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'asc', 's' => request('s')]) }}" 
+                         class="btn btn-xs {{ $sort === 'asc' ? 'btn-secondary active' : 'btn-outline-secondary' }}" 
+                         title="ID Ascending (1 to 9999)">
+                        <i class="fa fa-sort-numeric-asc"></i> ID (1 &rarr; End)
+                      </a>
+                      <a href="{{ route('admin.effects.index', ['status' => $filter, 'sort' => 'desc', 's' => request('s')]) }}" 
+                         class="btn btn-xs {{ $sort === 'desc' ? 'btn-secondary active' : 'btn-outline-secondary' }}" 
+                         title="Newest ID first">
+                        <i class="fa fa-sort-numeric-desc"></i> Newest First
+                      </a>
+                    </div>
+                  </div>
+
                 </div>
 
                 @if(Session::has('flash_message'))
@@ -70,24 +186,37 @@
                 @endif
 
                 <div class="table-responsive">
-                <table class="table table-bordered">
+                <table class="table table-bordered table-hover">
                   <thead>
                     <tr>
+                      <th style="width: 70px;">ID</th>
                       <th>Title</th>
                       <th>Category</th>
                       <th>Effect URL / GD Link</th>
                       <th>Access & Status</th>
-                      <th>Process Status</th>
-                      <th class="text-center">Action</th>
+                      <th style="min-width: 170px;">Process Status</th>
+                      <th class="text-center" style="width: 120px;">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                   @foreach($effects as $effect)
-                    <tr id="card_box_id_{{$effect->id}}" data-effect-id="{{ $effect->id }}" data-status="{{ $effect->status }}">
-                      <td><strong>{{ $effect->title }}</strong></td>
+                   @forelse($effects as $effect)
+                    @php
+                      $isCurrentlyProcessing = in_array($effect->status, ['downloading', 'processing']);
+                    @endphp
+                    <tr id="card_box_id_{{$effect->id}}" 
+                        data-effect-id="{{ $effect->id }}" 
+                        data-status="{{ $effect->status }}"
+                        style="{{ $isCurrentlyProcessing ? 'background-color: rgba(245, 158, 11, 0.08); border-left: 4px solid #f59e0b;' : '' }}">
+                      <td><span class="badge badge-dark">#{{ $effect->id }}</span></td>
+                      <td>
+                        <strong>{{ $effect->title }}</strong>
+                        @if($isCurrentlyProcessing)
+                          <span class="badge badge-warning ml-1"><i class="fa fa-spinner fa-spin"></i> Converting Now</span>
+                        @endif
+                      </td>
                       <td><span class="badge badge-info">{{ $effect->category ?? 'General' }}</span></td>
                       <td>
-                        <div class="input-group input-group-sm" style="min-width: 380px;">
+                        <div class="input-group input-group-sm" style="min-width: 340px;">
                           <input type="text" class="form-control form-control-sm" id="effect_url_{{ $effect->id }}" value="{{ $effect->effect_url }}" readonly>
                           <div class="input-group-append">
                             @if($effect->processed_url)
@@ -117,20 +246,23 @@
                                   <br><small style="color: #aaa;">{{ number_format($effect->converted_bytes / 1048576, 2) }} MB</small>
                               @endif
                           @elseif($effect->status == 'downloading')
-                              <span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> {{ $effect->process_step ?: 'Downloading...' }}</span>
+                              <span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> {{ $effect->process_step ?: 'Downloading...' }}</span>
                           @elseif($effect->status == 'processing')
                               <span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> {{ $effect->process_step ?: 'Converting MP4...' }}</span>
-                          @elseif($effect->status == 'error')
-                              <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-exclamation-circle"></i> Failed</span>
+                          @elseif($effect->status == 'error' || $effect->status == 'failed')
+                              <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="{{ $effect->process_step }}"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span>
+                              @if($effect->process_step)
+                                <br><small class="text-danger font-10 text-truncate d-inline-block" style="max-width: 160px;" title="{{ $effect->process_step }}">{{ $effect->process_step }}</small>
+                              @endif
                           @else
-                              <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>
+                              <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> In Queue (Waiting)</span>
                           @endif
                       </td>
                       <td class="text-center" style="white-space: nowrap;">
                         @if($effect->status != 'ready')
                           <form action="{{ route('admin.effects.retry-single', $effect->id) }}" method="POST" style="display:inline-block;">
                             @csrf
-                            <button type="submit" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" data-toggle="tooltip" title="Retry Processing"> <i class="fa fa-refresh"></i> </button>
+                            <button type="submit" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" data-toggle="tooltip" title="Retry Processing Now"> <i class="fa fa-refresh"></i> </button>
                           </form>
                         @endif
                         <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-icon waves-effect waves-light btn-success btn-xs m-r-5" data-toggle="tooltip" title="Edit"> <i class="fa fa-edit"></i> </a>
@@ -141,7 +273,14 @@
                         </form>
                       </td>
                     </tr>
-                   @endforeach
+                   @empty
+                    <tr>
+                      <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fa fa-info-circle font-18 mb-2 d-block"></i>
+                        No effects found matching status filter <strong>"{{ ucfirst($filter) }}"</strong>.
+                      </td>
+                    </tr>
+                   @endforelse
                   </tbody>
                 </table>
               </div>
@@ -247,59 +386,88 @@
                 var $ = jQuery;
 
                 function checkPendingStatus() {
-                    var pendingIds = [];
+                    var visibleIds = [];
                     $('tr[data-effect-id]').each(function() {
-                        var status = (($(this).attr('data-status') || '') + '').toLowerCase().trim();
-                        if (status !== 'ready' && status !== 'error' && status !== 'failed') {
-                            pendingIds.push($(this).attr('data-effect-id'));
-                        }
+                        visibleIds.push($(this).attr('data-effect-id'));
                     });
-
-                    if (pendingIds.length === 0) {
-                        return;
-                    }
 
                     $.ajax({
                         url: '{{ route("admin.effects.check-status") }}',
                         type: 'GET',
                         data: {
-                            ids: pendingIds.join(',')
+                            ids: visibleIds.join(',')
                         },
-                        success: function(data) {
-                            $.each(data, function(id, item) {
-                                var tr = $('#card_box_id_' + id);
-                                if (tr.length) {
-                                    var currentStatus = item.status ? item.status.toLowerCase() : 'pending';
-                                    tr.attr('data-status', currentStatus);
-                                    var statusCell = tr.find('.status-cell');
-                                    
-                                    if (currentStatus === 'ready') {
-                                        var html = '<span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>';
-                                        if (item.converted_mb) {
-                                            html += '<br><small style="color: #aaa;">' + item.converted_mb + '</small>';
-                                        }
-                                        statusCell.html(html);
+                        success: function(response) {
+                            var items = response.items ? response.items : response;
+                            var counts = response.counts;
+                            var activeEffect = response.active_effect;
 
-                                        // Auto-inject Preview button into URL input group append if not present
-                                        var appendGroup = tr.find('.input-group-append');
-                                        if (item.processed_url && appendGroup.find('.btn-preview-processed').length === 0) {
-                                            var previewBtn = '<button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview(\'' + item.processed_url + '\')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>';
-                                            appendGroup.prepend(previewBtn);
+                            // 1. Update Top Widgets & Tab counts if provided
+                            if (counts) {
+                                if ($('#stat_total_count').length) $('#stat_total_count').text(Number(counts.total || 0).toLocaleString());
+                                if ($('#stat_ready_count').length) $('#stat_ready_count').text(Number(counts.ready || 0).toLocaleString());
+                                if ($('#stat_processing_count').length) $('#stat_processing_count').text(Number(counts.processing || 0).toLocaleString());
+                                if ($('#stat_pending_count').length) $('#stat_pending_count').text(Number(counts.pending || 0).toLocaleString());
+                                if ($('#stat_failed_count').length) $('#stat_failed_count').text(Number(counts.failed || 0).toLocaleString());
+
+                                if ($('#tab_all_badge').length) $('#tab_all_badge').text(Number(counts.total || 0).toLocaleString());
+                                if ($('#tab_ready_badge').length) $('#tab_ready_badge').text(Number(counts.ready || 0).toLocaleString());
+                                if ($('#tab_processing_badge').length) $('#tab_processing_badge').text(Number(counts.processing || 0).toLocaleString());
+                                if ($('#tab_pending_badge').length) $('#tab_pending_badge').text(Number(counts.pending || 0).toLocaleString());
+                                if ($('#tab_failed_badge').length) $('#tab_failed_badge').text(Number(counts.failed || 0).toLocaleString());
+                            }
+
+                            // 2. Update Active Processing Banner
+                            if (activeEffect) {
+                                $('#live_processing_banner').removeClass('alert-secondary').addClass('alert-warning');
+                                $('#active_effect_title').html('<strong>Currently Processing:</strong> #' + activeEffect.id + ' - ' + (activeEffect.title || 'Effect') + ' &nbsp;|&nbsp; <span class="badge badge-warning font-11">' + (activeEffect.process_step || 'Converting...') + '</span>');
+                            } else {
+                                $('#live_processing_banner').removeClass('alert-warning').addClass('alert-secondary');
+                                $('#active_effect_title').html('<i class="fa fa-check-circle text-success mr-2"></i> All queued jobs completed or queue is idle.');
+                            }
+
+                            // 3. Update Table Rows
+                            if (items) {
+                                $.each(items, function(id, item) {
+                                    var tr = $('#card_box_id_' + id);
+                                    if (tr.length) {
+                                        var currentStatus = item.status ? item.status.toLowerCase() : 'pending';
+                                        tr.attr('data-status', currentStatus);
+                                        var statusCell = tr.find('.status-cell');
+                                        
+                                        if (currentStatus === 'ready') {
+                                            tr.css({'background-color': '', 'border-left': ''});
+                                            var html = '<span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>';
+                                            if (item.converted_mb) {
+                                                html += '<br><small style="color: #aaa;">' + item.converted_mb + '</small>';
+                                            }
+                                            statusCell.html(html);
+
+                                            // Auto-inject Preview button into URL input group append if not present
+                                            var appendGroup = tr.find('.input-group-append');
+                                            if (item.processed_url && appendGroup.find('.btn-preview-processed').length === 0) {
+                                                var previewBtn = '<button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview(\'' + item.processed_url + '\')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>';
+                                                appendGroup.prepend(previewBtn);
+                                            }
+                                        } else if (currentStatus === 'downloading') {
+                                            tr.css({'background-color': 'rgba(245, 158, 11, 0.08)', 'border-left': '4px solid #f59e0b'});
+                                            var stepText = item.process_step || 'Downloading...';
+                                            statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + stepText + '</span>');
+                                        } else if (currentStatus === 'processing') {
+                                            tr.css({'background-color': 'rgba(245, 158, 11, 0.08)', 'border-left': '4px solid #f59e0b'});
+                                            var stepText = item.process_step || 'Converting MP4...';
+                                            statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
+                                        } else if (currentStatus === 'error' || currentStatus === 'failed') {
+                                            tr.css({'background-color': '', 'border-left': ''});
+                                            var stepText = item.process_step || 'Failed';
+                                            statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span><br><small class="text-danger font-10 text-truncate d-inline-block" style="max-width: 160px;">' + stepText + '</small>');
+                                        } else {
+                                            tr.css({'background-color': '', 'border-left': ''});
+                                            statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> In Queue (Waiting)</span>');
                                         }
-                                    } else if (currentStatus === 'downloading') {
-                                        var stepText = item.process_step || 'Downloading...';
-                                        statusCell.html('<span class="badge badge-info" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + stepText + '</span>');
-                                    } else if (currentStatus === 'processing') {
-                                        var stepText = item.process_step || 'Converting MP4...';
-                                        statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
-                                    } else if (currentStatus === 'error' || currentStatus === 'failed') {
-                                        var stepText = item.process_step || 'Failed';
-                                        statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-circle"></i> ' + stepText + '</span>');
-                                    } else {
-                                        statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> Pending</span>');
                                     }
-                                }
-                            });
+                                });
+                            }
                         },
                         error: function(xhr, status, error) {
                             console.warn("Status check AJAX error:", error);
@@ -308,7 +476,7 @@
                 }
 
                 checkPendingStatus();
-                setInterval(checkPendingStatus, 3000);
+                setInterval(checkPendingStatus, 2500);
             }
 
             if (document.readyState === 'loading') {

@@ -17,22 +17,80 @@ class EffectsController extends Controller
 
     public function index(Request $request)
     {
+        $filter = $request->input('status', 'all');
+        $sort = $request->input('sort', 'processing_first');
+
         $query = Effect::query();
 
         if ($request->has('s') && !empty($request->s)) {
             $search = $request->s;
-            $query->where('title', 'like', "%{$search}%")
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
-        $effects = $query->orderBy('id', 'desc')->paginate(20);
+        // Filter by status
+        if ($filter === 'ready') {
+            $query->where('status', 'ready');
+        } elseif ($filter === 'pending') {
+            $query->where('status', 'pending');
+        } elseif ($filter === 'processing') {
+            $query->whereIn('status', ['downloading', 'processing']);
+        } elseif ($filter === 'failed') {
+            $query->where(function($q) {
+                $q->whereIn('status', ['failed', 'error'])
+                  ->orWhere(function($q2) {
+                      $q2->where('status', '!=', 'ready')
+                         ->where(function($q3) {
+                             $q3->whereNull('processed_url')->orWhere('processed_url', '');
+                         })
+                         ->whereNotIn('status', ['pending', 'downloading', 'processing']);
+                  });
+            });
+        }
+
+        // Sorting order: top to bottom processing order or newest/oldest
+        if ($sort === 'asc') {
+            // Queue FIFO: processing order top to bottom
+            $query->orderBy('id', 'asc');
+        } elseif ($sort === 'desc') {
+            // Newest ID first
+            $query->orderBy('id', 'desc');
+        } else {
+            // Default: processing_first -> Active downloading/processing first, then Pending (FIFO 1 -> 9999), then Failed, then Ready
+            $query->orderByRaw("
+                CASE 
+                    WHEN status = 'downloading' THEN 1
+                    WHEN status = 'processing' THEN 2
+                    WHEN status = 'pending' THEN 3
+                    WHEN status in ('failed', 'error') THEN 4
+                    ELSE 5
+                END ASC, id ASC
+            ");
+        }
+
+        $effects = $query->paginate(20)->appends($request->except('page'));
         $effects->getCollection()->transform(function ($effect) {
             $path = storage_path("app/public/effects/{$effect->id}.mp4");
             $effect->converted_bytes = file_exists($path) ? filesize($path) : null;
             return $effect;
         });
+
+        // Global status counts for filter badges
+        $statusCounts = Effect::selectRaw("
+            count(*) as total,
+            sum(case when status = 'ready' then 1 else 0 end) as ready,
+            sum(case when status in ('downloading', 'processing') then 1 else 0 end) as processing,
+            sum(case when status = 'pending' then 1 else 0 end) as pending,
+            sum(case when status in ('failed', 'error') then 1 else 0 end) as failed
+        ")->first();
+
+        // Currently active running effect
+        $activeEffect = Effect::whereIn('status', ['downloading', 'processing'])->first(['id', 'title', 'status', 'process_step', 'process_percent']);
+
         $page_title = 'Effects Management';
-        return view('admin.effects.index', compact('effects', 'page_title'));
+        return view('admin.effects.index', compact('effects', 'page_title', 'filter', 'sort', 'statusCounts', 'activeEffect'));
     }
 
     public function checkStatus(Request $request)
@@ -46,29 +104,48 @@ class EffectsController extends Controller
             $ids = [];
         }
 
-        if (empty($ids)) {
-            return response()->json([]);
+        $items = [];
+        if (!empty($ids)) {
+            $effects = Effect::whereIn('id', $ids)->get();
+            foreach ($effects as $effect) {
+                $path = storage_path("app/public/effects/{$effect->id}.mp4");
+                $convertedBytes = file_exists($path) ? filesize($path) : null;
+                $convertedMb = $convertedBytes !== null ? number_format($convertedBytes / 1048576, 2) . ' MB' : null;
+
+                $items[$effect->id] = [
+                    'id' => $effect->id,
+                    'status' => $effect->status,
+                    'process_percent' => $effect->process_percent ?? 0,
+                    'process_step' => $effect->process_step ?? '',
+                    'converted_mb' => $convertedMb,
+                    'processed_url' => $effect->processed_url
+                ];
+            }
         }
 
-        $effects = Effect::whereIn('id', $ids)->get();
-        $response = [];
+        // Global status counts
+        $counts = Effect::selectRaw("
+            count(*) as total,
+            sum(case when status = 'ready' then 1 else 0 end) as ready,
+            sum(case when status in ('downloading', 'processing') then 1 else 0 end) as processing,
+            sum(case when status = 'pending' then 1 else 0 end) as pending,
+            sum(case when status in ('failed', 'error') then 1 else 0 end) as failed
+        ")->first();
 
-        foreach ($effects as $effect) {
-            $path = storage_path("app/public/effects/{$effect->id}.mp4");
-            $convertedBytes = file_exists($path) ? filesize($path) : null;
-            $convertedMb = $convertedBytes !== null ? number_format($convertedBytes / 1048576, 2) . ' MB' : null;
+        // Currently active running effect
+        $activeEffect = Effect::whereIn('status', ['downloading', 'processing'])->first(['id', 'title', 'status', 'process_step', 'process_percent']);
 
-            $response[$effect->id] = [
-                'id' => $effect->id,
-                'status' => $effect->status,
-                'process_percent' => $effect->process_percent ?? 0,
-                'process_step' => $effect->process_step ?? '',
-                'converted_mb' => $convertedMb,
-                'processed_url' => $effect->processed_url
-            ];
-        }
-
-        return response()->json($response);
+        return response()->json([
+            'items' => $items,
+            'counts' => [
+                'total' => (int)($counts->total ?? 0),
+                'ready' => (int)($counts->ready ?? 0),
+                'processing' => (int)($counts->processing ?? 0),
+                'pending' => (int)($counts->pending ?? 0),
+                'failed' => (int)($counts->failed ?? 0)
+            ],
+            'active_effect' => $activeEffect
+        ]);
     }
 
     public function create()
