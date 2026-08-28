@@ -25,20 +25,42 @@ class GoogleDriveScannerController extends Controller
      */
     private function getScannedFolders($type = 'effect')
     {
-        // Auto-sync any existing distinct folders from google_drive_files
+        $videoExtensions = ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', 'flv', 'wmv', 'ts', 'mts', 'm2ts', '3gp', 'prores'];
+
+        // Auto-sync any existing distinct folders from google_drive_files that have video files
         $existingFolderIds = GoogleDriveFile::whereNotNull('folder_id')
             ->where('folder_id', '!=', '')
+            ->where('mime_type', '!=', 'application/vnd.google-apps.folder')
+            ->where('mime_type', 'NOT LIKE', 'image/%')
+            ->where('mime_type', 'NOT LIKE', 'audio/%')
+            ->where(function($q) use ($videoExtensions) {
+                $q->where('mime_type', 'LIKE', 'video/%');
+                foreach ($videoExtensions as $ext) {
+                    $q->orWhere('name', 'LIKE', "%.{$ext}");
+                }
+            })
             ->distinct('folder_id')
             ->pluck('folder_id');
 
         foreach ($existingFolderIds as $fid) {
-            $total = GoogleDriveFile::where('folder_id', $fid)->count();
-            $imported = GoogleDriveFile::where('folder_id', $fid)->where(function($q) {
+            $baseFolderQuery = GoogleDriveFile::where('folder_id', $fid)
+                ->where('mime_type', '!=', 'application/vnd.google-apps.folder')
+                ->where('mime_type', 'NOT LIKE', 'image/%')
+                ->where('mime_type', 'NOT LIKE', 'audio/%')
+                ->where(function($q) use ($videoExtensions) {
+                    $q->where('mime_type', 'LIKE', 'video/%');
+                    foreach ($videoExtensions as $ext) {
+                        $q->orWhere('name', 'LIKE', "%.{$ext}");
+                    }
+                });
+
+            $total = (clone $baseFolderQuery)->count();
+            $imported = (clone $baseFolderQuery)->where(function($q) {
                 $q->where('status', 'imported')->orWhereNotNull('effect_id');
             })->count();
-            $blocked = GoogleDriveFile::where('folder_id', $fid)->where('status', 'blocked')->count();
-            $pending = GoogleDriveFile::where('folder_id', $fid)->whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->count();
-            $latest = GoogleDriveFile::where('folder_id', $fid)->max('updated_at');
+            $blocked = (clone $baseFolderQuery)->where('status', 'blocked')->count();
+            $pending = (clone $baseFolderQuery)->whereNotIn('status', ['blocked', 'imported'])->whereNull('effect_id')->count();
+            $latest = (clone $baseFolderQuery)->max('updated_at');
 
             ScannedFolder::updateOrCreate(
                 ['type' => $type, 'folder_id' => $fid],
@@ -68,14 +90,18 @@ class GoogleDriveScannerController extends Controller
         $activeTab = $request->get('tab', 'all'); // 'all', 'pending', 'imported', 'blocked'
         $activeFolder = $request->get('folder_id', '');
 
-        $baseQuery = GoogleDriveFile::where('mime_type', 'NOT LIKE', 'audio/%')
-            ->where('name', 'NOT LIKE', '%.mp3')
-            ->where('name', 'NOT LIKE', '%.wav')
-            ->where('name', 'NOT LIKE', '%.flac')
-            ->where('name', 'NOT LIKE', '%.aac')
-            ->where('name', 'NOT LIKE', '%.ogg')
-            ->where('name', 'NOT LIKE', '%.m4a')
-            ->where('name', 'NOT LIKE', '%.wma');
+        $videoExtensions = ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', 'flv', 'wmv', 'ts', 'mts', 'm2ts', '3gp', 'prores'];
+
+        // Strictly only show video files in Effects Google Scan view (prevents folders, images, archives, docs garbage)
+        $baseQuery = GoogleDriveFile::where('mime_type', '!=', 'application/vnd.google-apps.folder')
+            ->where('mime_type', 'NOT LIKE', 'image/%')
+            ->where('mime_type', 'NOT LIKE', 'audio/%')
+            ->where(function($q) use ($videoExtensions) {
+                $q->where('mime_type', 'LIKE', 'video/%');
+                foreach ($videoExtensions as $ext) {
+                    $q->orWhere('name', 'LIKE', "%.{$ext}");
+                }
+            });
 
         if (!empty($activeFolder)) {
             $baseQuery->where('folder_id', $activeFolder);
@@ -208,14 +234,17 @@ class GoogleDriveScannerController extends Controller
                     $size = isset($file['size']) ? (int)$file['size'] : 0;
                     $directUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
 
-                    // Check if file is a ZIP archive or non-video compressed file
-                    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-                    // Skip audio files in Effects Scanner
-                    $audioExtensions = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'aiff'];
-                    $isAudio = in_array($ext, $audioExtensions) || strpos(strtolower($mimeType), 'audio') !== false;
-                    if ($isAudio) {
+                    // Skip Google Drive folders, images, audios, documents, archives - ONLY allow genuine VIDEO files!
+                    if ($mimeType === 'application/vnd.google-apps.folder') {
                         continue;
+                    }
+
+                    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    $videoExtensions = ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', 'flv', 'wmv', 'ts', 'mts', 'm2ts', '3gp', 'prores'];
+                    $isVideo = (strpos(strtolower($mimeType), 'video/') === 0) || in_array($ext, $videoExtensions);
+
+                    if (!$isVideo) {
+                        continue; // Strictly skip any non-video file (prevents garbage in effects scanner)
                     }
 
                     $isArchive = in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'iso'])
@@ -320,8 +349,27 @@ class GoogleDriveScannerController extends Controller
     {
         $driveFile = GoogleDriveFile::findOrFail($id);
 
-        // Check if file is a ZIP archive
+        // Prevent importing Google Drive Folders or non-video files as Effects
+        if ($driveFile->mime_type === 'application/vnd.google-apps.folder') {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => "Item '{$driveFile->name}' is a Google Drive Folder and cannot be imported as an effect!"], 400);
+            }
+            Session::flash('error_message', "Item '{$driveFile->name}' is a Google Drive Folder and cannot be imported as an effect!");
+            return redirect()->back();
+        }
+
         $ext = strtolower(pathinfo($driveFile->name, PATHINFO_EXTENSION));
+        $videoExtensions = ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', 'flv', 'wmv', 'ts', 'mts', 'm2ts', '3gp', 'prores'];
+        $isVideo = (strpos(strtolower($driveFile->mime_type), 'video/') === 0) || in_array($ext, $videoExtensions);
+        if (!$isVideo) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => "File '{$driveFile->name}' is not a supported video file and cannot be imported as an effect!"], 400);
+            }
+            Session::flash('error_message', "File '{$driveFile->name}' is not a supported video file!");
+            return redirect()->back();
+        }
+
+        // Check if file is a ZIP archive
         if (in_array($ext, ['zip', 'rar', '7z', 'tar', 'gz', 'bz2']) || strpos(strtolower($driveFile->mime_type), 'zip') !== false) {
             $driveFile->status = 'blocked';
             $driveFile->save();

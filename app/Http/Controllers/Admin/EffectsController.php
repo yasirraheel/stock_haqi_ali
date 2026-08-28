@@ -332,4 +332,51 @@ class EffectsController extends Controller
 
         return redirect()->back()->with('flash_message', "Effect #{$effect->id} ({$effect->title}) re-queued for processing!");
     }
+
+    /**
+     * Clean up and permanently remove invalid items (such as Google Drive folders, 0-byte files, and non-video files) from imported effects.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function cleanupInvalid(Request $request)
+    {
+        $invalidQuery = Effect::where(function($q) {
+            $q->where('process_step', 'LIKE', '%Folder%')
+              ->orWhere('process_step', 'LIKE', '%0 bytes%')
+              ->orWhere('process_step', 'LIKE', '%Empty source%')
+              ->orWhere('process_step', 'LIKE', '%Invalid Item%')
+              ->orWhere('process_step', 'LIKE', '%Corrupted or Non-Video%')
+              ->orWhere('process_step', 'LIKE', '%Unsupported Video Codec%');
+        })->where('status', '!=', 'ready');
+
+        $invalidEffects = $invalidQuery->get();
+        $count = $invalidEffects->count();
+
+        if ($count === 0) {
+            return redirect()->back()->with('flash_message', 'No invalid or non-video effects found to clean up.');
+        }
+
+        foreach ($invalidEffects as $effect) {
+            // Delete temp raw file if exists
+            $tempPath = storage_path("app/public/effects/{$effect->id}_raw.tmp");
+            if (file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
+            // Delete output mp4 if exists
+            $outputPath = storage_path("app/public/effects/{$effect->id}.mp4");
+            if (file_exists($outputPath)) {
+                @unlink($outputPath);
+            }
+            // Disconnect from google_drive_files if linked
+            \App\Models\GoogleDriveFile::where('effect_id', $effect->id)->update([
+                'effect_id' => null,
+                'status' => 'scanned'
+            ]);
+
+            $effect->delete();
+        }
+
+        return redirect()->back()->with('flash_message', "Successfully cleaned up and removed {$count} invalid / non-video effect items from stock!");
+    }
 }

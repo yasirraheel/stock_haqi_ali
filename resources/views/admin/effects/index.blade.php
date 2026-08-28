@@ -216,6 +216,12 @@
                          <i class="fa fa-refresh"></i> Retry Failed Only (Batch of 30)
                        </button>
                      </form>
+                     <form action="{{ route('admin.effects.cleanup-invalid') }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Permanently remove invalid items (such as Google Drive folders, empty 0-byte files, and non-video items) from imported effects?');">
+                       @csrf
+                       <button type="submit" class="btn btn-outline-danger btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Remove invalid items (Google Drive Folders, 0-byte files, non-videos) from database">
+                         <i class="fa fa-trash-o"></i> Clean Up Invalid / Folders
+                       </button>
+                     </form>
                   </div>
                   <div class="col-xl-6 col-lg-12 text-xl-right">
                      {!! Form::open(array('url' => 'admin/effects','class'=>'form-inline justify-content-xl-end justify-content-start','id'=>'search','role'=>'form','method'=>'get')) !!}
