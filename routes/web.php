@@ -58,6 +58,8 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
 
     // Effects Routes
     Route::match(['get', 'post'], 'effects/check-status', 'EffectsController@checkStatus')->name('admin.effects.check-status');
+    Route::post('effects/retry-failed', 'EffectsController@retryFailed')->name('admin.effects.retry-failed');
+    Route::post('effects/{id}/retry', 'EffectsController@retrySingle')->name('admin.effects.retry-single');
     Route::resource('effects', 'EffectsController')->names([
         'index' => 'admin.effects.index',
         'create' => 'admin.effects.create',

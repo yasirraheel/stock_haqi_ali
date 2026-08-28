@@ -196,4 +196,39 @@ class EffectsController extends Controller
         return redirect()->route('admin.effects.index')
             ->with('flash_message', 'Effect deleted successfully.');
     }
+
+    public function retryFailed(Request $request)
+    {
+        $failedEffects = Effect::where(function($q) {
+            $q->whereIn('status', ['failed', 'error', 'pending'])
+              ->orWhereNull('processed_url')
+              ->orWhere('processed_url', '');
+        })->where('status', '!=', 'ready')->get();
+
+        $count = 0;
+        foreach ($failedEffects as $effect) {
+            $effect->status = 'pending';
+            $effect->process_step = 'Queued for processing...';
+            $effect->process_percent = 0;
+            $effect->save();
+
+            \App\Jobs\ProcessStockEffectJob::dispatch($effect->id);
+            $count++;
+        }
+
+        return redirect()->back()->with('flash_message', "Successfully re-queued {$count} effects for background processing!");
+    }
+
+    public function retrySingle($id)
+    {
+        $effect = Effect::findOrFail($id);
+        $effect->status = 'pending';
+        $effect->process_step = 'Queued for processing...';
+        $effect->process_percent = 0;
+        $effect->save();
+
+        \App\Jobs\ProcessStockEffectJob::dispatch($effect->id);
+
+        return redirect()->back()->with('flash_message', "Effect #{$effect->id} ({$effect->title}) re-queued for processing!");
+    }
 }

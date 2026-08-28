@@ -44,8 +44,14 @@
                 </script>
 
                 <div class="row">
-                  <div class="col-md-3">
-                     <a href="{{ route('admin.effects.create') }}" class="btn btn-success btn-md waves-effect waves-light m-b-20" data-toggle="tooltip" title="Add Effect"><i class="fa fa-plus"></i> Add New Effect</a>
+                  <div class="col-md-6">
+                     <a href="{{ route('admin.effects.create') }}" class="btn btn-success btn-md waves-effect waves-light m-b-20 m-r-10" data-toggle="tooltip" title="Add Effect"><i class="fa fa-plus"></i> Add New Effect</a>
+                     <form action="{{ route('admin.effects.retry-failed') }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Re-queue all pending and failed effects for background processing?');">
+                       @csrf
+                       <button type="submit" class="btn btn-warning btn-md waves-effect waves-light m-b-20" data-toggle="tooltip" title="Retry all un-converted effects">
+                         <i class="fa fa-refresh"></i> Retry All Failed / Pending
+                       </button>
+                     </form>
                   </div>
                   <div class="col-md-6">
                      {!! Form::open(array('url' => 'admin/effects','class'=>'app-search','id'=>'search','role'=>'form','method'=>'get')) !!}
@@ -121,6 +127,12 @@
                           @endif
                       </td>
                       <td class="text-center" style="white-space: nowrap;">
+                        @if($effect->status != 'ready')
+                          <form action="{{ route('admin.effects.retry-single', $effect->id) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            <button type="submit" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" data-toggle="tooltip" title="Retry Processing"> <i class="fa fa-refresh"></i> </button>
+                          </form>
+                        @endif
                         <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-icon waves-effect waves-light btn-success btn-xs m-r-5" data-toggle="tooltip" title="Edit"> <i class="fa fa-edit"></i> </a>
                         <form action="{{ route('admin.effects.destroy', $effect->id) }}" method="POST" id="delete-form-{{ $effect->id }}" style="display:inline-block;">
                           @csrf

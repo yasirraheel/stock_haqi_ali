@@ -94,28 +94,19 @@ class ProcessStockEffectJob implements ShouldQueue
                 $fileId = '';
                 if (preg_match('/(?:id=|file\/d\/|\/d\/)([a-zA-Z0-9_-]+)/', $sourceUrl, $driveMatch)) {
                     $fileId = $driveMatch[1];
-                    
-                    // Fetch a random Google Drive API key from the database
-                    $apiRecord = \App\Models\GoogleDriveApi::inRandomOrder()->first();
-                    if ($apiRecord && !empty($apiRecord->api_key)) {
-                        $apiKey = $apiRecord->api_key;
-                        // Increment the API call count
-                        \App\Models\GoogleDriveApi::where('id', $apiRecord->id)->increment('calls');
-                        // Use the official Google Drive API to download the file directly, bypassing all virus scans
-                        $sourceUrl = "https://www.googleapis.com/drive/v3/files/{$fileId}?alt=media&key={$apiKey}";
-                    } else {
-                        // Fallback if no API key is available
-                        $sourceUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
-                    }
+                    // Primary Google Drive CDN direct download URL
+                    $sourceUrl = "https://drive.usercontent.google.com/download?id={$fileId}&export=download&confirm=t";
                 }
 
                 $ch = curl_init($sourceUrl);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
                 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
                 curl_setopt($ch, CURLOPT_HEADER, false);
                 curl_setopt($ch, CURLOPT_BUFFERSIZE, 1048576); // 1 MB buffer for high throughput
                 curl_setopt($ch, CURLOPT_TCP_NODELAY, 1);
                 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 600);
                 
                 $effectId = $this->effectId;
                 curl_setopt($ch, CURLOPT_NOPROGRESS, false);
