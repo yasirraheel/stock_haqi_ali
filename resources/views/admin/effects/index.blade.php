@@ -210,15 +210,15 @@
                 <div class="row align-items-center mb-3">
                   <div class="col-xl-6 col-lg-12 mb-2 mb-xl-0">
                      <a href="{{ route('admin.effects.create') }}" class="btn btn-success btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Add Effect"><i class="fa fa-plus"></i> Add New Effect</a>
-                     <form action="{{ route('admin.effects.retry-failed') }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Re-queue failed effects (batch of up to 30 with 10-second delays between jobs to prevent rate limits)?');">
+                     <form action="{{ route('admin.effects.retry-failed') }}" method="POST" id="retry-failed-form" style="display:inline-block;">
                        @csrf
-                       <button type="submit" class="btn btn-warning btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Re-queue only failed effects (spaced 10s apart, max 30 per batch to prevent Google Drive rate limit)">
+                       <button type="button" onclick="confirmRetryFailed()" class="btn btn-warning btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Re-queue only failed effects (spaced 10s apart, max 30 per batch to prevent Google Drive rate limit)">
                          <i class="fa fa-refresh"></i> Retry Failed Only (Batch of 30)
                        </button>
                      </form>
-                     <form action="{{ route('admin.effects.cleanup-invalid') }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Permanently remove invalid items (such as Google Drive folders, empty 0-byte files, and non-video items) from imported effects?');">
+                     <form action="{{ route('admin.effects.cleanup-invalid') }}" method="POST" id="cleanup-invalid-form" style="display:inline-block;">
                        @csrf
-                       <button type="submit" class="btn btn-outline-danger btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Remove invalid items (Google Drive Folders, 0-byte files, non-videos) from database">
+                       <button type="button" onclick="confirmCleanupInvalid()" class="btn btn-outline-danger btn-sm waves-effect waves-light mr-1" data-toggle="tooltip" title="Remove invalid items (Google Drive Folders, 0-byte files, non-videos) from database">
                          <i class="fa fa-trash-o"></i> Clean Up Invalid / Folders
                        </button>
                      </form>
@@ -379,9 +379,9 @@
                       </td>
                       <td class="text-center" style="white-space: nowrap;">
                         @if($effect->status != 'ready')
-                          <form action="{{ route('admin.effects.retry-single', $effect->id) }}" method="POST" style="display:inline-block;">
+                          <form action="{{ route('admin.effects.retry-single', $effect->id) }}" method="POST" id="retry-single-form-{{ $effect->id }}" style="display:inline-block;">
                             @csrf
-                            <button type="submit" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" data-toggle="tooltip" title="Retry Processing Now"> <i class="fa fa-refresh"></i> </button>
+                            <button type="button" class="btn btn-icon waves-effect waves-light btn-warning btn-xs m-r-5" onclick="confirmRetrySingle({{ $effect->id }}, '{{ addslashes($effect->title) }}')" data-toggle="tooltip" title="Retry Processing Now"> <i class="fa fa-refresh"></i> </button>
                           </form>
                         @endif
                         <a href="{{ route('admin.effects.edit', $effect->id) }}" class="btn btn-icon waves-effect waves-light btn-success btn-xs m-r-5" data-toggle="tooltip" title="Edit"> <i class="fa fa-edit"></i> </a>
@@ -478,6 +478,81 @@
             } else {
                 if (confirm("Are you sure you want to delete this effect?")) {
                     document.getElementById('delete-form-' + id).submit();
+                }
+            }
+        }
+
+        function confirmRetryFailed() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Retry Failed Effects?',
+                    text: 'Re-queue failed effects in a controlled batch of up to 30 with 10-second spaced delays to prevent rate limits?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f59e0b',
+                    cancelButtonColor: '#4b5563',
+                    confirmButtonText: '<i class="fa fa-refresh mr-1"></i> Yes, Retry Batch',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('retry-failed-form').submit();
+                    }
+                });
+            } else {
+                if (confirm('Re-queue failed effects (batch of up to 30 with 10-second delays between jobs to prevent rate limits)?')) {
+                    document.getElementById('retry-failed-form').submit();
+                }
+            }
+        }
+
+        function confirmCleanupInvalid() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Clean Up Invalid Items?',
+                    text: 'Permanently remove invalid imported items (such as Google Drive folders, empty 0-byte files, and non-video items) from stock effects?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#4b5563',
+                    confirmButtonText: '<i class="fa fa-trash-o mr-1"></i> Yes, Clean Up',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('cleanup-invalid-form').submit();
+                    }
+                });
+            } else {
+                if (confirm('Permanently remove invalid items (such as Google Drive folders, empty 0-byte files, and non-video items) from imported effects?')) {
+                    document.getElementById('cleanup-invalid-form').submit();
+                }
+            }
+        }
+
+        function confirmRetrySingle(id, title) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Retry Processing?',
+                    text: 'Re-queue #' + id + ' (' + title + ') for background processing?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f59e0b',
+                    cancelButtonColor: '#4b5563',
+                    confirmButtonText: '<i class="fa fa-refresh mr-1"></i> Yes, Retry Now',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a2234',
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('retry-single-form-' + id).submit();
+                    }
+                });
+            } else {
+                if (confirm('Re-queue this effect for processing?')) {
+                    document.getElementById('retry-single-form-' + id).submit();
                 }
             }
         }
