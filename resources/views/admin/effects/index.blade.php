@@ -2,6 +2,111 @@
 
 @section("content")
 
+  <style>
+    /* High-contrast Stat Cards (distinct from background) */
+    .stat-box-card {
+      background-color: #1a2234 !important;
+      border: 1px solid #2e3c54 !important;
+      border-radius: 8px;
+      padding: 16px 12px;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: block;
+      text-decoration: none !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    }
+    .stat-box-card:hover {
+      transform: translateY(-3px);
+      border-color: #4f6485 !important;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+    }
+    .stat-box-card.active-card {
+      border: 2px solid #3b82f6 !important;
+      background-color: #202c44 !important;
+    }
+    .stat-box-card h2 {
+      margin: 0 0 4px 0;
+      font-weight: 700;
+      font-size: 26px;
+    }
+    .stat-box-card h5 {
+      margin: 0;
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    /* Table dark styling & hover fix (ELIMINATES white wash on hover) */
+    .table-effects-custom {
+      background-color: transparent !important;
+      margin-bottom: 0;
+    }
+    .table-effects-custom th {
+      background-color: #111726 !important;
+      color: #94a3b8 !important;
+      border: 1px solid #2a374f !important;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 10px;
+    }
+    .table-effects-custom td {
+      border: 1px solid #232f44 !important;
+      vertical-align: middle !important;
+      padding: 10px;
+      background-color: #182030;
+      color: #cbd5e1;
+    }
+    .table-effects-custom tbody tr:nth-of-type(even) td {
+      background-color: #141b29;
+    }
+    /* Sleek Navy-Slate hover - completely overrides Bootstrap default white */
+    .table-effects-custom tbody tr:hover td {
+      background-color: #253550 !important;
+      color: #ffffff !important;
+    }
+
+    /* Active converting row highlight */
+    .row-processing-active td {
+      background-color: rgba(245, 158, 11, 0.12) !important;
+    }
+    .row-processing-active td:first-child {
+      border-left: 4px solid #f59e0b !important;
+    }
+    .row-processing-active:hover td {
+      background-color: rgba(245, 158, 11, 0.2) !important;
+    }
+
+    /* Filter tab buttons */
+    .filter-btn-custom {
+      background-color: #1a2234;
+      color: #94a3b8;
+      border: 1px solid #2e3c54;
+      font-size: 12px;
+      padding: 6px 13px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .filter-btn-custom:hover {
+      background-color: #26334d;
+      color: #ffffff;
+      border-color: #4a5c7c;
+    }
+    .filter-btn-custom.active {
+      background-color: #2563eb !important;
+      border-color: #2563eb !important;
+      color: #ffffff !important;
+    }
+    .filter-badge {
+      background: rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      padding: 3px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      margin-left: 5px;
+    }
+  </style>
+
   <div class="content-page">
       <div class="content">
         <div class="container-fluid">
@@ -11,88 +116,71 @@
               <!-- Top Stat Dashboard Widgets (Like Google Drive Scanned Files view) -->
               <div class="row mb-3">
                 <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-                  <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 's' => request('s')]) }}">
-                    <div class="card-box widget-user mb-0 {{ $filter === 'all' ? 'border border-primary' : '' }}" style="border-radius: 8px;">
-                      <div class="text-center">
-                        <h2 class="text-white font-24 mb-1" id="stat_total_count">{{ number_format($statusCounts->total ?? 0) }}</h2>
-                        <h5 class="text-muted font-13 m-0">Total Effects</h5>
-                      </div>
-                    </div>
+                  <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 's' => request('s')]) }}" class="stat-box-card {{ $filter === 'all' ? 'active-card' : '' }}">
+                    <h2 class="text-white" id="stat_total_count">{{ number_format($statusCounts->total ?? 0) }}</h2>
+                    <h5><i class="fa fa-th-list text-muted mr-1"></i> Total Effects</h5>
                   </a>
                 </div>
 
                 <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-                  <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 's' => request('s')]) }}">
-                    <div class="card-box widget-user mb-0 {{ $filter === 'ready' ? 'border border-success' : '' }}" style="border-radius: 8px;">
-                      <div class="text-center">
-                        <h2 class="text-success font-24 mb-1" id="stat_ready_count">{{ number_format($statusCounts->ready ?? 0) }}</h2>
-                        <h5 class="text-muted font-13 m-0"><i class="fa fa-check-circle text-success"></i> Ready (MP4)</h5>
-                      </div>
-                    </div>
+                  <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 's' => request('s')]) }}" class="stat-box-card {{ $filter === 'ready' ? 'active-card' : '' }}">
+                    <h2 class="text-success" id="stat_ready_count">{{ number_format($statusCounts->ready ?? 0) }}</h2>
+                    <h5><i class="fa fa-check-circle text-success mr-1"></i> Ready (MP4)</h5>
                   </a>
                 </div>
 
                 <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                  <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 's' => request('s')]) }}">
-                    <div class="card-box widget-user mb-0 {{ $filter === 'processing' ? 'border border-warning' : '' }}" style="border-radius: 8px;">
-                      <div class="text-center">
-                        <h2 class="text-warning font-24 mb-1" id="stat_processing_count">{{ number_format($statusCounts->processing ?? 0) }}</h2>
-                        <h5 class="text-muted font-13 m-0"><i class="fa fa-spinner fa-spin text-warning"></i> In Processing Now</h5>
-                      </div>
-                    </div>
+                  <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 's' => request('s')]) }}" class="stat-box-card {{ $filter === 'processing' ? 'active-card' : '' }}">
+                    <h2 class="text-warning" id="stat_processing_count">{{ number_format($statusCounts->processing ?? 0) }}</h2>
+                    <h5><i class="fa fa-spinner fa-spin text-warning mr-1"></i> In Processing Now</h5>
                   </a>
                 </div>
 
                 <div class="col-xl-2 col-md-4 col-sm-6 mb-2">
-                  <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 's' => request('s')]) }}">
-                    <div class="card-box widget-user mb-0 {{ $filter === 'pending' ? 'border border-info' : '' }}" style="border-radius: 8px;">
-                      <div class="text-center">
-                        <h2 class="text-info font-24 mb-1" id="stat_pending_count">{{ number_format($statusCounts->pending ?? 0) }}</h2>
-                        <h5 class="text-muted font-13 m-0"><i class="fa fa-clock-o text-info"></i> Pending in Queue</h5>
-                      </div>
-                    </div>
+                  <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 's' => request('s')]) }}" class="stat-box-card {{ $filter === 'pending' ? 'active-card' : '' }}">
+                    <h2 class="text-info" id="stat_pending_count">{{ number_format($statusCounts->pending ?? 0) }}</h2>
+                    <h5><i class="fa fa-clock-o text-info mr-1"></i> Pending in Queue</h5>
                   </a>
                 </div>
 
                 <div class="col-xl-3 col-md-4 col-sm-6 mb-2">
-                  <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 's' => request('s')]) }}">
-                    <div class="card-box widget-user mb-0 {{ $filter === 'failed' ? 'border border-danger' : '' }}" style="border-radius: 8px;">
-                      <div class="text-center">
-                        <h2 class="text-danger font-24 mb-1" id="stat_failed_count">{{ number_format($statusCounts->failed ?? 0) }}</h2>
-                        <h5 class="text-muted font-13 m-0"><i class="fa fa-exclamation-triangle text-danger"></i> Not Processing (Failed)</h5>
-                      </div>
-                    </div>
+                  <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 's' => request('s')]) }}" class="stat-box-card {{ $filter === 'failed' ? 'active-card' : '' }}">
+                    <h2 class="text-danger" id="stat_failed_count">{{ number_format($statusCounts->failed ?? 0) }}</h2>
+                    <h5><i class="fa fa-exclamation-triangle text-danger mr-1"></i> Not Processing (Failed)</h5>
                   </a>
                 </div>
               </div>
 
-              <!-- Main Table Card -->
-              <div class="card-box table-responsive">
+              <!-- Main Card Box -->
+              <div class="card-box table-responsive" style="border: 1px solid #2e3c54; border-radius: 8px;">
 
                 <!-- Active Processing Banner -->
-                <div id="live_processing_banner" class="alert {{ $activeEffect ? 'alert-warning' : 'alert-secondary' }} d-flex justify-content-between align-items-center mb-3 py-2 px-3" style="border-radius: 6px;">
-                  <div>
+                <div id="live_processing_banner" class="d-flex justify-content-between align-items-center mb-3 py-2 px-3" 
+                     style="background: {{ $activeEffect ? '#2b2314' : '#172030' }}; border: 1px solid {{ $activeEffect ? '#d97706' : '#2e3c54' }}; border-radius: 6px;">
+                  <div id="live_banner_content">
                     @if($activeEffect)
-                      <i class="fa fa-spinner fa-spin mr-2"></i>
-                      <strong>Currently Processing:</strong> 
+                      <i class="fa fa-spinner fa-spin text-warning mr-2"></i>
+                      <strong class="text-warning">Currently Processing:</strong> 
                       <span id="active_effect_title">#{{ $activeEffect->id }} - {{ $activeEffect->title }}</span>
                       &nbsp;|&nbsp; 
                       <span id="active_effect_step" class="badge badge-warning font-11">{{ $activeEffect->process_step ?: 'Converting...' }}</span>
                     @else
                       <i class="fa fa-check-circle text-success mr-2"></i>
-                      <span id="active_effect_title">All background jobs completed or queue is idle.</span>
+                      <span id="active_effect_title" class="text-muted">All background jobs completed or queue is idle.</span>
                     @endif
                   </div>
                   <div>
-                    <span class="text-muted font-11"><i class="fa fa-refresh fa-spin text-muted mr-1"></i> Live Auto-Sync Active</span>
+                    <span class="text-muted font-11"><i class="fa fa-refresh fa-spin mr-1"></i> Auto-Syncing Live</span>
                   </div>
                 </div>
 
-                <!-- Background Processing Cron Job Alert -->
-                <div class="alert alert-info py-2 mb-3">
-                    <small><strong><i class="fa fa-info-circle"></i> Background Processing Cron Job (Once Per Minute):</strong></small>
-                    <div class="input-group input-group-sm mt-1" style="max-width: 700px;">
-                        <input type="text" class="form-control form-control-sm" id="cronCommand" value="/usr/bin/php /home/u273790872/domains/cineworm.org/public_html/stock/artisan schedule:run >> /dev/null 2>&1" readonly>
+                <!-- Background Processing Cron Info -->
+                <div class="p-2 mb-3 d-flex flex-wrap align-items-center justify-content-between" style="background: #141b29; border: 1px solid #28354c; border-radius: 6px;">
+                    <small class="text-muted mr-2">
+                      <i class="fa fa-info-circle text-info"></i> <strong>Background Cron Job (Once Per Minute):</strong>
+                    </small>
+                    <div class="input-group input-group-sm" style="max-width: 620px;">
+                        <input type="text" class="form-control form-control-sm" id="cronCommand" value="/usr/bin/php /home/u273790872/domains/cineworm.org/public_html/stock/artisan schedule:run >> /dev/null 2>&1" readonly style="background: #0d121c; color: #a5b4fc; border-color: #28354c;">
                         <div class="input-group-append">
                             <button class="btn btn-primary btn-sm" type="button" onclick="copyCron()">Copy</button>
                         </div>
@@ -115,7 +203,7 @@
                       <input type="hidden" name="status" value="{{ $filter }}">
                       <input type="hidden" name="sort" value="{{ $sort }}">
                       <div class="input-group input-group-sm">
-                        <input type="text" name="s" placeholder="Search title or description..." value="{{ request('s', '') }}" class="form-control form-control-sm" style="min-width: 250px;">
+                        <input type="text" name="s" placeholder="Search title or description..." value="{{ request('s', '') }}" class="form-control form-control-sm" style="min-width: 240px; background: #141b29; color: #fff; border-color: #2e3c54;">
                         <div class="input-group-append">
                           <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Search</button>
                           @if(request('s'))
@@ -128,28 +216,28 @@
                 </div>
 
                 <!-- Status Filter Tabs & Processing Order Bar -->
-                <div class="p-2 mb-3 d-flex flex-wrap justify-content-between align-items-center" style="background-color: #1a2234; border: 1px solid #2e384d; border-radius: 6px; gap: 8px;">
+                <div class="p-2 mb-3 d-flex flex-wrap justify-content-between align-items-center" style="background-color: #141b29; border: 1px solid #2e3c54; border-radius: 6px; gap: 8px;">
                   
                   <!-- Filter Buttons -->
                   <div class="btn-group flex-wrap">
-                    <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'all' ? 'btn-primary' : 'btn-dark' }} font-12">
-                      <i class="fa fa-th-list"></i> All <span class="badge badge-light ml-1" id="tab_all_badge">{{ number_format($statusCounts->total ?? 0) }}</span>
+                    <a href="{{ route('admin.effects.index', ['status' => 'all', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'all' ? 'active' : '' }}">
+                      <i class="fa fa-th-list"></i> All <span class="filter-badge" id="tab_all_badge">{{ number_format($statusCounts->total ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'ready' ? 'btn-success' : 'btn-dark' }} font-12">
-                      <i class="fa fa-check-circle"></i> Ready <span class="badge badge-success ml-1" id="tab_ready_badge">{{ number_format($statusCounts->ready ?? 0) }}</span>
+                    <a href="{{ route('admin.effects.index', ['status' => 'ready', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'ready' ? 'active' : '' }}">
+                      <i class="fa fa-check-circle text-success"></i> Ready <span class="filter-badge text-success" id="tab_ready_badge">{{ number_format($statusCounts->ready ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'processing' ? 'btn-warning' : 'btn-dark' }} font-12">
-                      <i class="fa fa-spin fa-spinner"></i> In Processing <span class="badge badge-warning ml-1" id="tab_processing_badge">{{ number_format($statusCounts->processing ?? 0) }}</span>
+                    <a href="{{ route('admin.effects.index', ['status' => 'processing', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'processing' ? 'active' : '' }}">
+                      <i class="fa fa-spinner fa-spin text-warning"></i> In Processing <span class="filter-badge text-warning" id="tab_processing_badge">{{ number_format($statusCounts->processing ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'pending' ? 'btn-info' : 'btn-dark' }} font-12">
-                      <i class="fa fa-clock-o"></i> Pending <span class="badge badge-info ml-1" id="tab_pending_badge">{{ number_format($statusCounts->pending ?? 0) }}</span>
+                    <a href="{{ route('admin.effects.index', ['status' => 'pending', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'pending' ? 'active' : '' }}">
+                      <i class="fa fa-clock-o text-info"></i> Pending <span class="filter-badge text-info" id="tab_pending_badge">{{ number_format($statusCounts->pending ?? 0) }}</span>
                     </a>
 
-                    <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 's' => request('s')]) }}" class="btn btn-sm {{ $filter === 'failed' ? 'btn-danger' : 'btn-dark' }} font-12">
-                      <i class="fa fa-exclamation-triangle"></i> Not In Processing <span class="badge badge-danger ml-1" id="tab_failed_badge">{{ number_format($statusCounts->failed ?? 0) }}</span>
+                    <a href="{{ route('admin.effects.index', ['status' => 'failed', 'sort' => $sort, 's' => request('s')]) }}" class="btn filter-btn-custom {{ $filter === 'failed' ? 'active' : '' }}">
+                      <i class="fa fa-exclamation-triangle text-danger"></i> Not In Processing <span class="filter-badge text-danger" id="tab_failed_badge">{{ number_format($statusCounts->failed ?? 0) }}</span>
                     </a>
                   </div>
 
@@ -186,7 +274,7 @@
                 @endif
 
                 <div class="table-responsive">
-                <table class="table table-bordered table-hover">
+                <table class="table table-bordered table-effects-custom">
                   <thead>
                     <tr>
                       <th style="width: 70px;">ID</th>
@@ -206,18 +294,15 @@
                     <tr id="card_box_id_{{$effect->id}}" 
                         data-effect-id="{{ $effect->id }}" 
                         data-status="{{ $effect->status }}"
-                        style="{{ $isCurrentlyProcessing ? 'background-color: rgba(245, 158, 11, 0.08); border-left: 4px solid #f59e0b;' : '' }}">
+                        class="{{ $isCurrentlyProcessing ? 'row-processing-active' : '' }}">
                       <td><span class="badge badge-dark">#{{ $effect->id }}</span></td>
                       <td>
                         <strong>{{ $effect->title }}</strong>
-                        @if($isCurrentlyProcessing)
-                          <span class="badge badge-warning ml-1"><i class="fa fa-spinner fa-spin"></i> Converting Now</span>
-                        @endif
                       </td>
                       <td><span class="badge badge-info">{{ $effect->category ?? 'General' }}</span></td>
                       <td>
                         <div class="input-group input-group-sm" style="min-width: 340px;">
-                          <input type="text" class="form-control form-control-sm" id="effect_url_{{ $effect->id }}" value="{{ $effect->effect_url }}" readonly>
+                          <input type="text" class="form-control form-control-sm" id="effect_url_{{ $effect->id }}" value="{{ $effect->effect_url }}" readonly style="background: #141b29; color: #cbd5e1; border-color: #2b384e;">
                           <div class="input-group-append">
                             @if($effect->processed_url)
                               <button class="btn btn-sm btn-info btn-preview-processed" type="button" onclick="showPreview('{{ $effect->processed_url }}')" data-toggle="tooltip" title="Preview Processed Video"><i class="fa fa-play-circle"></i> Preview</button>
@@ -419,11 +504,11 @@
 
                             // 2. Update Active Processing Banner
                             if (activeEffect) {
-                                $('#live_processing_banner').removeClass('alert-secondary').addClass('alert-warning');
-                                $('#active_effect_title').html('<strong>Currently Processing:</strong> #' + activeEffect.id + ' - ' + (activeEffect.title || 'Effect') + ' &nbsp;|&nbsp; <span class="badge badge-warning font-11">' + (activeEffect.process_step || 'Converting...') + '</span>');
+                                $('#live_processing_banner').css({'background': '#2b2314', 'border-color': '#d97706'});
+                                $('#live_banner_content').html('<i class="fa fa-spinner fa-spin text-warning mr-2"></i><strong class="text-warning">Currently Processing:</strong> <span id="active_effect_title">#' + activeEffect.id + ' - ' + (activeEffect.title || 'Effect') + '</span> &nbsp;|&nbsp; <span id="active_effect_step" class="badge badge-warning font-11">' + (activeEffect.process_step || 'Converting...') + '</span>');
                             } else {
-                                $('#live_processing_banner').removeClass('alert-warning').addClass('alert-secondary');
-                                $('#active_effect_title').html('<i class="fa fa-check-circle text-success mr-2"></i> All queued jobs completed or queue is idle.');
+                                $('#live_processing_banner').css({'background': '#172030', 'border-color': '#2e3c54'});
+                                $('#live_banner_content').html('<i class="fa fa-check-circle text-success mr-2"></i><span id="active_effect_title" class="text-muted">All background jobs completed or queue is idle.</span>');
                             }
 
                             // 3. Update Table Rows
@@ -436,7 +521,7 @@
                                         var statusCell = tr.find('.status-cell');
                                         
                                         if (currentStatus === 'ready') {
-                                            tr.css({'background-color': '', 'border-left': ''});
+                                            tr.removeClass('row-processing-active');
                                             var html = '<span class="badge badge-success" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-check-circle"></i> Ready</span>';
                                             if (item.converted_mb) {
                                                 html += '<br><small style="color: #aaa;">' + item.converted_mb + '</small>';
@@ -450,19 +535,19 @@
                                                 appendGroup.prepend(previewBtn);
                                             }
                                         } else if (currentStatus === 'downloading') {
-                                            tr.css({'background-color': 'rgba(245, 158, 11, 0.08)', 'border-left': '4px solid #f59e0b'});
+                                            tr.addClass('row-processing-active');
                                             var stepText = item.process_step || 'Downloading...';
                                             statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-cloud-download fa-spin"></i> ' + stepText + '</span>');
                                         } else if (currentStatus === 'processing') {
-                                            tr.css({'background-color': 'rgba(245, 158, 11, 0.08)', 'border-left': '4px solid #f59e0b'});
+                                            tr.addClass('row-processing-active');
                                             var stepText = item.process_step || 'Converting MP4...';
                                             statusCell.html('<span class="badge badge-warning" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-spin fa-spinner"></i> ' + stepText + '</span>');
                                         } else if (currentStatus === 'error' || currentStatus === 'failed') {
-                                            tr.css({'background-color': '', 'border-left': ''});
+                                            tr.removeClass('row-processing-active');
                                             var stepText = item.process_step || 'Failed';
-                                            statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span><br><small class="text-danger font-10 text-truncate d-inline-block" style="max-width: 160px;">' + stepText + '</small>');
+                                            statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span><br><small class="text-danger font-10 text-truncate d-inline-block" style="max-width: 160px;" title="' + stepText + '">' + stepText + '</small>');
                                         } else {
-                                            tr.css({'background-color': '', 'border-left': ''});
+                                            tr.removeClass('row-processing-active');
                                             statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> In Queue (Waiting)</span>');
                                         }
                                     }
