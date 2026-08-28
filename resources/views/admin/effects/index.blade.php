@@ -363,9 +363,9 @@
                           @elseif($effect->status == 'processing')
                               <span class="badge-converting-active"><i class="fa fa-spinner fa-spin mr-1"></i> {{ $effect->process_step ?: 'Converting MP4...' }}</span>
                           @elseif($effect->status == 'error' || $effect->status == 'failed')
-                              <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="{{ $effect->process_step }}"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span>
+                              <span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" data-toggle="tooltip" title="{{ $effect->process_step }}"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span>
                               @if($effect->process_step)
-                                <br><small class="text-danger font-10 text-truncate d-inline-block" style="max-width: 160px;" title="{{ $effect->process_step }}">{{ $effect->process_step }}</small>
+                                <br><small class="text-danger font-11 d-inline-block mt-1" style="max-width: 250px; line-height: 1.3;" data-toggle="tooltip" title="{{ $effect->process_step }}"><i class="fa fa-info-circle mr-1"></i>{{ $effect->process_step }}</small>
                               @endif
                           @else
                               <span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> In Queue (Waiting)</span>
@@ -573,7 +573,7 @@
                                         } else if (currentStatus === 'error' || currentStatus === 'failed') {
                                             tr.removeClass('row-processing-active');
                                             var stepText = item.process_step || 'Failed';
-                                            statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" title="' + stepText + '"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span><br><small class="text-danger font-10 text-truncate d-inline-block" style="max-width: 160px;" title="' + stepText + '">' + stepText + '</small>');
+                                            statusCell.html('<span class="badge badge-danger" style="padding: 6px 10px; font-size: 11px;" data-toggle="tooltip" title="' + stepText + '"><i class="fa fa-exclamation-triangle"></i> Not Processing (Failed)</span><br><small class="text-danger font-11 d-inline-block mt-1" style="max-width: 250px; line-height: 1.3;" data-toggle="tooltip" title="' + stepText + '"><i class="fa fa-info-circle mr-1"></i>' + stepText + '</small>');
                                         } else {
                                             tr.removeClass('row-processing-active');
                                             statusCell.html('<span class="badge badge-secondary" style="padding: 6px 10px; font-size: 11px;"><i class="fa fa-clock-o"></i> In Queue (Waiting)</span>');

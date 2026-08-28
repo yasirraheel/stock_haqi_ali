@@ -102,9 +102,26 @@ class ProcessStockEffectJob implements ShouldQueue
                 // If it is a Google Drive file, rotate across all available API keys with rate-limiting backoff
                 if (!empty($fileId)) {
                     // Respectful delay before Google Drive API request to prevent rate limiting
-                    sleep(3);
+                    sleep(2);
 
                     $apiKeys = \App\Models\GoogleDriveApi::orderBy('calls', 'asc')->get();
+
+                    // Pre-check metadata using available API keys to detect if item is a Folder instead of a file!
+                    foreach ($apiKeys as $apiRecord) {
+                        $apiKey = trim($apiRecord->api_key);
+                        if (empty($apiKey)) continue;
+
+                        $metaUrl = "https://www.googleapis.com/drive/v3/files/{$fileId}?fields=id,name,mimeType,size&key={$apiKey}";
+                        $ctx = stream_context_create(['http' => ['timeout' => 10]]);
+                        $metaJson = @file_get_contents($metaUrl, false, $ctx);
+                        if ($metaJson) {
+                            $meta = json_decode($metaJson, true);
+                            if (isset($meta['mimeType']) && $meta['mimeType'] === 'application/vnd.google-apps.folder') {
+                                throw new \Exception('Invalid Item: Google Drive link is a Folder, not a video file.');
+                            }
+                            break;
+                        }
+                    }
 
                     foreach ($apiKeys as $apiRecord) {
                         $apiKey = trim($apiRecord->api_key);
@@ -162,22 +179,24 @@ class ProcessStockEffectJob implements ShouldQueue
                 ]);
             }
 
-            // 2. Convert via FFmpeg.
-            // Keep the output compatible with Reel2Reel and the older Hostinger FFmpeg build.
+            // 2. Convert via FFmpeg (Single-threaded decoder + encoder to prevent Hostinger EAGAIN limits)
             $ffmpegPath = '/home/u273790872/bin/ffmpeg';
             if (!file_exists($ffmpegPath) || !is_executable($ffmpegPath)) {
                 $ffmpegPath = 'ffmpeg';
             }
 
             if (file_exists($outputPath)) {
-                unlink($outputPath);
+                @unlink($outputPath);
             }
 
+            // Command with -threads 1 -thread_type slice BEFORE -i (Decoder) and AFTER -i (Encoder)
             $cmdParts = [
                 $ffmpegPath, '-y', '-hide_banner', '-loglevel', 'error',
+                '-threads', '1',
+                '-thread_type', 'slice',
                 '-i', $tempPath,
                 '-map', '0:v:0?',
-                '-vf', 'scale=1280:-2',
+                '-vf', 'scale=trunc(min(max(iw\,ih*dar)\,1280)/2)*2:-2',
                 '-c:v', 'libx264',
                 '-preset', 'veryfast',
                 '-threads', '1',
@@ -188,28 +207,44 @@ class ProcessStockEffectJob implements ShouldQueue
                 $outputPath,
             ];
 
-            $returnCode = 1;
-            $outputLines = [];
-            if (function_exists('proc_open')) {
-                $descriptorspec = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-                $process = proc_open($cmdParts, $descriptorspec, $pipes);
-                if (is_resource($process)) {
-                    fclose($pipes[0]);
-                    $stdoutContent = stream_get_contents($pipes[1]);
-                    $stderrContent = stream_get_contents($pipes[2]);
-                    fclose($pipes[1]);
-                    fclose($pipes[2]);
-                    $returnCode = proc_close($process);
-                    $outputLines = [$stdoutContent, $stderrContent];
-                }
-            } elseif (function_exists('shell_exec')) {
-                $quoted = array_map('escapeshellarg', $cmdParts);
-                $out = shell_exec(implode(' ', $quoted) . ' 2>&1');
-                $outputLines = [$out];
-                $returnCode = 0;
+            $res = $this->runFfmpegProcess($cmdParts);
+
+            // Fallback 1: If scaling filter fails, try without scale filter
+            if ((!file_exists($outputPath) || filesize($outputPath) <= 0) && file_exists($tempPath) && filesize($tempPath) > 0) {
+                $cmdFallback = [
+                    $ffmpegPath, '-y', '-hide_banner', '-loglevel', 'error',
+                    '-threads', '1',
+                    '-thread_type', 'slice',
+                    '-i', $tempPath,
+                    '-map', '0:v:0?',
+                    '-c:v', 'libx264',
+                    '-preset', 'veryfast',
+                    '-threads', '1',
+                    '-crf', '28',
+                    '-pix_fmt', 'yuv420p',
+                    '-movflags', '+faststart',
+                    '-an',
+                    $outputPath,
+                ];
+                $res = $this->runFfmpegProcess($cmdFallback);
             }
 
-            if ($returnCode === 0 && file_exists($outputPath) && filesize($outputPath) > 0) {
+            // Fallback 2: Stream copy if already h264/mp4 container
+            if ((!file_exists($outputPath) || filesize($outputPath) <= 0) && file_exists($tempPath) && filesize($tempPath) > 0) {
+                $cmdCopy = [
+                    $ffmpegPath, '-y', '-hide_banner', '-loglevel', 'error',
+                    '-threads', '1',
+                    '-i', $tempPath,
+                    '-map', '0:v:0?',
+                    '-c:v', 'copy',
+                    '-movflags', '+faststart',
+                    '-an',
+                    $outputPath,
+                ];
+                $res = $this->runFfmpegProcess($cmdCopy);
+            }
+
+            if (file_exists($outputPath) && filesize($outputPath) > 0) {
                 $convertedBytes = filesize($outputPath);
                 DB::table('effects')->where('id', $this->effectId)->update([
                     'status' => 'ready',
@@ -225,15 +260,16 @@ class ProcessStockEffectJob implements ShouldQueue
                 // Cool down delay between conversions to prevent rapid queue churn
                 sleep(3);
             } else {
-                throw new \Exception('FFmpeg conversion failed: ' . implode("\n", $outputLines));
+                throw new \Exception('FFmpeg conversion failed: ' . implode("\n", $res['output'] ?? []));
             }
 
         } catch (\Exception $e) {
             $msg = $e->getMessage();
-            \Log::error("Effect Processing Failed [ID: {$this->effectId}]: " . $msg);
+            $specificError = $this->formatSpecificError($msg);
+            \Log::error("Effect Processing Failed [ID: {$this->effectId}]: {$msg}");
             DB::table('effects')->where('id', $this->effectId)->update([
                 'status' => 'failed',
-                'process_step' => 'Failed: ' . \Illuminate\Support\Str::limit($msg, 80)
+                'process_step' => 'Failed: ' . $specificError
             ]);
         } finally {
             // Unlink temporary raw download file only when processing successfully completes (ready).
@@ -326,5 +362,80 @@ class ProcessStockEffectJob implements ShouldQueue
         }
 
         return ['success' => true, 'error' => '', 'http_code' => $httpCode];
+    }
+
+    /**
+     * Run an FFmpeg command with safe process handling.
+     */
+    protected function runFfmpegProcess(array $cmdParts): array
+    {
+        $returnCode = 1;
+        $outputLines = [];
+
+        if (function_exists('proc_open')) {
+            $descriptorspec = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+            $process = proc_open($cmdParts, $descriptorspec, $pipes);
+            if (is_resource($process)) {
+                fclose($pipes[0]);
+                $stdoutContent = stream_get_contents($pipes[1]);
+                $stderrContent = stream_get_contents($pipes[2]);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                $returnCode = proc_close($process);
+                $outputLines = array_filter([trim($stdoutContent), trim($stderrContent)]);
+            }
+        } elseif (function_exists('shell_exec')) {
+            $quoted = array_map('escapeshellarg', $cmdParts);
+            $out = shell_exec(implode(' ', $quoted) . ' 2>&1');
+            $outputLines = [trim($out)];
+            $returnCode = 0;
+        }
+
+        return ['code' => $returnCode, 'output' => $outputLines];
+    }
+
+    /**
+     * Convert raw error string into a specific, human-readable status description.
+     */
+    protected function formatSpecificError(string $rawMsg): string
+    {
+        $raw = strtolower($rawMsg);
+
+        if (str_contains($raw, 'folder, not a video') || str_contains($raw, 'is a folder') || str_contains($raw, 'link is a folder')) {
+            return 'URL is a Google Drive Folder (Not a video file)';
+        }
+        if (str_contains($raw, '429') || str_contains($raw, 'rate limit')) {
+            return 'Google Drive Rate Limit (429) - Cooldown required';
+        }
+        if (str_contains($raw, 'virus scan') || str_contains($raw, 'large file')) {
+            return 'Google Drive Virus Scan Warning HTML returned';
+        }
+        if (str_contains($raw, '403') || str_contains($raw, 'access denied') || str_contains($raw, 'permission')) {
+            return 'Google Drive Access Denied (Private File / No Permission)';
+        }
+        if (str_contains($raw, '404') || str_contains($raw, 'not found')) {
+            return 'Google Drive File Not Found (Deleted or Invalid ID)';
+        }
+        if (str_contains($raw, '0 bytes') || str_contains($raw, 'empty')) {
+            return 'Downloaded file is 0 bytes (Empty source file)';
+        }
+        if (str_contains($raw, 'resource temporarily unavailable') || str_contains($raw, 'eagain')) {
+            return 'Server Resource/Thread Limit (EAGAIN - Process busy)';
+        }
+        if (str_contains($raw, 'invalid data found') || str_contains($raw, 'corrupt')) {
+            return 'Corrupted or Non-Video File Format';
+        }
+        if (str_contains($raw, 'opening decoder') || str_contains($raw, 'no decoder')) {
+            return 'Unsupported Video Codec in Source';
+        }
+        if (str_contains($raw, 'curl error')) {
+            return 'Network/Connection Timeout downloading from Google Drive';
+        }
+
+        // Clean up any FFmpeg local path prefix
+        $clean = preg_replace('/\/home\/[^\/]+\/[^\s:]+:\s*/', '', $rawMsg);
+        $clean = trim(preg_replace('/\s+/', ' ', $clean));
+
+        return \Illuminate\Support\Str::limit($clean, 120);
     }
 }
