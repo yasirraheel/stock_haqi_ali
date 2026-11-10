@@ -180,10 +180,9 @@ class ProcessStockEffectJob implements ShouldQueue
             }
 
             // 2. Convert via FFmpeg (Single-threaded decoder + encoder to prevent Hostinger EAGAIN limits)
-            $ffmpegPath = '/home/u273790872/bin/ffmpeg';
-            if (!file_exists($ffmpegPath) || !is_executable($ffmpegPath)) {
-                $ffmpegPath = 'ffmpeg';
-            }
+            // Resolve a real executable before starting the process. Falling back to the literal
+            // string "ffmpeg" can hide a missing execute bit and only produce a blank error.
+            $ffmpegPath = $this->resolveFfmpegPath();
 
             if (file_exists($outputPath)) {
                 @unlink($outputPath);
@@ -371,10 +370,13 @@ class ProcessStockEffectJob implements ShouldQueue
     {
         $returnCode = 1;
         $outputLines = [];
+        $quotedCommand = implode(' ', array_map('escapeshellarg', $cmdParts));
 
         if (function_exists('proc_open')) {
             $descriptorspec = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-            $process = proc_open($cmdParts, $descriptorspec, $pipes);
+            // Use a quoted command string for compatibility with shared-hosting PHP builds.
+            // Some builds accept an argv array, while others silently fail to launch it.
+            $process = proc_open($quotedCommand, $descriptorspec, $pipes);
             if (is_resource($process)) {
                 fclose($pipes[0]);
                 $stdoutContent = stream_get_contents($pipes[1]);
@@ -383,15 +385,43 @@ class ProcessStockEffectJob implements ShouldQueue
                 fclose($pipes[2]);
                 $returnCode = proc_close($process);
                 $outputLines = array_filter([trim($stdoutContent), trim($stderrContent)]);
+            } else {
+                $outputLines = ['Unable to start FFmpeg process.'];
             }
-        } elseif (function_exists('shell_exec')) {
-            $quoted = array_map('escapeshellarg', $cmdParts);
-            $out = shell_exec(implode(' ', $quoted) . ' 2>&1');
-            $outputLines = [trim($out)];
-            $returnCode = 0;
+        } elseif (function_exists('exec')) {
+            exec($quotedCommand . ' 2>&1', $outputLines, $returnCode);
         }
 
         return ['code' => $returnCode, 'output' => $outputLines];
+    }
+
+    /**
+     * Find an executable FFmpeg binary on the production/shared-hosting server.
+     */
+    protected function resolveFfmpegPath(): string
+    {
+        $candidates = [
+            '/home/u273790872/bin/ffmpeg',
+            storage_path('ffmpeg/ffmpeg-7.0.2-amd64-static/ffmpeg'),
+            storage_path('ffmpeg_linux/ffmpeg'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate) && is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        if (function_exists('shell_exec')) {
+            $path = trim((string) @shell_exec('command -v ffmpeg 2>/dev/null'));
+            if ($path !== '' && is_executable($path)) {
+                return $path;
+            }
+        }
+
+        throw new \RuntimeException(
+            'FFmpeg executable is missing or not executable. Checked: ' . implode(', ', $candidates)
+        );
     }
 
     /**
