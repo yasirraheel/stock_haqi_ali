@@ -34,15 +34,21 @@ class AccountSyncService
         $signature = hash_hmac('sha256', $body, $secret);
 
         try {
-            $response = Http::timeout(5)
+            $client = Http::timeout(5)
                 ->connectTimeout(3)
+                ->when(config('services.account_sync.partner_resolve'), function ($request) {
+                    return $request->withOptions([
+                        'curl' => [CURLOPT_RESOLVE => [config('services.account_sync.partner_resolve')]],
+                    ]);
+                })
                 ->withHeaders([
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                     'X-Account-Sync-Signature' => $signature,
                 ])
-                ->withBody($body, 'application/json')
-                ->post($partnerUrl . '/api/internal/account-sync');
+                ->withBody($body, 'application/json');
+
+            $response = $client->post($partnerUrl . '/api/internal/account-sync');
 
             if (!$response->successful()) {
                 Log::warning('Account sync partner rejected request', [

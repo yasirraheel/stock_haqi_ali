@@ -48,6 +48,7 @@ return [
     'account_sync' => [
         'enabled' => env('ACCOUNT_SYNC_ENABLED', false),
         'partner_url' => env('ACCOUNT_SYNC_PARTNER_URL'),
+        'partner_resolve' => env('ACCOUNT_SYNC_PARTNER_RESOLVE'),
         'secret' => env('ACCOUNT_SYNC_SECRET'),
     ],
 

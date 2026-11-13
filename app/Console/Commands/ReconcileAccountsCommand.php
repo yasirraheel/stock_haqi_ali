@@ -58,15 +58,21 @@ class ReconcileAccountsCommand extends Command
             $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
 
             try {
-                $response = Http::timeout(15)
+                $client = Http::timeout(15)
                     ->connectTimeout(5)
+                    ->when(config('services.account_sync.partner_resolve'), function ($request) {
+                        return $request->withOptions([
+                            'curl' => [CURLOPT_RESOLVE => [config('services.account_sync.partner_resolve')]],
+                        ]);
+                    })
                     ->withHeaders([
                         'Accept' => 'application/json',
                         'Content-Type' => 'application/json',
                         'X-Account-Sync-Signature' => hash_hmac('sha256', $body, $secret),
                     ])
-                    ->withBody($body, 'application/json')
-                    ->post($partnerUrl . '/api/internal/account-sync');
+                    ->withBody($body, 'application/json');
+
+                $response = $client->post($partnerUrl . '/api/internal/account-sync');
 
                 if (!$response->successful()) {
                     $failed++;
