@@ -16,7 +16,19 @@ class AudioApiController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Audio::where('is_active', true);
+            // Keep the curated library and expose user submissions immediately.
+            // User submissions are pending by default, so filtering only by
+            // is_active made newly uploaded audio invisible in Reel2Reel.
+            $query = Audio::where(function ($q) {
+                $q->where('is_active', true)
+                    ->orWhere(function ($submission) {
+                        $submission->whereNotNull('added_by')
+                            ->where(function ($status) {
+                                $status->whereNull('status')
+                                    ->orWhere('status', '!=', 'blocked');
+                            });
+                    });
+            });
 
             if ($request->has('search') && !empty($request->get('search'))) {
                 $search = trim($request->get('search'));
@@ -71,6 +83,7 @@ class AudioApiController extends Controller
             return response()->json([
                 'status' => 200,
                 'success' => true,
+                'total_audios' => count($formatted),
                 'AUDIOS_LIST' => $formatted,
                 'data' => $formatted
             ], 200, [

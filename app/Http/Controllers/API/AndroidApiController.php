@@ -1962,15 +1962,26 @@ class AndroidApiController extends MainAPIController
         $offset = max(0, ($page - 1) * $per_page);
 
         $query = DB::table('effects')
-            ->where('is_active', true)
+            // Include user submissions as soon as they are uploaded, while
+            // never exposing explicitly blocked records.
+            ->where(function($q) {
+                $q->where('is_active', true)
+                    ->orWhere(function($submission) {
+                        $submission->whereNotNull('added_by')
+                            ->where(function($status) {
+                                $status->whereNull('status')
+                                    ->orWhere('status', '!=', 'blocked');
+                            });
+                    });
+            })
             ->where(function($q) {
                 $q->where(function($q2) {
                     $q2->where('status', 'ready')
                        ->whereNotNull('processed_url')
-                       ->where('processed_url', 'like', '%.mp4%');
+                       ->where('processed_url', '!=', '');
                 })->orWhere(function($q3) {
                     $q3->whereNotNull('effect_url')
-                       ->where('effect_url', 'like', '%.mp4%');
+                       ->where('effect_url', '!=', '');
                 });
             });
 
@@ -1997,6 +2008,12 @@ class AndroidApiController extends MainAPIController
         $response = array();
         foreach($effects as $effect) {
             $effectUrl = !empty($effect->processed_url) ? $effect->processed_url : $effect->effect_url;
+            // Google Drive user submissions cannot be fetched directly by a
+            // browser because of CORS/redirects. Send Reel2Reel through the
+            // existing server-side proxy for those records.
+            if (preg_match('/drive\.google\.com|googleusercontent\.com/i', (string) $effectUrl)) {
+                $effectUrl = url('/api/public/effect_download?api_key=com.cineworm.tv&effect_id=' . (int) $effect->id);
+            }
             $response[] = array(
                 "effect_id" => $effect->id,
                 "title" => $effect->title,
@@ -2029,15 +2046,24 @@ class AndroidApiController extends MainAPIController
     public function effects_categories()
     {
         $baseQuery = DB::table('effects')
-            ->where('is_active', true)
+            ->where(function($q) {
+                $q->where('is_active', true)
+                    ->orWhere(function($submission) {
+                        $submission->whereNotNull('added_by')
+                            ->where(function($status) {
+                                $status->whereNull('status')
+                                    ->orWhere('status', '!=', 'blocked');
+                            });
+                    });
+            })
             ->where(function($q) {
                 $q->where(function($q2) {
                     $q2->where('status', 'ready')
                        ->whereNotNull('processed_url')
-                       ->where('processed_url', 'like', '%.mp4%');
+                       ->where('processed_url', '!=', '');
                 })->orWhere(function($q3) {
                     $q3->whereNotNull('effect_url')
-                       ->where('effect_url', 'like', '%.mp4%');
+                       ->where('effect_url', '!=', '');
                 });
             });
 
@@ -2081,7 +2107,17 @@ class AndroidApiController extends MainAPIController
     public function effect_download(Request $request)
     {
         $effectId = (int) $request->input('effect_id');
-        $effect = DB::table('effects')->where('id', $effectId)->where('is_active', true)->first();
+        $effect = DB::table('effects')->where('id', $effectId)
+            ->where(function($q) {
+                $q->where('is_active', true)
+                    ->orWhere(function($submission) {
+                        $submission->whereNotNull('added_by')
+                            ->where(function($status) {
+                                $status->whereNull('status')
+                                    ->orWhere('status', '!=', 'blocked');
+                            });
+                    });
+            })->first();
 
         if (!$effect || !filter_var($effect->effect_url, FILTER_VALIDATE_URL)) {
             return \Response::json(['message' => 'Effect not found'], 404);

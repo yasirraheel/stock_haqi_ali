@@ -75,3 +75,14 @@ Route::options('v1/film-stock', function() {
 });
 Route::get('v1/film-stock', 'API\FilmStockApiController@index')->name('api.v1.film-stock.index');
 Route::get('v1/film-stock/{id}/stream', 'API\FilmStockApiController@stream')->name('api.v1.film-stock.stream');
+
+// Public Stock LUT routes for Reel2Reel color grading.
+Route::options('v1/luts', function() {
+    return response('', 200, [
+        'Access-Control-Allow-Origin' => '*',
+        'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+        'Access-Control-Allow-Headers' => 'Content-Type, X-API-KEY, Authorization'
+    ]);
+});
+Route::get('v1/luts', 'API\LutApiController@index')->name('api.v1.luts.index');
+Route::get('v1/luts/{id}/download', 'API\LutApiController@download')->name('api.v1.luts.download');
