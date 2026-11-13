@@ -73,7 +73,7 @@
                                 <label for="checkbox<?php echo $i; ?>"></label>
                               </div>
 
-                            @if(isset($live_tv_data->channel_thumb)) <img class="card-img-top thumb-lg img-fluid" src="{{URL::to('/'.$live_tv_data->channel_thumb)}}" alt="{{ stripslashes($live_tv_data->channel_name) }}"> @endif
+                            @if(isset($live_tv_data->channel_thumb)) <img class="card-img-top thumb-lg img-fluid" src="{{ live_tv_thumb_url($live_tv_data->channel_thumb) }}" alt="{{ stripslashes($live_tv_data->channel_name) }}"> @endif
  
 
                             <div class="card-body p-3">

@@ -47,7 +47,7 @@ class UserLiveTvSubmissionController extends Controller
             'channel_url' => 'required|string|max:500',
             'channel_url2' => 'nullable|string|max:500',
             'channel_url3' => 'nullable|string|max:500',
-            'channel_thumb' => 'required|string|max:500',
+            'channel_thumb' => 'required|string|max:255',
         ]);
 
         $urlType = $request->input('channel_url_type');

@@ -168,7 +168,7 @@
                     <label class="col-sm-3 col-form-label">&nbsp;</label>
                     <div class="col-sm-8">
                                                                          
-                           <img src="{{URL::to('/'.$tv_info->channel_thumb)}}" alt="video image" class="img-thumbnail" width="200">                        
+                           <img src="{{ live_tv_thumb_url($tv_info->channel_thumb) }}" alt="video image" class="img-thumbnail" width="200">                        
                        
                     </div>
                   </div>

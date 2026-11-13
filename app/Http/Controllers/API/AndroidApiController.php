@@ -1068,7 +1068,7 @@ class AndroidApiController extends MainAPIController
 
                             $tv_id= $live_tv_data->id;
                             $tv_title= stripslashes($live_tv_data->channel_name);
-                            $tv_logo= URL::to('/'.$live_tv_data->channel_thumb);
+                            $tv_logo= live_tv_thumb_url($live_tv_data->channel_thumb);
                             $tv_access= $live_tv_data->channel_access;
 
                             $response['live_tv'][]=array("tv_id"=>$tv_id,"tv_title"=>$tv_title,"tv_logo"=>$tv_logo,"tv_access"=>$tv_access);

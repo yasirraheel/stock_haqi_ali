@@ -138,7 +138,7 @@
            <div class="video-img">
 
             <span class="video-item-content">{{App\LiveTV::getLiveTvInfo($livetv_data->post_id,'channel_name')}}</span>
-            <img src="{{URL::to('/'.App\LiveTV::getLiveTvInfo($livetv_data->post_id,'channel_thumb'))}}" alt="{{App\LiveTV::getLiveTvInfo($livetv_data->post_id,'channel_name')}}" title="{{App\LiveTV::getLiveTvInfo($livetv_data->post_id,'channel_name')}}" />
+            <img src="{{ live_tv_thumb_url(App\LiveTV::getLiveTvInfo($livetv_data->post_id,'channel_thumb')) }}" alt="{{App\LiveTV::getLiveTvInfo($livetv_data->post_id,'channel_name')}}" title="{{App\LiveTV::getLiveTvInfo($livetv_data->post_id,'channel_name')}}" />
            </div>
         </a>
 

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('channel_url', 500);
             $table->string('channel_url2', 500)->nullable();
             $table->string('channel_url3', 500)->nullable();
-            $table->string('channel_thumb', 500);
+            $table->string('channel_thumb', 255);
             $table->string('seo_title')->nullable();
             $table->string('seo_description', 500)->nullable();
             $table->string('seo_keyword', 500)->nullable();
