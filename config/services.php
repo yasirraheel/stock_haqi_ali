@@ -48,7 +48,7 @@ return [
     'account_sync' => [
         'enabled' => env('ACCOUNT_SYNC_ENABLED', false),
         'partner_url' => env('ACCOUNT_SYNC_PARTNER_URL'),
-        'partner_resolve' => env('ACCOUNT_SYNC_PARTNER_RESOLVE'),
+        'partner_resolve' => env('ACCOUNT_SYNC_PARTNER_RESOLVE') ?: 'cineworm.org:443:82.25.96.181',
         'secret' => env('ACCOUNT_SYNC_SECRET'),
     ],
 
