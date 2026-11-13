@@ -24,6 +24,9 @@ class AccountSyncController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'name' => ['nullable', 'string', 'max:255'],
             'password_hash' => ['required', 'string', 'max:255'],
+            'reconcile' => ['sometimes', 'boolean'],
+            'force_password' => ['sometimes', 'boolean'],
+            'restore_deleted' => ['sometimes', 'boolean'],
         ]);
 
         if ($validator->fails() || !preg_match('/^\$(2y|2b|argon2i|argon2id)\$/', (string) ($data['password_hash'] ?? ''))) {
@@ -33,12 +36,41 @@ class AccountSyncController extends Controller
         $email = strtolower(trim($data['email']));
         $user = User::withTrashed()->whereRaw('LOWER(email) = ?', [$email])->first();
         $created = !$user;
+        $reconcile = filter_var($data['reconcile'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $forcePassword = $reconcile && filter_var($data['force_password'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $restoreDeleted = $reconcile && filter_var($data['restore_deleted'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        if (!$created) {
-            return response()->json(['ok' => true, 'created' => false, 'user_id' => $user->id]);
+        if (!$created && !$reconcile) {
+            return response()->json(['ok' => true, 'created' => false, 'updated' => false, 'restored' => false, 'user_id' => $user->id]);
         }
 
-        User::withoutEvents(function () use (&$user, $email, $data): void {
+        $updated = false;
+        $restored = false;
+
+        User::withoutEvents(function () use (&$user, &$updated, &$restored, $created, $email, $data, $forcePassword, $restoreDeleted): void {
+            if (!$created) {
+                if ($user->trashed() && $restoreDeleted) {
+                    $user->restore();
+                    $restored = true;
+                }
+
+                if ($forcePassword && $user->getAuthPassword() !== $data['password_hash']) {
+                    $user->password = $data['password_hash'];
+                    $updated = true;
+                }
+
+                if (trim((string) $user->name) === '' && trim((string) ($data['name'] ?? '')) !== '') {
+                    $user->name = trim((string) $data['name']);
+                    $updated = true;
+                }
+
+                if ($updated) {
+                    $user->save();
+                }
+
+                return;
+            }
+
             $user = new User();
             $user->usertype = 'User';
             $user->name = trim((string) ($data['name'] ?? explode('@', $email)[0]));
@@ -47,6 +79,6 @@ class AccountSyncController extends Controller
             $user->save();
         });
 
-        return response()->json(['ok' => true, 'created' => true, 'user_id' => $user->id]);
+        return response()->json(['ok' => true, 'created' => $created, 'updated' => $updated, 'restored' => $restored, 'user_id' => $user->id]);
     }
 }

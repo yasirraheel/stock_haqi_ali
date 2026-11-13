@@ -26,6 +26,9 @@ class AccountSyncService
             'email' => $email,
             'name' => (string) ($user->name ?? ''),
             'password_hash' => (string) $user->getAuthPassword(),
+            'reconcile' => true,
+            'force_password' => true,
+            'restore_deleted' => true,
         ];
         $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
         $signature = hash_hmac('sha256', $body, $secret);
