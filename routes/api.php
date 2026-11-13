@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('internal/account-sync', 'AccountSyncController@upsert');
+Route::post('internal/account-sync-batch', 'AccountSyncController@upsertBatch');
 
 // Public API routes with APP_KEY authentication
 Route::group(['prefix' => 'public', 'namespace' => 'API', 'middleware' => 'app.key'], function(){

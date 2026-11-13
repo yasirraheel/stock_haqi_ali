@@ -28,38 +28,32 @@ class ReconcileAccountsCommand extends Command
             return 1;
         }
 
-        $users = User::query()->whereNotNull('email')->get();
-        $this->info('Found ' . $users->count() . ' active accounts.');
-
-        if ($this->option('dry-run')) {
-            return 0;
-        }
-
-        $created = 0;
-        $updated = 0;
-        $restored = 0;
-        $unchanged = 0;
-        $failed = 0;
-
-        foreach ($users as $user) {
-            $email = strtolower(trim((string) $user->email));
-            if ($email === '' || str_contains($email, '__deleted__')) {
-                continue;
-            }
-
-            $payload = [
-                'email' => $email,
+        $payloads = User::query()->whereNotNull('email')->get()->map(function (User $user): array {
+            return [
+                'email' => strtolower(trim((string) $user->email)),
                 'name' => (string) ($user->name ?? ''),
                 'password_hash' => (string) $user->getAuthPassword(),
                 'reconcile' => true,
                 'force_password' => (bool) $this->option('force-password'),
                 'restore_deleted' => true,
             ];
-            $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        })->filter(function (array $account): bool {
+            return $account['email'] !== '' && !str_contains($account['email'], '__deleted__');
+        })->values()->all();
+
+        $this->info('Found ' . count($payloads) . ' active accounts.');
+        if ($this->option('dry-run')) {
+            return 0;
+        }
+
+        $summary = ['created' => 0, 'updated' => 0, 'restored' => 0, 'unchanged' => 0, 'invalid' => 0, 'failed' => 0];
+
+        foreach (array_chunk($payloads, 200) as $batch) {
+            $body = json_encode(['accounts' => $batch], JSON_UNESCAPED_SLASHES);
 
             try {
-                $client = Http::timeout(15)
-                    ->connectTimeout(5)
+                $client = Http::timeout(30)
+                    ->connectTimeout(8)
                     ->when(config('services.account_sync.partner_resolve'), function ($request) {
                         return $request->withOptions([
                             'curl' => [CURLOPT_RESOLVE => [config('services.account_sync.partner_resolve')]],
@@ -72,32 +66,28 @@ class ReconcileAccountsCommand extends Command
                     ])
                     ->withBody($body, 'application/json');
 
-                $response = $client->post($partnerUrl . '/api/internal/account-sync');
-
+                $response = $client->post($partnerUrl . '/api/internal/account-sync-batch');
                 if (!$response->successful()) {
-                    $failed++;
-                    $this->warn('Failed: ' . $email . ' (' . $response->status() . ')');
+                    $summary['failed'] += count($batch);
+                    $this->warn('Batch failed: HTTP ' . $response->status());
                     continue;
                 }
 
-                $result = $response->json();
-                if (!empty($result['created'])) {
-                    $created++;
-                } elseif (!empty($result['updated'])) {
-                    $updated++;
-                } elseif (!empty($result['restored'])) {
-                    $restored++;
-                } else {
-                    $unchanged++;
+                foreach (['created', 'updated', 'restored', 'unchanged', 'invalid'] as $key) {
+                    $summary[$key] += (int) ($response->json($key) ?? 0);
                 }
             } catch (\Throwable $e) {
-                $failed++;
-                $this->warn('Failed: ' . $email . ' (' . $e->getMessage() . ')');
+                $summary['failed'] += count($batch);
+                $this->warn('Batch failed: ' . $e->getMessage());
             }
         }
 
-        $this->line("Created: {$created}; updated: {$updated}; restored: {$restored}; unchanged: {$unchanged}; failed: {$failed}");
+        $this->line(sprintf(
+            'Created: %d; updated: %d; restored: %d; unchanged: %d; invalid: %d; failed: %d',
+            $summary['created'], $summary['updated'], $summary['restored'],
+            $summary['unchanged'], $summary['invalid'], $summary['failed']
+        ));
 
-        return $failed > 0 ? 1 : 0;
+        return $summary['failed'] > 0 ? 1 : 0;
     }
 }
