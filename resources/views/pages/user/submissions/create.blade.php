@@ -286,7 +286,7 @@
                                 <div class="tab-pane fade" id="form-effect" role="tabpanel">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
                                         <h4 class="text-white mb-0" style="font-weight: 600;"><i class="fa fa-magic text-danger mr-2"></i> Submit Video Effect</h4>
-                                        <span class="badge badge-info" style="padding: 6px 10px;">GDrive Video / FX (.mp4, .mov, .webm)</span>
+                                        <span class="badge badge-info" style="padding: 6px 10px;">GDrive Video / FX / LUT (.mp4, .mov, .webm, .cube, .3dl)</span>
                                     </div>
 
                                     <form action="{{ route('user.submissions.effect.store') }}" method="POST" id="effectSubmissionForm">
@@ -294,7 +294,7 @@
 
                                         <!-- Step 1: Link & Scan Button -->
                                         <div class="form-group mb-3">
-                                            <label class="text-white">Google Drive Effect Link <span class="text-danger">*</span></label>
+                                            <label class="text-white">Google Drive Effect or LUT Link <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <input type="text" name="drive_url" id="effect_drive_url" class="form-control" placeholder="Paste link (e.g. https://drive.google.com/file/d/1XyZ.../view)" value="{{ old('drive_url') }}" required>
                                                 <div class="input-group-append">
@@ -317,14 +317,15 @@
 
                                         <!-- Step 2: Auto-Filled Fields -->
                                         <div class="form-group mb-3">
-                                            <label class="text-white">Effect Title <span class="text-danger">*</span></label>
+                                            <label class="text-white">Effect / LUT Title <span class="text-danger">*</span></label>
                                             <input type="text" name="title" id="effect_title" class="form-control" placeholder="e.g. Glitch Transition Flash FX" value="{{ old('title') }}" required>
                                         </div>
 
                                         <div class="row">
                                             <div class="col-md-6 form-group mb-3">
                                                 <label class="text-white">Category</label>
-                                                <input type="text" name="category" id="effect_category" class="form-control" placeholder="e.g. Transitions, Glitch, VFX, Lights" value="{{ old('category', 'Transitions') }}">
+                                                <input type="text" name="category" id="effect_category" class="form-control" placeholder="e.g. Transitions, Glitch, VFX, LUT" value="{{ old('category', 'Transitions') }}">
+                                                <small class="text-muted">For a .cube or .3dl file, enter <strong>LUT</strong> so Reel2Reel shows it in Color &gt; LUT.</small>
                                             </div>
                                             <div class="col-md-6 form-group mb-3">
                                                 <label class="text-white">License Price ($ USD)</label>
@@ -338,7 +339,7 @@
                                         </div>
 
                                         <button type="submit" class="vfx-item-btn-danger text-uppercase w-100" style="padding: 13px; font-weight: 700; border-radius: 6px;">
-                                            <i class="fa fa-paper-plane mr-2"></i> Submit Effect for Approval
+                                            <i class="fa fa-paper-plane mr-2"></i> Submit Effect / LUT for Approval
                                         </button>
                                     </form>
                                 </div>
