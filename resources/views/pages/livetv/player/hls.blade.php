@@ -1,4 +1,4 @@
-<video id="v_player" class="video-js vjs-big-play-centered skin-blue vjs-16-9" controls preload="auto" playsinline crossorigin="anonymous" width="640" height="450" poster="{{URL::to('/'.$tv_info->channel_thumb)}}" data-setup="{}" @if(get_player_cong('autoplay')=="true")autoplay="true"@endif>
+<video id="v_player" class="video-js vjs-big-play-centered skin-blue vjs-16-9" controls preload="auto" playsinline crossorigin="anonymous" width="640" height="450" poster="{{ live_tv_thumb_url($tv_info->channel_thumb) }}" data-setup="{}" @if(get_player_cong('autoplay')=="true")autoplay="true"@endif>
 
 		  	<!-- video source -->
 		  @if(isset($_GET['server']) AND $_GET['server']==2)

@@ -18,7 +18,7 @@
 @endif
 
 
-@section('head_image', URL::to('/'.$tv_info->channel_thumb) )
+@section('head_image', live_tv_thumb_url($tv_info->channel_thumb) )
 
 @section('head_url', Request::url())
 
@@ -221,7 +221,7 @@
               @endif
 
               <span class="video-item-content">{{stripslashes($related_data->channel_name)}}</span>
-              <img src="{{URL::to('/'.$related_data->channel_thumb)}}" alt="{{stripslashes($related_data->channel_name)}}" title="{{stripslashes($related_data->channel_name)}}">
+              <img src="{{ live_tv_thumb_url($related_data->channel_thumb) }}" alt="{{stripslashes($related_data->channel_name)}}" title="{{stripslashes($related_data->channel_name)}}">
              </div>
           </a>
           </div>

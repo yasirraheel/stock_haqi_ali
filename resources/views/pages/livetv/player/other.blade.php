@@ -42,7 +42,7 @@
                         @endif
 
 					 ],
-					 posterPath:"{{URL::to('/'.$tv_info->channel_thumb)}}",
+						 posterPath:"{{ live_tv_thumb_url($tv_info->channel_thumb) }}",
 					 showErrorInfo:"yes",
 					 fillEntireScreenWithPoster:"no",
 					 disableDoubleClickFullscreen:"no",

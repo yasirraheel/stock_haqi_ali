@@ -19,6 +19,19 @@ use App\SubscriptionPlan;
 use App\SettingsAndroidApp;
 use App\WebAds;
 
+if (! function_exists('live_tv_thumb_url')) {
+    function live_tv_thumb_url($path)
+    {
+        if (empty($path)) {
+            return URL::asset('site_assets/images/placeholder.jpg');
+        }
+
+        return preg_match('/^https?:\\/\\//i', $path)
+            ? $path
+            : URL::to('/' . ltrim($path, '/'));
+    }
+}
+
 if (! function_exists('set_tmdb_language')) {
 
     function set_tmdb_language()

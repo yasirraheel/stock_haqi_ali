@@ -136,6 +136,11 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin'], function () {
     Route::get('photos-user-submissions/approve/{id}', 'UserSubmissionsAdminController@approvePhoto')->name('admin.photos.user-submissions.approve');
     Route::get('photos-user-submissions/reject/{id}', 'UserSubmissionsAdminController@rejectPhoto')->name('admin.photos.user-submissions.reject');
 
+    // Live TV user submissions: admin approval is required before publishing
+    Route::get('live_tv/submissions', 'LiveTvController@submissions')->name('admin.live-tv.submissions');
+    Route::post('live_tv/submissions/{id}/approve', 'LiveTvController@approveSubmission')->name('admin.live-tv.submissions.approve');
+    Route::post('live_tv/submissions/{id}/reject', 'LiveTvController@rejectSubmission')->name('admin.live-tv.submissions.reject');
+
     Route::get('dashboard', 'DashboardController@index');
     Route::get('login', ['as' => 'login', 'uses' => 'IndexController@index']);
 
@@ -472,6 +477,13 @@ Route::group(['middleware' => 'auth', 'prefix' => 'user/submissions', 'as' => 'u
     Route::post('/film-stock', 'UserSubmissionController@storeFilmStock')->name('film-stock.store');
     Route::post('/effect', 'UserSubmissionController@storeEffect')->name('effect.store');
     Route::post('/photo', 'UserSubmissionController@storePhoto')->name('photo.store');
+});
+
+// User Live TV submissions (published only after admin approval)
+Route::group(['middleware' => 'auth', 'prefix' => 'user/live-tv', 'as' => 'user.live-tv.'], function () {
+    Route::get('/', 'UserLiveTvSubmissionController@index')->name('index');
+    Route::get('/create', 'UserLiveTvSubmissionController@create')->name('create');
+    Route::post('/', 'UserLiveTvSubmissionController@store')->name('store');
 });
 
 

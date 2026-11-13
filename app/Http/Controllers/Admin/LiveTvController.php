@@ -7,6 +7,7 @@ use App\User;
 use App\LiveTV;
 use App\TvCategory;
 use App\RecentlyWatched;
+use App\LiveTVSubmission;
 
 use App\Http\Requests;
 use Illuminate\Http\Request;
@@ -60,6 +61,94 @@ class LiveTvController extends MainAdminController
         } 
          
         return view('admin.pages.livetv.list',compact('page_title','live_tv_list','cat_list'));
+    }
+
+    public function submissions(Request $request)
+    {
+        if (Auth::User()->usertype != "Admin" AND Auth::User()->usertype != "Sub_Admin") {
+            \Session::flash('flash_message', trans('words.access_denied'));
+            return redirect('dashboard');
+        }
+
+        $query = LiveTVSubmission::with(['user', 'liveTv'])->orderBy('id', 'DESC');
+
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('s')) {
+            $search = trim($request->input('s'));
+            $query->where(function ($q) use ($search) {
+                $q->where('channel_name', 'LIKE', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        $submissions = $query->paginate(20)->appends($request->query());
+        $pendingCount = LiveTVSubmission::where('status', 'pending')->count();
+        $approvedCount = LiveTVSubmission::where('status', 'approved')->count();
+        $rejectedCount = LiveTVSubmission::where('status', 'rejected')->count();
+        $page_title = 'Live TV User Submissions';
+
+        return view('admin.pages.livetv.submissions', compact(
+            'submissions', 'pendingCount', 'approvedCount', 'rejectedCount', 'page_title'
+        ));
+    }
+
+    public function approveSubmission($id)
+    {
+        if (Auth::User()->usertype != "Admin" AND Auth::User()->usertype != "Sub_Admin") {
+            \Session::flash('flash_message', trans('words.access_denied'));
+            return redirect('dashboard');
+        }
+
+        $submission = LiveTVSubmission::where('status', 'pending')->findOrFail($id);
+        $tv = new LiveTV;
+        $tv->channel_access = $submission->channel_access ?: 'Free';
+        $tv->channel_cat_id = $submission->channel_cat_id;
+        $tv->channel_name = addslashes($submission->channel_name);
+        $tv->channel_slug = Str::slug($submission->channel_name, '-', null);
+        $tv->channel_description = $submission->channel_description ? addslashes($submission->channel_description) : null;
+        $tv->channel_url_type = $submission->channel_url_type ?: 'HLS';
+        $tv->channel_url = $submission->channel_url;
+        $tv->channel_url2 = $submission->channel_url2;
+        $tv->channel_url3 = $submission->channel_url3;
+        $tv->channel_thumb = $submission->channel_thumb;
+        $tv->status = 1;
+        $tv->seo_title = $submission->seo_title ?: $submission->channel_name;
+        $tv->seo_description = $submission->seo_description;
+        $tv->seo_keyword = $submission->seo_keyword;
+        $tv->save();
+
+        $submission->status = 'approved';
+        $submission->live_tv_id = $tv->id;
+        $submission->reviewed_by = Auth::id();
+        $submission->reviewed_at = now();
+        $submission->save();
+
+        Session::flash('flash_message', "Live TV '{$submission->channel_name}' approved and published.");
+        return redirect()->back();
+    }
+
+    public function rejectSubmission(Request $request, $id)
+    {
+        if (Auth::User()->usertype != "Admin" AND Auth::User()->usertype != "Sub_Admin") {
+            \Session::flash('flash_message', trans('words.access_denied'));
+            return redirect('dashboard');
+        }
+
+        $submission = LiveTVSubmission::where('status', 'pending')->findOrFail($id);
+        $submission->status = 'rejected';
+        $submission->admin_notes = $request->input('admin_notes');
+        $submission->reviewed_by = Auth::id();
+        $submission->reviewed_at = now();
+        $submission->save();
+
+        Session::flash('flash_message', "Live TV '{$submission->channel_name}' rejected.");
+        return redirect()->back();
     }
     
     public function addTv()    { 

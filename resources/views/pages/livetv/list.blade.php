@@ -69,7 +69,7 @@
                 </div> 
                 @endif             
 
-                <img src="{{URL::to('/'.$live_tv_data->channel_thumb)}}" title="{{$live_tv_data->channel_name}}" alt="{{$live_tv_data->channel_name}}">         
+                <img src="{{ live_tv_thumb_url($live_tv_data->channel_thumb) }}" title="{{$live_tv_data->channel_name}}" alt="{{$live_tv_data->channel_name}}">
                </div>
                <div class="season-title-item">
                 <h3 class="mb-0">{{Str::limit(stripslashes($live_tv_data->channel_name),20)}}</h3>

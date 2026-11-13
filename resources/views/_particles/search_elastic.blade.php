@@ -115,7 +115,7 @@
                 </div>
               @endif
               <span class="video-item-content">{{$live_tv_data->channel_name}}</span>
-              <img src="{{URL::to('/'.$live_tv_data->channel_thumb)}}" alt="{{$live_tv_data->channel_name}}" title="{{$live_tv_data->channel_name}}">
+              <img src="{{ live_tv_thumb_url($live_tv_data->channel_thumb) }}" alt="{{$live_tv_data->channel_name}}" title="{{$live_tv_data->channel_name}}">
              </div>
           </a>
           </div>

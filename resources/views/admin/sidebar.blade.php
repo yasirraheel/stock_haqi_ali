@@ -116,6 +116,18 @@
                         </ul>
                     </li>
 
+                    @if (getcong('menu_livetv'))
+                    <li class="has_sub">
+                        <a href="javascript:void(0);" class="waves-effect {{ classActivePath('live_tv') }}">
+                            <i class="fa fa-television"></i><span>Live TV</span><span class="menu-arrow"></span>
+                        </a>
+                        <ul class="list-unstyled">
+                            <li class="{{ classActivePath('live_tv') }}"><a href="{{ URL::to('admin/live_tv') }}"><i class="fa fa-list"></i><span>All Live TV</span></a></li>
+                            <li class="{{ classActivePath('live_tv/submissions') }}"><a href="{{ route('admin.live-tv.submissions') }}"><i class="fa fa-user"></i><span>User Submissions</span></a></li>
+                        </ul>
+                    </li>
+                    @endif
+
                     <li class="has_sub">
                         <a href="javascript:void(0);" class="waves-effect {{ classActivePath('sub_admin') }}">
                             <i class="fa fa-users"></i>

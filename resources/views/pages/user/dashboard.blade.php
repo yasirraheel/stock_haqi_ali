@@ -69,6 +69,11 @@
                                                     style="flex: 1; text-align: center; padding: 10px; box-sizing: border-box; text-decoration: none; font-size: 13px;">
                                                     <i class="fa fa-plus-circle"></i> Submit Media
                                                 </a>
+                                                <a href="{{ route('user.live-tv.create') }}"
+                                                    class="btn btn-info text-uppercase"
+                                                    style="flex: 1; text-align: center; padding: 10px; box-sizing: border-box; text-decoration: none; font-size: 13px;">
+                                                    <i class="fa fa-television"></i> Add Live TV
+                                                </a>
                                                 <a href="{{ route('user.submissions.index') }}"
                                                     class="btn btn-secondary text-uppercase"
                                                     style="flex: 1; text-align: center; padding: 10px; box-sizing: border-box; text-decoration: none; font-size: 13px; background: #2a3447; border: 1px solid #3c4858; color: #fff;">

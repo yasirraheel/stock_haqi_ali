@@ -21,7 +21,8 @@
                   <div class="col-sm-6">
                      &nbsp;
                   </div>              
-                  <div class="col-md-3">
+                  <div class="col-md-6 text-right">
+                    <a href="{{ route('admin.live-tv.submissions') }}" class="btn btn-info btn-md waves-effect waves-light m-b-20 mt-2 mr-2"><i class="fa fa-user"></i> User Submissions</a>
                     <a href="{{URL::to('admin/live_tv/add_live_tv')}}" class="btn btn-success btn-md waves-effect waves-light m-b-20 mt-2 pull-right" data-toggle="tooltip" title="{{trans('words.live_tv_add')}}"><i class="fa fa-plus"></i> {{trans('words.live_tv_add')}}</a>
                   </div>
               </div>

@@ -239,7 +239,7 @@
                                                     title="{{ $info->channel_name }}">
                                                     <div class="video-img">
                                                         <span class="video-item-content">{{ $info->channel_name }}</span>
-                                                        <img src="{{ URL::to('/' . $info->channel_thumb) }}"
+                                                        <img src="{{ live_tv_thumb_url($info->channel_thumb) }}"
                                                             alt="{{ $info->channel_name }}"
                                                             title="LiveTV-{{ $info->channel_name }}">
                                                     </div>
@@ -802,7 +802,7 @@
                                                     @endif
                                                     <span
                                                         class="video-item-content">{{ App\LiveTV::getLiveTvInfo($tv_data, 'channel_name') }}</span>
-                                                    <img src="{{ URL::to('/' . App\LiveTV::getLiveTvInfo($tv_data, 'channel_thumb')) }}"
+                                                    <img src="{{ live_tv_thumb_url(App\LiveTV::getLiveTvInfo($tv_data, 'channel_thumb')) }}"
                                                         alt="{{ App\LiveTV::getLiveTvInfo($tv_data, 'channel_name') }}"
                                                         title="LiveTV-{{ App\LiveTV::getLiveTvInfo($tv_data, 'channel_name') }}" />
                                                 </div>

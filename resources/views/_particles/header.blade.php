@@ -117,6 +117,8 @@
                 <li><a href="{{ URL::to('dashboard') }}" title="{{trans('words.dashboard_text')}}"><i class="fa fa-database"></i>{{trans('words.dashboard_text')}}</a></li>
                 <li><a href="{{ route('user.submissions.create') }}" title="Submit Media"><i class="fa fa-cloud-upload"></i>Submit Media</a></li>
                 <li><a href="{{ route('user.submissions.index') }}" title="My Submissions"><i class="fa fa-folder-open"></i>My Submissions</a></li>
+                <li><a href="{{ route('user.live-tv.create') }}" title="Add Live TV"><i class="fa fa-television"></i>Add Live TV</a></li>
+                <li><a href="{{ route('user.live-tv.index') }}" title="My Live TV"><i class="fa fa-list"></i>My Live TV</a></li>
                 <li><a href="{{ URL::to('profile') }}" title="{{trans('words.profile')}}"><i class="fa fa-user"></i>{{trans('words.profile')}}</a></li>
                 <li><a href="{{ URL::to('messages') }}" title="Contact"><i class="fa fa-envelope"></i>Contact</a></li>
                 <li><a href="{{ URL::to('watchlist') }}" title="{{trans('words.my_watchlist')}}"><i class="fa fa-list"></i>{{trans('words.my_watchlist')}}</a></li>
