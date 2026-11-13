@@ -45,4 +45,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'account_sync' => [
+        'enabled' => env('ACCOUNT_SYNC_ENABLED', false),
+        'partner_url' => env('ACCOUNT_SYNC_PARTNER_URL'),
+        'secret' => env('ACCOUNT_SYNC_SECRET'),
+    ],
+
 ];

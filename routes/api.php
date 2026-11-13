@@ -18,6 +18,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::post('internal/account-sync', 'AccountSyncController@upsert');
+
 // Public API routes with APP_KEY authentication
 Route::group(['prefix' => 'public', 'namespace' => 'API', 'middleware' => 'app.key'], function(){
     Route::match(['get', 'post', 'options'], 'random_videos', 'AndroidApiController@random_videos');
