@@ -283,7 +283,7 @@
           <!-- Audio Player -->
           <div class="audio-player-container" style="background: #2d2d44; border-radius: 8px; padding: 15px; border: 1px solid #3d3d5c; margin-bottom: 20px;">
             <audio id="audioPlayer" controls style="width: 100%; height: 50px;">
-              <source src="{{ asset('storage/' . $audio->audio_path) }}" type="audio/{{ $audio->format ?: 'mp3' }}">
+              <source src="{{ $audio->audio_url }}" type="audio/{{ $audio->format ?: 'mp3' }}">
               Your browser does not support the audio element.
             </audio>
           </div>
@@ -407,7 +407,7 @@
 
                     <!-- Hidden Audio Player -->
                     <audio id="audioPlayer{{$related_audio->id}}" preload="none">
-                      <source src="{{ asset('storage/' . $related_audio->audio_path) }}" type="audio/{{ $related_audio->format ?: 'mp3' }}">
+                      <source src="{{ $related_audio->audio_url }}" type="audio/{{ $related_audio->format ?: 'mp3' }}">
                     </audio>
                   </div>
                 @endforeach

@@ -378,7 +378,7 @@
 
                                     <!-- Hidden Audio Player -->
                                     <audio id="audioPlayer{{$audio_data->id}}" preload="none">
-                                        <source src="{{ asset('storage/' . $audio_data->audio_path) }}" type="audio/{{ $audio_data->format ?: 'mp3' }}">
+                                        <source src="{{ $audio_data->audio_url }}" type="audio/{{ $audio_data->format ?: 'mp3' }}">
                                     </audio>
                                 </div>
                             </div>
