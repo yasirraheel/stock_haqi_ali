@@ -45,7 +45,7 @@
                                     @endif
                                     <span
                                         class="video-item-content">{{ App\Movies::getMoviesInfo($movie_data, 'video_title') }}</span>
-                                    <img src="{{ URL::to('/' . App\Movies::getMoviesInfo($movie_data, 'video_image_thumb')) }}"
+                                    <img src="{{ stock_image_url(App\Movies::getMoviesInfo($movie_data, 'video_image_thumb')) }}"
                                         alt="{{ App\Movies::getMoviesInfo($movie_data, 'video_title') }}"
                                         title="{{ App\Movies::getMoviesInfo($movie_data, 'video_title') }}">
                                 </div>

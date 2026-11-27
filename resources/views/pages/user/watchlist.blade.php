@@ -45,7 +45,7 @@
             <a href="{{ URL::to('movies/details/'.App\Movies::getMoviesInfo($movies_data->post_id,'video_slug').'/'.App\Movies::getMoviesInfo($movies_data->post_id,'id')) }}" title="{{App\Movies::getMoviesInfo($movies_data->post_id,'video_title')}}">
                <div class="video-img">
                 <span class="video-item-content">{{ Str::limit(stripslashes(App\Movies::getMoviesInfo($movies_data->post_id,'video_title')),25)}}</span>
-                <img src="{{URL::to('/'.App\Movies::getMoviesInfo($movies_data->post_id,'video_image_thumb'))}}" alt="{{App\Movies::getMoviesInfo($movies_data->post_id,'video_title')}}" title="{{App\Movies::getMoviesInfo($movies_data->post_id,'video_title')}}">
+                <img src="{{stock_image_url(App\Movies::getMoviesInfo($movies_data->post_id,'video_image_thumb'))}}" alt="{{App\Movies::getMoviesInfo($movies_data->post_id,'video_title')}}" title="{{App\Movies::getMoviesInfo($movies_data->post_id,'video_title')}}">
                </div>
             </a>
           </div>

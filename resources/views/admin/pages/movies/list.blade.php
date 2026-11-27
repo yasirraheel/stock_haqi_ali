@@ -127,13 +127,11 @@
                                                     {{ \App\Language::getLanguageInfo($movies->movie_lang_id, 'language_name') }}
                                                 </p>
 
-                                                @if (isset($movies->video_image_thumb))
-                                                    <!-- Set the aspect ratio to be landscape -->
-                                                    <img class="card-img-top thumb-xs img-fluid"
-                                                        src="{{url($movies->video_image_thumb)}}"
-                                                        alt="{{ stripslashes($movies->video_title) }}"
-                                                        style="width: 100%; height: auto; aspect-ratio: 16/9; object-fit: cover;">
-                                                @endif
+                                                <!-- Set the aspect ratio to be landscape -->
+                                                <img class="card-img-top thumb-xs img-fluid"
+                                                    src="{{ stock_image_url($movies->video_image_thumb) }}"
+                                                    alt="{{ stripslashes($movies->video_title) }}"
+                                                    style="width: 100%; height: auto; aspect-ratio: 16/9; object-fit: cover;">
                                             </div>
 
                                             <div class="card-body p-3">

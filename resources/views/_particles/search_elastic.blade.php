@@ -17,7 +17,7 @@
                 </div>
                 @endif
                 <span class="video-item-content">{{$movies_data->video_title}}</span>
-                <img src="{{URL::to('/'.$movies_data->video_image_thumb)}}" alt="{{$movies_data->video_title}}" title="{{$movies_data->video_title}}">
+                <img src="{{stock_image_url($movies_data->video_image_thumb)}}" alt="{{$movies_data->video_title}}" title="{{$movies_data->video_title}}">
                </div>
             </a>
             </div>

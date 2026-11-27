@@ -57,12 +57,25 @@
                       <td class="text-center">
                         @if ($audio->audio_url || $audio->drive_file_id)
                             <button type="button" class="btn btn-sm btn-danger waves-effect waves-light"
-                                onclick="openAudioPreview('{{ addslashes($audio->title) }}', '{{ $audio->audio_url }}', '{{ $audio->drive_file_id ?? '' }}')"
-                                data-toggle="tooltip" title="Open Audio Preview Popup">
+                                onclick="openAudioPreview(this)"
+                                data-preview-title="{{ e($audio->title) }}"
+                                data-preview-url="{{ e($audio->audio_url ?? '') }}"
+                                data-preview-drive-id="{{ e($audio->drive_file_id ?? '') }}"
+                                data-toggle="tooltip" title="Play audio preview here">
                                 <i class="fa fa-play-circle"></i> Preview
                             </button>
                         @else
                             <span class="text-muted"><i class="fa fa-ban"></i> No Audio</span>
+                        @endif
+                        @if ($audio->audio_url || $audio->drive_file_id)
+                            <div class="stock-inline-preview mt-2 text-left" style="display:none; min-width:260px; max-width:360px; margin-left:auto; margin-right:auto;">
+                                <div class="stock-preview-loading text-info small p-2" style="display:none; background:#121824; border:1px solid #32383e; border-radius:6px;">
+                                    <i class="fa fa-spinner fa-spin mr-1"></i> Loading preview…
+                                </div>
+                                <div class="stock-preview-error text-danger small p-2" style="display:none; background:#121824; border:1px solid #5d2830; border-radius:6px;"></div>
+                                <audio class="stock-inline-audio" controls preload="none" style="display:none; width:100%; outline:none;"></audio>
+                                <iframe class="stock-inline-drive" title="Audio preview" src="about:blank" allow="autoplay" style="display:none; width:100%; height:90px; border:0; border-radius:6px; background:#121824;"></iframe>
+                            </div>
                         @endif
                       </td>
                       <td>{{ $audio->duration ?? 'N/A' }}</td>
@@ -100,93 +113,94 @@
       @include("admin.copyright")
     </div>
 
-    <!-- Audio Preview Popup Modal -->
-    <div id="audioPreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 540px;">
-            <div class="modal-content" style="background: #1a2234; border: 1px solid #32383e; color: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                <div class="modal-header" style="border-bottom: 1px solid #2a3447; padding: 14px 20px; background: #151c2b;">
-                    <h5 class="modal-title mt-0" id="audioPreviewModalTitle" style="font-size: 15px; font-weight: 600;">
-                        <i class="fa fa-music text-info mr-1"></i> Audio Track Preview
-                    </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="closeAudioPreview()" style="outline: none; opacity: 0.8;">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body p-4 text-center" style="background: #121824;">
-                    <div class="m-b-20">
-                        <div style="width: 70px; height: 70px; margin: 0 auto; background: linear-gradient(135deg, #10c469, #35b8e0); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(16, 196, 105, 0.3);">
-                            <i class="fa fa-headphones" style="font-size: 32px; color: #fff;"></i>
-                        </div>
-                        <h4 id="audioModalTrackTitle" class="text-white mt-3 mb-2" style="font-size: 15px; font-weight: 600; word-break: break-word; overflow-wrap: anywhere; white-space: normal; line-height: 1.4; padding: 0 10px;">Track Title</h4>
-                        <p class="text-muted mb-0" style="font-size: 13px;"><i class="fa fa-play-circle-o"></i> Audio Playback & Preview</p>
-                    </div>
-
-                    <!-- Single Player Container (Only ONE player is shown, never dual) -->
-                    <div id="audioPlayerWrapper" class="p-2" style="background: #1e2838; border-radius: 8px; border: 1px solid #32383e; display: none;">
-                        <audio id="modalAudioPlayer" controls style="width: 100%; outline: none;"></audio>
-                    </div>
-
-                    <div id="audioIframeWrapper" style="display: none;">
-                        <iframe id="modalAudioIframe" src="" style="width: 100%; height: 110px; border: 0; border-radius: 8px; background: #1e2838;" allow="autoplay"></iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="{{ URL::asset('admin_assets/js/jquery.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
  <script type="text/javascript">
-  function openAudioPreview(title, audioUrl, driveFileId) {
-    document.getElementById('audioModalTrackTitle').innerText = title;
-    var audioPlayer = document.getElementById('modalAudioPlayer');
-    var audioPlayerWrapper = document.getElementById('audioPlayerWrapper');
-    var iframeWrapper = document.getElementById('audioIframeWrapper');
-    var iframe = document.getElementById('modalAudioIframe');
-
-    // Immediately stop & clear any previous playback
-    if (audioPlayer) {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        audioPlayer.src = '';
+  function resetAudioPreview(container) {
+    if (!container) return;
+    var audio = container.querySelector('.stock-inline-audio');
+    var iframe = container.querySelector('.stock-inline-drive');
+    if (audio) {
+        audio.pause();
+        audio.removeAttribute('src');
+        audio.load();
+        audio.style.display = 'none';
     }
     if (iframe) {
-        iframe.src = '';
+        iframe.src = 'about:blank';
+        iframe.style.display = 'none';
     }
-
-    if (driveFileId && driveFileId !== '') {
-        // Show ONLY the GDrive player
-        audioPlayerWrapper.style.display = 'none';
-        iframe.src = 'https://drive.google.com/file/d/' + driveFileId + '/preview';
-        iframeWrapper.style.display = 'block';
-    } else if (audioUrl && audioUrl !== '') {
-        // Show ONLY the HTML5 player
-        iframeWrapper.style.display = 'none';
-        audioPlayer.src = audioUrl;
-        audioPlayerWrapper.style.display = 'block';
-        audioPlayer.play().catch(function() {});
-    }
-
-    $('#audioPreviewModal').modal('show');
+    container.querySelector('.stock-preview-loading').style.display = 'none';
+    container.querySelector('.stock-preview-error').style.display = 'none';
   }
 
-  function closeAudioPreview() {
-    var audioPlayer = document.getElementById('modalAudioPlayer');
-    var iframe = document.getElementById('modalAudioIframe');
-    if (audioPlayer) {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        audioPlayer.src = '';
-    }
-    if (iframe) {
-        iframe.src = '';
-    }
+  function closeAllAudioPreviews(except) {
+    document.querySelectorAll('.stock-inline-preview').forEach(function (container) {
+        if (container !== except) {
+            resetAudioPreview(container);
+            container.style.display = 'none';
+        }
+    });
   }
 
-  $('#audioPreviewModal').on('hidden.bs.modal', function () {
-    closeAudioPreview();
-  });
+  function openAudioPreview(button) {
+    var container = button.parentElement.querySelector('.stock-inline-preview');
+    if (!container) return;
+
+    if (container.style.display !== 'none') {
+        resetAudioPreview(container);
+        container.style.display = 'none';
+        button.classList.remove('active');
+        return;
+    }
+
+    closeAllAudioPreviews(container);
+    var audioUrl = button.dataset.previewUrl || '';
+    var driveFileId = button.dataset.previewDriveId || '';
+    var audio = container.querySelector('.stock-inline-audio');
+    var iframe = container.querySelector('.stock-inline-drive');
+    var loading = container.querySelector('.stock-preview-loading');
+    var error = container.querySelector('.stock-preview-error');
+
+    container.style.display = 'block';
+    button.classList.add('active');
+    loading.style.display = 'block';
+
+    if (driveFileId) {
+        iframe.onload = function () {
+            loading.style.display = 'none';
+        };
+        iframe.onerror = function () {
+            loading.style.display = 'none';
+            error.textContent = 'Preview could not be loaded.';
+            error.style.display = 'block';
+        };
+        iframe.src = 'https://drive.google.com/file/d/' + encodeURIComponent(driveFileId) + '/preview';
+        iframe.style.display = 'block';
+    } else if (audioUrl) {
+        audio.onloadeddata = function () {
+            loading.style.display = 'none';
+            audio.style.display = 'block';
+        };
+        audio.oncanplay = function () {
+            loading.style.display = 'none';
+            audio.style.display = 'block';
+        };
+        audio.onerror = function () {
+            loading.style.display = 'none';
+            error.textContent = 'Audio preview could not be loaded.';
+            error.style.display = 'block';
+        };
+        audio.src = audioUrl;
+        audio.load();
+        audio.play().catch(function () {});
+    } else {
+        loading.style.display = 'none';
+        error.textContent = 'No preview source is available.';
+        error.style.display = 'block';
+    }
+  }
 
   // Pause other audios when any audio starts playing
   document.addEventListener('play', function (e) {

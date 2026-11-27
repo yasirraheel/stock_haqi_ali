@@ -44,7 +44,7 @@
                         @if($movies_info)
                             <div class="featured-movie-card">
                                 <div class="featured-movie-image">
-                                    <img src="{{ URL::to('/' . $movies_info->video_image_thumb) }}"
+                                    <img src="{{ stock_image_url($movies_info->video_image_thumb) }}"
                                          alt="{{ stripslashes($movies_info->video_title) }}"
                                          class="img-fluid">
                                     @if($movies_info->video_access == 'Paid')
@@ -116,7 +116,7 @@
                                                 title="{{ $movies_data->video_title }}">
                                         @endif
                                     @endif
-                                    <img src="{{ URL::to('/' . $movies_data->video_image_thumb) }}"
+                                    <img src="{{ stock_image_url($movies_data->video_image_thumb) }}"
                                         alt="{{ stripslashes($movies_data->video_title) }}"
                                         title="{{ stripslashes($movies_data->video_title) }}"
                                         class="img-fluid">
@@ -170,7 +170,7 @@
                                                 title="{{ $info->video_title }}">
                                                 <div class="video-img">
                                                     <span class="video-item-content">{{ $info->video_title }}</span>
-                                                    <img src="{{ URL::to('/' . $info->video_image) }}"
+                                                    <img src="{{ stock_image_url($info->video_image) }}"
                                                         alt="{{ $info->video_title }}"
                                                         title="Movies-{{ $info->video_title }}">
                                                 </div>
@@ -195,7 +195,7 @@
                                                     title="{{ $info->video_title }}">
                                                     <div class="video-img">
                                                         <span class="video-item-content">{{ $info->video_title }}</span>
-                                                        <img src="{{ URL::to('/' . $info->video_image) }}"
+                                                    <img src="{{ stock_image_url($info->video_image) }}"
                                                             alt="{{ $info->video_title }}"
                                                             title="Episodes-{{ $info->video_title }}">
                                                     </div>
@@ -217,7 +217,7 @@
                                                     title="{{ $info->video_title }}">
                                                     <div class="video-img">
                                                         <span class="video-item-content">{{ $info->video_title }}</span>
-                                                        <img src="{{ URL::to('/' . $info->video_image) }}"
+                                                    <img src="{{ stock_image_url($info->video_image) }}"
                                                             alt="{{ $info->video_title }}"
                                                             title="Sports-{{ $info->video_title }}">
                                                     </div>
@@ -288,7 +288,7 @@
                                                 title="premium">
                                         </div>
                                     @endif
-                                    <img src="{{ URL::to('/' . $movies_data->video_image_thumb) }}"
+                                    <img src="{{ stock_image_url($movies_data->video_image_thumb) }}"
                                         alt="{{ stripslashes($movies_data->video_title) }}"
                                         title="{{ stripslashes($movies_data->video_title) }}" class="img-fluid fixed-img">
                                     <div style="background:rgba(255,0,0,0.6);color:white;padding:3px;">
@@ -488,7 +488,7 @@
                                                         alt="premium" title="premium">
                                                 </div>
                                             @endif
-                                            <img src="{{ URL::to('/' . $movies_data->video_image_thumb) }}"
+                                            <img src="{{ stock_image_url($movies_data->video_image_thumb) }}"
                                                 alt="{{ stripslashes($movies_data->video_title) }}"
                                                 title="{{ stripslashes($movies_data->video_title) }}"
                                                 class="img-fluid fixed-img">
@@ -556,7 +556,7 @@
                                                 @endif
                                                 <span
                                                     class="video-item-content">{{ stripslashes($movies_data->video_title) }}</span>
-                                                <img src="{{ URL::to('/' . $movies_data->video_image_thumb) }}"
+                                                <img src="{{ stock_image_url($movies_data->video_image_thumb) }}"
                                                     alt="{{ $movies_data->video_title }}"
                                                     title="Movies-{{ $movies_data->video_title }}">
                                             </div>
@@ -654,7 +654,7 @@
                                                     @endif
                                                     <span
                                                         class="video-item-content">{{ stripslashes(App\Movies::getMoviesInfo($movie_data, 'video_title')) }}</span>
-                                                    <img src="{{ URL::to('/' . App\Movies::getMoviesInfo($movie_data, 'video_image_thumb')) }}"
+                                                    <img src="{{ stock_image_url(App\Movies::getMoviesInfo($movie_data, 'video_image_thumb')) }}"
                                                         alt="{{ App\Movies::getMoviesInfo($movie_data, 'video_title') }}"
                                                         title="Movies-{{ App\Movies::getMoviesInfo($movie_data, 'video_title') }}">
                                                 </div>

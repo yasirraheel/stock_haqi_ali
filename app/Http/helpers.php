@@ -32,6 +32,26 @@ if (! function_exists('live_tv_thumb_url')) {
     }
 }
 
+if (! function_exists('stock_placeholder_path')) {
+    function stock_placeholder_path()
+    {
+        return 'site_assets/images/stock-placeholder.jpg';
+    }
+}
+
+if (! function_exists('stock_image_url')) {
+    function stock_image_url($path)
+    {
+        if (empty($path)) {
+            return URL::asset(stock_placeholder_path());
+        }
+
+        return preg_match('/^https?:\/\//i', $path)
+            ? $path
+            : URL::to('/' . ltrim($path, '/'));
+    }
+}
+
 if (! function_exists('set_tmdb_language')) {
 
     function set_tmdb_language()

@@ -313,7 +313,7 @@
 
                                                 <span
                                                     class="video-item-content">{{ stripslashes($movies_data->video_title) }}</span>
-                                                <img src="{{ URL::to('/' . $movies_data->video_image_thumb) }}"
+                                                <img src="{{ stock_image_url($movies_data->video_image_thumb) }}"
                                                     alt="{{ stripslashes($movies_data->video_title) }}"
                                                     title="{{ stripslashes($movies_data->video_title) }}">
                                             </div>

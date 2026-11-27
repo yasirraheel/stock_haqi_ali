@@ -144,6 +144,8 @@ class MoviesController extends MainAdminController
         }
         // If updating an existing movie, retrieve it. Otherwise, create a new movie object.
         $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
+        $removeImage = $request->boolean('remove_image');
+        $placeholderPath = stock_placeholder_path();
 
         // Store original values for comparison (for updates)
         $original_title = $movie_obj->video_title ?? '';
@@ -181,6 +183,11 @@ class MoviesController extends MainAdminController
         $movie_obj->video_url = $video_url;
         $movie_obj->video_type = "URL";
 
+        if ($removeImage) {
+            $movie_obj->video_image = $placeholderPath;
+            $movie_obj->video_image_thumb = $placeholderPath;
+        }
+
         // Optional fields for video quality, downloads, and subtitles
         if (isset($inputs['video_quality'])) {
             $movie_obj->video_quality = $inputs['video_quality'];
@@ -205,6 +212,16 @@ class MoviesController extends MainAdminController
 
         // Save the movie object
         $movie_obj->save();
+
+        if ($removeImage) {
+            Thumbnail::updateOrCreate(
+                ['file_id' => $fileId],
+                ['video_image_thumb' => $placeholderPath]
+            );
+
+            Session::flash('flash_message', trans('words.successfully_updated'));
+            return Redirect::back();
+        }
 
         // Determine if we need to generate a new screenshot
         $needsNewScreenshot = false;
@@ -231,6 +248,17 @@ class MoviesController extends MainAdminController
             // Handle error if screenshot generation fails
             if (isset($screenshotResult['error'])) {
                 return redirect()->back()->with('error', $screenshotResult['error']);
+            }
+
+            // Keep the movie usable even when both image generators fail.
+            if (($screenshotResult['image_path'] ?? null) === $placeholderPath) {
+                $movie_obj->video_image = $placeholderPath;
+                $movie_obj->video_image_thumb = $placeholderPath;
+                $movie_obj->save();
+                Thumbnail::updateOrCreate(
+                    ['file_id' => $fileId],
+                    ['video_image_thumb' => $placeholderPath]
+                );
             }
         }
         // Flash success message and redirect back
@@ -301,12 +329,8 @@ class MoviesController extends MainAdminController
                 Log::warning('Gemini AI failed, using fallback: ' . $result['error']);
                 $result = $geminiService->generateFallbackImage($videoTitle, $fileId);
 
-                if (!$result) {
-                    return ['error' => 'Failed to generate image using both Gemini AI and fallback method'];
-                }
-
-                // Update result format for fallback
-                $result = ['success' => 'Fallback image generated successfully', 'image_path' => $result];
+                // If both generators are unavailable, keep the catalog usable with the site placeholder.
+                $result = ['success' => 'Fallback image generated successfully', 'image_path' => $result ?: stock_placeholder_path()];
             }
 
             // Save or update the screenshot in the Thumbnail model
@@ -328,7 +352,8 @@ class MoviesController extends MainAdminController
 
         } catch (\Exception $e) {
             Log::error('AI Screenshot Generation Error: ' . $e->getMessage());
-            return ['error' => 'Error generating AI screenshot: ' . $e->getMessage()];
+            Log::warning('Using stock placeholder after image generation failure.');
+            return ['success' => 'Stock placeholder image used', 'image_path' => stock_placeholder_path()];
         }
     }
 

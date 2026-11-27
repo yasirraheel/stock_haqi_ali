@@ -157,7 +157,7 @@
           <!-- End Social Media Icon Popup -->
 
       <div class="dtl-poster-img">
-        <img src="{{URL::to('/'.$movies_info->video_image)}}" alt="{{stripslashes($movies_info->video_title)}}" title="{{stripslashes($movies_info->video_title)}}" />
+        <img src="{{stock_image_url($movies_info->video_image)}}" alt="{{stripslashes($movies_info->video_title)}}" title="{{stripslashes($movies_info->video_title)}}" />
       </div>
     </div>
     </div>
@@ -243,7 +243,7 @@
               </div>
               @endif
               <span class="video-item-content">{{stripslashes($movies_data->video_title)}}</span>
-              <img src="{{URL::to('/'.$movies_data->video_image_thumb)}}" alt="{{stripslashes($movies_data->video_title)}}" title="{{stripslashes($movies_data->video_title)}}">
+              <img src="{{stock_image_url($movies_data->video_image_thumb)}}" alt="{{stripslashes($movies_data->video_title)}}" title="{{stripslashes($movies_data->video_title)}}">
              </div>
           </a>
           </div>
