@@ -12,7 +12,7 @@
       <stop offset="1" stop-color="#ff9d14"/>
     </linearGradient>
   </defs>
-  <circle cx="32" cy="32" r="31" fill="url(#premiumGold)" stroke="none"/>
+  <circle cx="32" cy="32" r="32" fill="url(#premiumGold)" stroke="none"/>
   <circle cx="32" cy="32" r="26" fill="none" stroke="#ffe88a" stroke-width="1.5" opacity="0.75"/>
   <path d="M17 24.5 24 31l8-13 8 13 7-6.5-3.4 18.5H20.4L17 24.5Z" fill="#fff8c9" stroke="#fffdf0" stroke-width="1.5" stroke-linejoin="round"/>
   <path d="M20.5 43h23" stroke="#c87500" stroke-width="3" stroke-linecap="round"/>
