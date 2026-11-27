@@ -33,6 +33,25 @@
         .payment_loading {
             opacity: 0.5;
         }
+
+        .movie-image-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .movie-image-picker {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .movie-image-picker input {
+            display: none;
+        }
     </style>
 
     <div id="loading" style="display: none;"></div>
@@ -127,25 +146,23 @@
                                             <div id="movie-image-preview">
                                                 <img src="{{ $currentMovieImage }}" alt="video thumb"
                                                     class="img-thumbnail" width="220">
-                                                @if (isset($movie->id))
-                                                    <div class="mt-2">
+                                                <div class="movie-image-actions">
+                                                    @if (isset($movie->id))
                                                         <button type="button" id="remove_movie_image" class="btn btn-outline-danger btn-sm">
                                                             <i class="fa fa-trash"></i> Remove image
                                                         </button>
-                                                        <small id="movie-image-placeholder-note" class="form-text text-muted" style="display:none;">
-                                                            Placeholder selected. Choose a new image below to replace it.
-                                                        </small>
-                                                    </div>
-                                                @endif
+                                                    @endif
+                                                    <label for="movie_image_upload" class="movie-image-picker btn btn-outline-info btn-sm">
+                                                        <i class="fa fa-upload mr-1"></i> Choose new image
+                                                        <input type="file" name="movie_image_upload" id="movie_image_upload"
+                                                            accept="image/jpeg,image/png,image/webp">
+                                                    </label>
+                                                    <small id="movie-image-placeholder-note" class="text-muted" style="display:none;">
+                                                        Placeholder selected
+                                                    </small>
+                                                </div>
                                             </div>
-                                            <div class="mt-3">
-                                                <label for="movie_image_upload" class="mb-1">Upload new image</label>
-                                                <input type="file" name="movie_image_upload" id="movie_image_upload"
-                                                    class="form-control-file" accept="image/jpeg,image/png,image/webp">
-                                                <small class="form-text text-muted">
-                                                    Optional. JPG, PNG or WebP, maximum 5 MB.
-                                                </small>
-                                            </div>
+                                            <small class="form-text text-muted mt-1">JPG, PNG or WebP · max 5 MB</small>
                                         </div>
                                     </div>
                                     <input type="hidden" name="remove_image" id="remove_image" value="0">
