@@ -446,6 +446,36 @@ if (getcong('menu_livetv')) {
 
 Route::get('login', 'IndexController@login');
 Route::post('login', 'IndexController@postLogin');
+
+// Accept a short-lived signed handoff from cineworm.org so users do not have
+// to sign in again when opening CineStock from the main Cineworm dashboard.
+Route::get('sso/consume', function (\Illuminate\Http\Request $request) {
+    $payload = (string) $request->query('payload', '');
+    $signature = (string) $request->query('signature', '');
+    $secret = (string) config('services.account_sync.secret');
+
+    if ($payload === '' || $signature === '' || $secret === '' || !hash_equals(hash_hmac('sha256', $payload, $secret), $signature)) {
+        abort(403, 'Invalid sign-in handoff.');
+    }
+
+    $encoded = strtr($payload, '-_', '+/');
+    $encoded .= str_repeat('=', (4 - strlen($encoded) % 4) % 4);
+    $data = json_decode(base64_decode($encoded), true);
+
+    if (!is_array($data) || empty($data['email']) || (int) ($data['expires_at'] ?? 0) < time()) {
+        abort(403, 'Expired sign-in handoff.');
+    }
+
+    $user = \App\User::where('email', strtolower(trim((string) $data['email'])))->first();
+    if (!$user || (string) $user->status === '0' || $user->deleted_at !== null) {
+        abort(403, 'CineStock account is unavailable.');
+    }
+
+    \Auth::login($user, true);
+    $request->session()->regenerate();
+
+    return redirect('/');
+})->name('stock.sso.consume');
 Route::get('admin/sold_licenses', 'Admin\SettingsController@sold_licenses');
 Route::get('auth/google', 'Auth\GoogleController@redirectToGoogle');
 Route::get('auth/google/callback', 'Auth\GoogleController@handleGoogleCallback');
