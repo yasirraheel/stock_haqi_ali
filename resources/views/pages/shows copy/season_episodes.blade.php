@@ -54,7 +54,7 @@
 
                @if($episode_data->video_access=="Paid")       
                 <div class="vid-lab-premium">
-                  <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="premium" title="premium">
+                  <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="premium" title="premium">
                 </div> 
                 @endif
 

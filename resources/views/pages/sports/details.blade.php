@@ -274,7 +274,7 @@
           <div class="dtl-poster-img" style="background: linear-gradient(90deg, #ff8508, #fd0575); height: 250px; display: flex; align-items: center; justify-content: center; color: white; font-size: 64px; border-radius: 8px; position: relative; margin-bottom: 20px;">
             @if($audio->license_price && $audio->license_price > 0)
               <div class="premium-badge" style="position: absolute; top: 15px; right: 15px; background: linear-gradient(45deg, #ffd700, #ffed4e); color: #333; padding: 8px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 10; box-shadow: 0 2px 8px rgba(255,215,0,0.3);">
-                <i class="fa fa-crown"></i> Premium - {{getcong('currency_symbol')}}{{number_format($audio->license_price, 2)}}
+                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium"> Premium - {{getcong('currency_symbol')}}{{number_format($audio->license_price, 2)}}
               </div>
             @endif
             <i class="fa fa-music"></i>
@@ -395,7 +395,7 @@
 
                       @if($related_audio->license_price && $related_audio->license_price > 0)
                         <div class="audio-premium-badge">
-                          <i class="fa fa-crown"></i>
+                          <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
                           <span>Premium</span>
                         </div>
                       @endif
@@ -450,6 +450,8 @@
 
   // Audio Player Functionality
   let isPlaying = false;
+  let activeAudio = null;
+  let playRequestToken = 0;
 
   function formatAudioDuration(seconds) {
       if (!Number.isFinite(seconds) || seconds <= 0) return '';
@@ -485,103 +487,128 @@
       });
   });
 
+  function resetAudioElement(audio) {
+      if (!audio) return;
+      const isMainAudio = audio.id === 'audioPlayer';
+      const audioId = audio.id.replace('audioPlayer', '');
+      const playIcon = document.getElementById(isMainAudio ? 'playIcon' : 'playIcon' + audioId);
+      const card = isMainAudio ? null : audio.closest('.audio-card-related');
+      if (playIcon) playIcon.className = isMainAudio ? 'icon fa fa-play' : 'fa fa-play';
+      if (card) card.classList.remove('playing', 'audio-loading');
+      if (isMainAudio) isPlaying = false;
+  }
+
+  function stopOtherAudio(exceptAudio) {
+      document.querySelectorAll('audio[id^="audioPlayer"]').forEach(function(otherAudio) {
+          if (otherAudio !== exceptAudio) {
+              otherAudio.pause();
+              resetAudioElement(otherAudio);
+          }
+      });
+  }
+
+  function playManagedAudio(audio, onStarted) {
+      if (!audio) return;
+      const requestToken = ++playRequestToken;
+      stopOtherAudio(audio);
+      activeAudio = audio;
+      const card = audio.id === 'audioPlayer' ? null : audio.closest('.audio-card-related');
+      if (card) card.classList.add('audio-loading');
+
+      audio.play().then(() => {
+          if (requestToken !== playRequestToken || activeAudio !== audio) {
+              audio.pause();
+              resetAudioElement(audio);
+              return;
+          }
+          if (card) card.classList.remove('audio-loading');
+          if (onStarted) onStarted();
+      }).catch(error => {
+          console.error('Error playing audio:', error);
+          if (activeAudio === audio) activeAudio = null;
+          resetAudioElement(audio);
+      });
+  }
+
   function toggleAudio() {
       const audio = document.getElementById('audioPlayer');
-      const playIcon = document.getElementById('playIcon');
+      if (!audio) return;
 
-      if (isPlaying) {
-          audio.pause();
-          playIcon.className = 'icon fa fa-play';
-          isPlaying = false;
+      if (audio.paused) {
+          playManagedAudio(audio, function() {
+              document.getElementById('playIcon').className = 'icon fa fa-pause';
+              isPlaying = true;
+          });
       } else {
-          audio.play();
-          playIcon.className = 'icon fa fa-pause';
-          isPlaying = true;
+          ++playRequestToken;
+          audio.pause();
+          if (activeAudio === audio) activeAudio = null;
+          resetAudioElement(audio);
       }
   }
 
-  // Update play button when audio ends
-  document.getElementById('audioPlayer').addEventListener('ended', function() {
-      document.getElementById('playIcon').className = 'icon fa fa-play';
-      isPlaying = false;
-  });
-
-  document.getElementById('audioPlayer').addEventListener('pause', function() {
-      document.getElementById('playIcon').className = 'icon fa fa-play';
-      isPlaying = false;
-  });
-
-  document.getElementById('audioPlayer').addEventListener('play', function() {
-      document.getElementById('playIcon').className = 'icon fa fa-pause';
-      isPlaying = true;
-  });
-
-  // Related Audio Player Management
-  let currentPlayingRelatedAudio = null;
-
   function toggleRelatedAudio(audioId) {
       const audio = document.getElementById('audioPlayer' + audioId);
-      const playIcon = document.getElementById('playIcon' + audioId);
-      const card = audio.closest('.audio-card-related');
-
-      if (currentPlayingRelatedAudio && currentPlayingRelatedAudio !== audio) {
-          currentPlayingRelatedAudio.pause();
-          const currentPlayIcon = document.getElementById('playIcon' + currentPlayingRelatedAudio.id.replace('audioPlayer', ''));
-          const currentCard = currentPlayingRelatedAudio.closest('.audio-card-related');
-          if (currentPlayIcon) {
-              currentPlayIcon.className = 'fa fa-play';
-          }
-          if (currentCard) {
-              currentCard.classList.remove('playing');
-          }
-      }
+      if (!audio) return;
 
       if (audio.paused) {
-          audio.play().then(() => {
-              playIcon.className = 'fa fa-pause';
-              currentPlayingRelatedAudio = audio;
-              card.classList.add('playing');
-          }).catch(error => {
-              console.error('Error playing related audio:', error);
+          playManagedAudio(audio, function() {
+              const playIcon = document.getElementById('playIcon' + audioId);
+              const card = audio.closest('.audio-card-related');
+              if (playIcon) playIcon.className = 'fa fa-pause';
+              if (card) card.classList.add('playing');
           });
       } else {
+          ++playRequestToken;
           audio.pause();
-          playIcon.className = 'fa fa-play';
-          card.classList.remove('playing');
-          currentPlayingRelatedAudio = null;
+          if (activeAudio === audio) activeAudio = null;
+          resetAudioElement(audio);
       }
   }
 
   document.addEventListener('DOMContentLoaded', function() {
+      const mainAudio = document.getElementById('audioPlayer');
+      if (mainAudio) {
+          mainAudio.addEventListener('ended', function() {
+              if (activeAudio === this) activeAudio = null;
+              resetAudioElement(this);
+          });
+
+          mainAudio.addEventListener('pause', function() {
+              if (activeAudio === this) activeAudio = null;
+              resetAudioElement(this);
+          });
+
+          mainAudio.addEventListener('play', function() {
+              if (activeAudio && activeAudio !== this) {
+                  this.pause();
+                  return;
+              }
+              activeAudio = this;
+              document.getElementById('playIcon').className = 'icon fa fa-pause';
+              isPlaying = true;
+          });
+      }
+
       const relatedAudioElements = document.querySelectorAll('audio[id^="audioPlayer"]:not(#audioPlayer)');
 
       relatedAudioElements.forEach(audio => {
           audio.addEventListener('ended', function() {
-              const audioId = this.id.replace('audioPlayer', '');
-              const playIcon = document.getElementById('playIcon' + audioId);
-              const card = this.closest('.audio-card-related');
-              if (playIcon) {
-                  playIcon.className = 'fa fa-play';
-              }
-              if (card) {
-                  card.classList.remove('playing');
-              }
-              currentPlayingRelatedAudio = null;
+              if (activeAudio === this) activeAudio = null;
+              resetAudioElement(this);
           });
 
           audio.addEventListener('pause', function() {
-              const audioId = this.id.replace('audioPlayer', '');
-              const playIcon = document.getElementById('playIcon' + audioId);
-              const card = this.closest('.audio-card-related');
-              if (playIcon) {
-                  playIcon.className = 'fa fa-play';
-              }
-              if (card) {
-                  card.classList.remove('playing');
-              }
+              if (activeAudio === this) activeAudio = null;
+              resetAudioElement(this);
           });
 
           audio.addEventListener('play', function() {
+              if (activeAudio && activeAudio !== this) {
+                  this.pause();
+                  return;
+              }
+              activeAudio = this;
               const audioId = this.id.replace('audioPlayer', '');
               const playIcon = document.getElementById('playIcon' + audioId);
               const card = this.closest('.audio-card-related');

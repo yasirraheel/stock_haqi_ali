@@ -49,7 +49,7 @@
                                          class="img-fluid">
                                     @if($movies_info->video_access == 'Paid')
                                         <div class="premium-badge">
-                                            <i class="fas fa-crown"></i> Premium
+                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium"> Premium
                                         </div>
                                     @endif
                                 </div>
@@ -122,7 +122,7 @@
                                         class="img-fluid">
                                     @if ($movies_data->video_access == 'Paid')
                                         <div class="premium-overlay">
-                                            <i class="fas fa-crown"></i>
+                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
                                         </div>
                                     @endif
                                     <div class="card-overlay">
@@ -284,7 +284,7 @@
                                 <div class="video-img">
                                     @if ($movies_data->video_access == 'Paid')
                                         <div class="vid-lab-premium">
-                                            <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="premium"
+                                            <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="premium"
                                                 title="premium">
                                         </div>
                                     @endif
@@ -368,7 +368,7 @@
 
                                         @if($audio_data->license_price && $audio_data->license_price > 0)
                                         <div class="audio-premium-badge">
-                                            <i class="fa fa-crown"></i>
+                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
                                             <span>Premium</span>
                                         </div>
                                         @endif
@@ -411,7 +411,7 @@
 
                                             @if($photo_data->license_price && $photo_data->license_price > 0)
                                             <div class="photo-premium-badge">
-                                                <i class="fa fa-crown"></i>
+                                                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
                                                 <span>Premium</span>
                                             </div>
                                             @endif
@@ -482,7 +482,7 @@
                                         <div class="video-img">
                                             @if ($movies_data->video_access == 'Paid')
                                                 <div class="vid-lab-premium">
-                                                    <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}"
+                                                    <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
                                                         alt="premium" title="premium">
                                                 </div>
                                             @endif
@@ -548,7 +548,7 @@
                                             <div class="video-img">
                                                 @if ($movies_data->video_access == 'Paid')
                                                     <div class="vid-lab-premium">
-                                                        <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}"
+                                                        <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
                                                             alt="ic-premium" title="Movies">
                                                     </div>
                                                 @endif
@@ -594,7 +594,7 @@
                                             <div class="video-img">
                                                 @if ($series_data->series_access == 'Paid')
                                                     <div class="vid-lab-premium"><img
-                                                            src="{{ URL::asset('site_assets/images/ic-premium.png') }}"
+                                                            src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
                                                             alt="premium" title="premium"></div>
                                                 @endif
                                                 <span
@@ -646,7 +646,7 @@
                                                 <div class="video-img">
                                                     @if (App\Movies::getMoviesInfo($movie_data, 'video_access') == 'Paid')
                                                         <div class="vid-lab-premium">
-                                                            <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}"
+                                                            <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
                                                                 alt="ic-premium" title="Movies-ic-premium">
                                                         </div>
                                                     @endif
@@ -695,7 +695,7 @@
                                                 <div class="video-img">
                                                     @if (App\Series::getSeriesInfo($show_data, 'series_access') == 'Paid')
                                                         <div class="vid-lab-premium"><img
-                                                                src="{{ URL::asset('site_assets/images/ic-premium.png') }}"
+                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
                                                                 alt="ic-premium" title="Shows-ic-premium"></div>
                                                     @endif
                                                     <span
@@ -745,7 +745,7 @@
                                                 <div class="video-img">
                                                     @if (App\Sports::getSportsInfo($sport_data, 'video_access') == 'Paid')
                                                         <div class="vid-lab-premium"><img
-                                                                src="{{ URL::asset('site_assets/images/ic-premium.png') }}"
+                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
                                                                 alt="ic-premium" title="Sports-ic-premium"></div>
                                                     @endif
                                                     <span
@@ -795,7 +795,7 @@
                                                 <div class="video-img">
                                                     @if (App\LiveTV::getLiveTvInfo($tv_data, 'channel_access') == 'Paid')
                                                         <div class="vid-lab-premium"><img
-                                                                src="{{ URL::asset('site_assets/images/ic-premium.png') }}"
+                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
                                                                 alt="ic-premium" title="LiveTV-ic-premium"></div>
                                                     @endif
                                                     <span
@@ -991,31 +991,41 @@ $(document).ready(function() {
 
     // Initialize spectrum analyzer
     const spectrumAnalyzer = new AudioSpectrumAnalyzer();
+    let activeAudio = null;
+    let playRequestToken = 0;
+
+    function resetAudioCard(audio) {
+        if (!audio) return;
+        const audioId = audio.id.replace('audioPlayer', '');
+        const playIcon = document.getElementById('playIcon' + audioId);
+        const audioCard = audio.closest('.audio-card');
+        spectrumAnalyzer.stopSpectrumAnalysis(audioId);
+        if (playIcon) playIcon.className = 'fa fa-play';
+        if (audioCard) audioCard.classList.remove('playing', 'loading');
+    }
+
+    function stopOtherAudio(exceptAudio) {
+        document.querySelectorAll('audio[id^="audioPlayer"]').forEach(function(otherAudio) {
+            if (otherAudio !== exceptAudio) {
+                otherAudio.pause();
+                resetAudioCard(otherAudio);
+            }
+        });
+    }
 
     // Enhanced audio functionality with real-time spectrum analysis
     window.toggleAudio = async function(audioId) {
         const audio = document.getElementById('audioPlayer' + audioId);
         const playIcon = document.getElementById('playIcon' + audioId);
-        const spectrum = document.getElementById('spectrum' + audioId);
         const audioCard = audio ? audio.closest('.audio-card') : null;
 
         if (!audio) return;
 
         if (audio.paused) {
-            // Pause all other audio players and stop their spectrum analysis
-            document.querySelectorAll('audio').forEach(function(otherAudio) {
-                if (!otherAudio.paused && otherAudio !== audio) {
-                    const otherId = otherAudio.id.replace('audioPlayer', '');
-                    const otherCard = otherAudio.closest('.audio-card');
-                    const otherIcon = document.getElementById('playIcon' + otherId);
-
-                    otherAudio.pause();
-                    spectrumAnalyzer.stopSpectrumAnalysis(otherId);
-
-                    if (otherIcon) otherIcon.className = 'fa fa-play';
-                    if (otherCard) otherCard.classList.remove('playing');
-                }
-            });
+            const requestToken = ++playRequestToken;
+            stopOtherAudio(audio);
+            activeAudio = audio;
+            if (audioCard) audioCard.classList.add('loading');
 
             // Initialize audio context for this audio if not already done
             await spectrumAnalyzer.initializeAudioContext(audioId);
@@ -1023,23 +1033,36 @@ $(document).ready(function() {
             // Resume audio context if suspended (required by browser policies)
             await spectrumAnalyzer.resumeAudioContext(audioId);
 
+            if (requestToken !== playRequestToken || activeAudio !== audio) {
+                audio.pause();
+                resetAudioCard(audio);
+                return;
+            }
+
             // Play audio and start spectrum analysis
             try {
                 await audio.play();
+                if (requestToken !== playRequestToken || activeAudio !== audio) {
+                    audio.pause();
+                    resetAudioCard(audio);
+                    return;
+                }
                 spectrumAnalyzer.startSpectrumAnalysis(audioId);
 
                 if (playIcon) playIcon.className = 'fa fa-pause';
+                if (audioCard) audioCard.classList.remove('loading');
                 if (audioCard) audioCard.classList.add('playing');
             } catch (error) {
                 console.warn('Failed to play audio:', error);
+                if (activeAudio === audio) activeAudio = null;
+                resetAudioCard(audio);
             }
         } else {
             // Pause audio and stop spectrum analysis
+            ++playRequestToken;
             audio.pause();
-            spectrumAnalyzer.stopSpectrumAnalysis(audioId);
-
-            if (playIcon) playIcon.className = 'fa fa-play';
-            if (audioCard) audioCard.classList.remove('playing');
+            if (activeAudio === audio) activeAudio = null;
+            resetAudioCard(audio);
         }
 
         // Enhanced event listeners for better sync
@@ -1050,36 +1073,37 @@ $(document).ready(function() {
                 spectrumAnalyzer.stopSpectrumAnalysis(audioId);
                 if (playIcon) playIcon.className = 'fa fa-play';
                 if (audioCard) audioCard.classList.remove('playing');
+                if (activeAudio === this) activeAudio = null;
             });
 
             audio.addEventListener('pause', function() {
-                spectrumAnalyzer.stopSpectrumAnalysis(audioId);
-                if (playIcon) playIcon.className = 'fa fa-play';
-                if (audioCard) audioCard.classList.remove('playing');
+                if (activeAudio === this) activeAudio = null;
+                resetAudioCard(this);
             });
 
             audio.addEventListener('play', function() {
-                spectrumAnalyzer.startSpectrumAnalysis(audioId);
+                if (activeAudio && activeAudio !== this) {
+                    this.pause();
+                    return;
+                }
+                activeAudio = this;
                 if (playIcon) playIcon.className = 'fa fa-pause';
                 if (audioCard) audioCard.classList.add('playing');
             });
 
             // Handle loading states
             audio.addEventListener('loadstart', function() {
-                if (audioCard) audioCard.classList.add('loading');
+                if (activeAudio === this && audioCard) audioCard.classList.add('loading');
             });
 
             audio.addEventListener('canplay', function() {
-                if (audioCard) audioCard.classList.remove('loading');
+                if (activeAudio === this && audioCard) audioCard.classList.remove('loading');
             });
 
             audio.addEventListener('error', function(e) {
                 console.warn('Audio loading error:', e);
-                spectrumAnalyzer.stopSpectrumAnalysis(audioId);
-                if (playIcon) playIcon.className = 'fa fa-play';
-                if (audioCard) {
-                    audioCard.classList.remove('playing', 'loading');
-                }
+                if (activeAudio === this) activeAudio = null;
+                resetAudioCard(this);
             });
         }
     };

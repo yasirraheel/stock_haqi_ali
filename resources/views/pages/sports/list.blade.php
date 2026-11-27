@@ -342,7 +342,7 @@
 
               @if($audio->license_price && $audio->license_price > 0)
               <div class="audio-premium-badge">
-                <i class="fa fa-crown"></i>
+                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
                 <span>Premium</span>
               </div>
               @endif
@@ -389,6 +389,8 @@ let audioContext = null;
 let analyser = null;
 let dataArray = null;
 let animationId = null;
+let playRequestToken = 0;
+let analyserConnected = false;
 
 // Initialize Audio Context
 function initAudioContext() {
@@ -404,6 +406,26 @@ function initAudioContext() {
         }
     }
     return true;
+}
+
+function connectAudioForVisualization(audio) {
+    if (!initAudioContext()) return false;
+
+    try {
+        if (!audio.dataset.audioSourceConnected) {
+            const source = audioContext.createMediaElementSource(audio);
+            source.connect(analyser);
+            audio.dataset.audioSourceConnected = 'true';
+        }
+        if (!analyserConnected) {
+            analyser.connect(audioContext.destination);
+            analyserConnected = true;
+        }
+        return true;
+    } catch (audioContextError) {
+        console.warn('Audio context error (spectrum may not work):', audioContextError);
+        return false;
+    }
 }
 
 // Real-time spectrum visualization
@@ -436,55 +458,55 @@ function stopSpectrum() {
     }
 }
 
+function resetAudioCard(audio) {
+    if (!audio) return;
+    const audioId = audio.id.replace('audioPlayer', '');
+    const playIcon = document.getElementById('playIcon' + audioId);
+    const card = audio.closest('.audio-card');
+    stopSpectrum();
+    if (playIcon) playIcon.className = 'fa fa-play';
+    if (card) card.classList.remove('playing', 'audio-loading');
+}
+
+function stopOtherAudio(exceptAudio) {
+    document.querySelectorAll('audio[id^="audioPlayer"]').forEach(function(otherAudio) {
+        if (otherAudio !== exceptAudio) {
+            otherAudio.pause();
+            resetAudioCard(otherAudio);
+        }
+    });
+}
+
 function toggleAudio(audioId) {
     const audio = document.getElementById('audioPlayer' + audioId);
     const playIcon = document.getElementById('playIcon' + audioId);
     const card = audio.closest('.audio-card');
 
-    // Stop any currently playing audio
-    if (currentPlayingAudio && currentPlayingAudio !== audio) {
-        currentPlayingAudio.pause();
-        const currentPlayIcon = document.getElementById('playIcon' + currentPlayingAudio.id.replace('audioPlayer', ''));
-        const currentCard = currentPlayingAudio.closest('.audio-card');
-        if (currentPlayIcon) {
-            currentPlayIcon.className = 'fa fa-play';
-        }
-        if (currentCard) {
-            currentCard.classList.remove('playing');
-        }
-        stopSpectrum();
-    }
-
     if (audio.paused) {
-        // Add loading state
+        const requestToken = ++playRequestToken;
+        stopOtherAudio(audio);
+        currentPlayingAudio = audio;
         card.classList.add('audio-loading');
 
         // Try to play audio first
         audio.play().then(() => {
+            if (requestToken !== playRequestToken || currentPlayingAudio !== audio) {
+                audio.pause();
+                resetAudioCard(audio);
+                return;
+            }
             playIcon.className = 'fa fa-pause';
-            currentPlayingAudio = audio;
             card.classList.remove('audio-loading');
             card.classList.add('playing');
 
-            // Initialize audio context and connect to analyser
-            try {
-                if (initAudioContext()) {
-                    const source = audioContext.createMediaElementSource(audio);
-                    source.connect(analyser);
-                    analyser.connect(audioContext.destination);
-
-                    // Start real-time spectrum visualization
-                    updateSpectrum(audioId);
-                } else {
-                    console.warn('Web Audio API not supported - spectrum visualization disabled');
-                }
-            } catch (audioContextError) {
-                console.warn('Audio context error (spectrum may not work):', audioContextError);
-                // Audio still plays, just without spectrum
+            // Connect this player only once; repeated plays must not duplicate sources.
+            if (connectAudioForVisualization(audio)) {
+                updateSpectrum(audioId);
             }
         }).catch(error => {
             console.error('Error playing audio:', error);
-            card.classList.remove('audio-loading');
+            if (currentPlayingAudio === audio) currentPlayingAudio = null;
+            resetAudioCard(audio);
 
             // More specific error messages
             if (error.name === 'NotAllowedError') {
@@ -496,11 +518,10 @@ function toggleAudio(audioId) {
             }
         });
     } else {
+        ++playRequestToken;
         audio.pause();
-        playIcon.className = 'fa fa-play';
-        card.classList.remove('playing');
-        stopSpectrum();
-        currentPlayingAudio = null;
+        if (currentPlayingAudio === audio) currentPlayingAudio = null;
+        resetAudioCard(audio);
     }
 }
 
@@ -544,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.classList.remove('playing');
             }
             stopSpectrum();
-            currentPlayingAudio = null;
+            if (currentPlayingAudio === this) currentPlayingAudio = null;
         });
 
         audio.addEventListener('pause', function() {
@@ -558,32 +579,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.classList.remove('playing');
             }
             stopSpectrum();
+            if (currentPlayingAudio === this) currentPlayingAudio = null;
         });
 
         audio.addEventListener('play', function() {
             const audioId = this.id.replace('audioPlayer', '');
             const playIcon = document.getElementById('playIcon' + audioId);
             const card = this.closest('.audio-card');
+            if (currentPlayingAudio && currentPlayingAudio !== this) {
+                this.pause();
+                return;
+            }
+            currentPlayingAudio = this;
             if (playIcon) {
                 playIcon.className = 'fa fa-pause';
             }
             if (card) {
                 card.classList.add('playing');
-            }
-
-            // Initialize audio context and start spectrum
-            try {
-                if (initAudioContext()) {
-                    const source = audioContext.createMediaElementSource(this);
-                    source.connect(analyser);
-                    analyser.connect(audioContext.destination);
-                    updateSpectrum(audioId);
-                } else {
-                    console.warn('Web Audio API not supported - spectrum visualization disabled');
-                }
-            } catch (audioContextError) {
-                console.warn('Audio context error (spectrum may not work):', audioContextError);
-                // Audio still plays, just without spectrum
             }
         });
     });

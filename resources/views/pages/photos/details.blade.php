@@ -264,7 +264,7 @@
           <div class="photo-display">
             @if($photo->license_price && $photo->license_price > 0)
             <div class="premium-alert">
-              <i class="fa fa-crown"></i> Premium Photo - {{getcong('currency_symbol')}}{{number_format($photo->license_price, 2)}}
+              <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium"> Premium Photo - {{getcong('currency_symbol')}}{{number_format($photo->license_price, 2)}}
             </div>
             @endif
 

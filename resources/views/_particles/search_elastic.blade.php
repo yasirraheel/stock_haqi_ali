@@ -13,7 +13,7 @@
                <div class="video-img">
                 @if($movies_data->video_access =="Paid")
                 <div class="vid-lab-premium">
-                  <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="premium" title="premium">
+                  <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="premium" title="premium">
                 </div>
                 @endif
                 <span class="video-item-content">{{$movies_data->video_title}}</span>
@@ -45,7 +45,7 @@
              <div class="video-img">
               @if($series_data->series_access=="Paid")
                 <div class="vid-lab-premium">
-                  <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="ic-premium" title="ic-premium">
+                  <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="ic-premium" title="ic-premium">
                 </div>
               @endif
               <span class="video-item-content">{{$series_data->series_name}}</span>
@@ -78,7 +78,7 @@
              <div class="video-img">
               @if($sports_video->series_access=="Paid")
                 <div class="vid-lab-premium">
-                  <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="premium" title="premium">
+                  <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="premium" title="premium">
                 </div>
               @endif
               <span class="video-item-content">{{$sports_video->video_title}}</span>
@@ -111,7 +111,7 @@
              <div class="video-img">
               @if($live_tv_data->channel_access=="Paid")
                 <div class="vid-lab-premium">
-                  <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="premium" title="premium">
+                  <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="premium" title="premium">
                 </div>
               @endif
               <span class="video-item-content">{{$live_tv_data->channel_name}}</span>

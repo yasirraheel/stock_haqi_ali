@@ -55,7 +55,7 @@
               
               @if($movies_data->video_access =="Paid")       
               <div class="vid-lab-premium">
-                <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="ic-premium" title="ic-premium">
+                <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="ic-premium" title="ic-premium">
               </div> 
               @endif  
 
@@ -90,7 +90,7 @@
              <div class="video-img">    
              @if($series_data->series_access =="Paid")          
               <div class="vid-lab-premium">                 
-                  <img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="ic-premium" title="ic-premium">
+                  <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="ic-premium" title="ic-premium">
               </div> 
               @endif
               <img src="{{URL::to('/'.$series_data->series_poster)}}" alt="{{stripslashes($series_data->series_name)}}" title="{{stripslashes($series_data->series_name)}}">         

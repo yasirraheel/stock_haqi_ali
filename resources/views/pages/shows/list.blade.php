@@ -306,7 +306,7 @@
 
                   @if($photo->license_price && $photo->license_price > 0)
                   <div class="photo-listing-premium-badge">
-                    <i class="fa fa-crown"></i>
+                    <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
                     <span>Premium</span>
                   </div>
                   @else

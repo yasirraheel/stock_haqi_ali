@@ -80,6 +80,36 @@
  @endif
 
  <style type="text/css">
+      .premium-inline-icon {
+          width: 1.15em;
+          height: 1.15em;
+          object-fit: contain;
+          display: inline-block;
+          vertical-align: -0.2em;
+          flex: 0 0 auto;
+      }
+
+      .premium-badge .premium-inline-icon,
+      .premium-alert .premium-inline-icon {
+          width: 1.35em;
+          height: 1.35em;
+          margin-right: 3px;
+          vertical-align: -0.3em;
+      }
+
+      .premium-overlay .premium-inline-icon {
+          width: 1.8em;
+          height: 1.8em;
+      }
+
+      .audio-premium-badge .premium-inline-icon,
+      .photo-listing-premium-badge .premium-inline-icon {
+          width: 1.1em;
+          height: 1.1em;
+          margin-right: 2px;
+          vertical-align: -0.2em;
+      }
+
       .search .search-input input[type=text]::placeholder, .search .search-input input[type=text].focus {
           background: {{$search_bg}} !important;
       }

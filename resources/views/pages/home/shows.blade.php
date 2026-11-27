@@ -35,7 +35,7 @@
                     <a href="{{ URL::to('shows/details/'.App\Series::getSeriesInfo($show_data,'series_slug').'/'.$show_data) }}" title="{{App\Series::getSeriesInfo($show_data,'series_name')}}">
                      <div class="video-img"> 
                              
-                      <div class="vid-lab-premium"><img src="{{ URL::asset('site_assets/images/ic-premium.png') }}" alt="ic-premium" title="ic-premium"></div> 
+                      <div class="vid-lab-premium"><img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="ic-premium" title="ic-premium"></div>
                        
                       <span class="video-item-content">{{stripslashes(App\Series::getSeriesInfo($show_data,'series_name'))}}</span> 
                       <img src="{{URL::to('/'.App\Series::getSeriesInfo($show_data,'series_poster'))}}" alt="{{App\Series::getSeriesInfo($show_data,'series_name')}}" title="{{App\Series::getSeriesInfo($show_data,'series_name')}}">         
