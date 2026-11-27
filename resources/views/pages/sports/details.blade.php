@@ -282,7 +282,7 @@
 
           <!-- Audio Player -->
           <div class="audio-player-container" style="background: #2d2d44; border-radius: 8px; padding: 15px; border: 1px solid #3d3d5c; margin-bottom: 20px;">
-            <audio id="audioPlayer" controls style="width: 100%; height: 50px;">
+            <audio id="audioPlayer" controls preload="metadata" style="width: 100%; height: 50px;">
               <source src="{{ $audio->audio_url }}" type="audio/{{ $audio->format ?: 'mp3' }}">
               Your browser does not support the audio element.
             </audio>
@@ -295,9 +295,7 @@
               @if($audio->created_at)
                 <span style="color: #b5b5b5; font-size: 12px;"><i class="fa fa-calendar-alt"></i> {{ date('M d Y', strtotime($audio->created_at)) }}</span>
               @endif
-              @if($audio->duration)
-                <span style="color: #b5b5b5; font-size: 12px;"><i class="fa fa-clock"></i> {{$audio->duration}}</span>
-              @endif
+              <span class="audio-duration" style="color: #b5b5b5; font-size: 12px;" @if(!$audio->duration || in_array(trim($audio->duration), ['0:00', '00:00', '0'])) hidden @endif><i class="fa fa-clock"></i> {{trim($audio->duration ?? '')}}</span>
             </div>
 
             <div class="metadata-actions" style="display: flex; gap: 10px; margin-left: auto;">
@@ -381,9 +379,7 @@
                         @if($related_audio->genre)
                           <span class="audio-genre">{{$related_audio->genre}}</span>
                         @endif
-                        @if($related_audio->duration)
-                          <span class="audio-duration">{{$related_audio->duration}}</span>
-                        @endif
+                        <span class="audio-duration" @if(!$related_audio->duration || in_array(trim($related_audio->duration), ['0:00', '00:00', '0'])) hidden @endif>{{trim($related_audio->duration ?? '')}}</span>
                       </div>
 
                       <div class="audio-actions">
@@ -406,7 +402,7 @@
                     </div>
 
                     <!-- Hidden Audio Player -->
-                    <audio id="audioPlayer{{$related_audio->id}}" preload="none">
+                    <audio id="audioPlayer{{$related_audio->id}}" preload="metadata">
                       <source src="{{ $related_audio->audio_url }}" type="audio/{{ $related_audio->format ?: 'mp3' }}">
                     </audio>
                   </div>
@@ -454,6 +450,40 @@
 
   // Audio Player Functionality
   let isPlaying = false;
+
+  function formatAudioDuration(seconds) {
+      if (!Number.isFinite(seconds) || seconds <= 0) return '';
+      const totalSeconds = Math.round(seconds);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const remainingSeconds = totalSeconds % 60;
+      if (hours > 0) {
+          return hours + ':' + String(minutes).padStart(2, '0') + ':' + String(remainingSeconds).padStart(2, '0');
+      }
+      return minutes + ':' + String(remainingSeconds).padStart(2, '0');
+  }
+
+  function updateAudioDuration(audio) {
+      const durationElement = audio.id === 'audioPlayer'
+          ? document.querySelector('.audio-metadata .audio-duration')
+          : audio.closest('.audio-card-related')?.querySelector('.audio-duration');
+      if (!durationElement) return;
+      const formattedDuration = formatAudioDuration(audio.duration);
+      if (audio.id === 'audioPlayer') {
+          durationElement.innerHTML = formattedDuration ? '<i class="fa fa-clock"></i> ' + formattedDuration : '';
+      } else {
+          durationElement.textContent = formattedDuration;
+      }
+      durationElement.hidden = !formattedDuration;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('audio[id^="audioPlayer"]').forEach(function(audio) {
+          audio.addEventListener('loadedmetadata', function() { updateAudioDuration(this); });
+          audio.addEventListener('durationchange', function() { updateAudioDuration(this); });
+          updateAudioDuration(audio);
+      });
+  });
 
   function toggleAudio() {
       const audio = document.getElementById('audioPlayer');

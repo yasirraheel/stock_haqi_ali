@@ -311,9 +311,7 @@
                 @if($audio->genre)
                   <span class="audio-genre">{{$audio->genre}}</span>
                 @endif
-                @if($audio->duration)
-                  <span class="audio-duration">{{$audio->duration}}</span>
-                @endif
+                <span class="audio-duration" @if(!$audio->duration || in_array(trim($audio->duration), ['0:00', '00:00', '0'])) hidden @endif>{{trim($audio->duration ?? '')}}</span>
               </div>
 
               <div class="audio-spectrum" id="spectrum{{$audio->id}}">
@@ -351,7 +349,7 @@
             </div>
 
             <!-- Hidden Audio Player -->
-            <audio id="audioPlayer{{$audio->id}}" preload="none">
+            <audio id="audioPlayer{{$audio->id}}" preload="metadata">
               <source src="{{ $audio->audio_url }}" type="audio/{{ $audio->format ?: 'mp3' }}">
             </audio>
           </div>
@@ -510,7 +508,31 @@ function toggleAudio(audioId) {
 document.addEventListener('DOMContentLoaded', function() {
     const audioElements = document.querySelectorAll('audio[id^="audioPlayer"]');
 
+    function formatAudioDuration(seconds) {
+        if (!Number.isFinite(seconds) || seconds <= 0) return '';
+        const totalSeconds = Math.round(seconds);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const remainingSeconds = totalSeconds % 60;
+        if (hours > 0) {
+            return hours + ':' + String(minutes).padStart(2, '0') + ':' + String(remainingSeconds).padStart(2, '0');
+        }
+        return minutes + ':' + String(remainingSeconds).padStart(2, '0');
+    }
+
+    function updateAudioDuration(audio) {
+        const durationElement = audio.closest('.audio-card')?.querySelector('.audio-duration');
+        if (!durationElement) return;
+        const formattedDuration = formatAudioDuration(audio.duration);
+        durationElement.textContent = formattedDuration;
+        durationElement.hidden = !formattedDuration;
+    }
+
     audioElements.forEach(audio => {
+        audio.addEventListener('loadedmetadata', function() { updateAudioDuration(this); });
+        audio.addEventListener('durationchange', function() { updateAudioDuration(this); });
+        updateAudioDuration(audio);
+
         audio.addEventListener('ended', function() {
             const audioId = this.id.replace('audioPlayer', '');
             const playIcon = document.getElementById('playIcon' + audioId);

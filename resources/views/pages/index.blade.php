@@ -351,9 +351,7 @@
                                         @if($audio_data->genre)
                                             <span class="audio-genre">{{$audio_data->genre}}</span>
                                         @endif
-                                        @if($audio_data->duration)
-                                            <span class="audio-duration">{{$audio_data->duration}}</span>
-                                        @endif
+                                        <span class="audio-duration" @if(!$audio_data->duration || in_array(trim($audio_data->duration), ['0:00', '00:00', '0'])) hidden @endif>{{trim($audio_data->duration ?? '')}}</span>
                                     </div>
                                 </div>
 
@@ -377,7 +375,7 @@
                                     </div>
 
                                     <!-- Hidden Audio Player -->
-                                    <audio id="audioPlayer{{$audio_data->id}}" preload="none">
+                                    <audio id="audioPlayer{{$audio_data->id}}" preload="metadata">
                                         <source src="{{ $audio_data->audio_url }}" type="audio/{{ $audio_data->format ?: 'mp3' }}">
                                     </audio>
                                 </div>
@@ -843,6 +841,32 @@
 @section('javascript')
 <script>
 $(document).ready(function() {
+    function formatAudioDuration(seconds) {
+        if (!Number.isFinite(seconds) || seconds <= 0) return '';
+        const totalSeconds = Math.round(seconds);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const remainingSeconds = totalSeconds % 60;
+        if (hours > 0) {
+            return hours + ':' + String(minutes).padStart(2, '0') + ':' + String(remainingSeconds).padStart(2, '0');
+        }
+        return minutes + ':' + String(remainingSeconds).padStart(2, '0');
+    }
+
+    function updateAudioDuration(audio) {
+        const durationElement = audio.closest('.audio-card')?.querySelector('.audio-duration');
+        if (!durationElement) return;
+        const formattedDuration = formatAudioDuration(audio.duration);
+        durationElement.textContent = formattedDuration;
+        durationElement.hidden = !formattedDuration;
+    }
+
+    $('audio[id^="audioPlayer"]').each(function() {
+        this.addEventListener('loadedmetadata', function() { updateAudioDuration(this); });
+        this.addEventListener('durationchange', function() { updateAudioDuration(this); });
+        updateAudioDuration(this);
+    });
+
     // Real-time Audio Spectrum Analyzer
     class AudioSpectrumAnalyzer {
         constructor() {
