@@ -49,7 +49,7 @@
                                          class="img-fluid">
                                     @if($movies_info->video_access == 'Paid')
                                         <div class="premium-badge">
-                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium"> Premium
+                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="Premium"> Premium
                                         </div>
                                     @endif
                                 </div>
@@ -122,7 +122,7 @@
                                         class="img-fluid">
                                     @if ($movies_data->video_access == 'Paid')
                                         <div class="premium-overlay">
-                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
+                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="Premium">
                                         </div>
                                     @endif
                                     <div class="card-overlay">
@@ -284,7 +284,7 @@
                                 <div class="video-img">
                                     @if ($movies_data->video_access == 'Paid')
                                         <div class="vid-lab-premium">
-                                            <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="premium"
+                                            <img src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="premium"
                                                 title="premium">
                                         </div>
                                     @endif
@@ -368,7 +368,7 @@
 
                                         @if($audio_data->license_price && $audio_data->license_price > 0)
                                         <div class="audio-premium-badge">
-                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
+                                            <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="Premium">
                                             <span>Premium</span>
                                         </div>
                                         @endif
@@ -411,7 +411,7 @@
 
                                             @if($photo_data->license_price && $photo_data->license_price > 0)
                                             <div class="photo-premium-badge">
-                                                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
+                                                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="Premium">
                                                 <span>Premium</span>
                                             </div>
                                             @endif
@@ -482,7 +482,7 @@
                                         <div class="video-img">
                                             @if ($movies_data->video_access == 'Paid')
                                                 <div class="vid-lab-premium">
-                                                    <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
+                                                    <img src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}"
                                                         alt="premium" title="premium">
                                                 </div>
                                             @endif
@@ -548,7 +548,7 @@
                                             <div class="video-img">
                                                 @if ($movies_data->video_access == 'Paid')
                                                     <div class="vid-lab-premium">
-                                                        <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
+                                                        <img src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}"
                                                             alt="ic-premium" title="Movies">
                                                     </div>
                                                 @endif
@@ -594,7 +594,7 @@
                                             <div class="video-img">
                                                 @if ($series_data->series_access == 'Paid')
                                                     <div class="vid-lab-premium"><img
-                                                            src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
+                                                            src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}"
                                                             alt="premium" title="premium"></div>
                                                 @endif
                                                 <span
@@ -646,7 +646,7 @@
                                                 <div class="video-img">
                                                     @if (App\Movies::getMoviesInfo($movie_data, 'video_access') == 'Paid')
                                                         <div class="vid-lab-premium">
-                                                            <img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
+                                                            <img src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}"
                                                                 alt="ic-premium" title="Movies-ic-premium">
                                                         </div>
                                                     @endif
@@ -695,7 +695,7 @@
                                                 <div class="video-img">
                                                     @if (App\Series::getSeriesInfo($show_data, 'series_access') == 'Paid')
                                                         <div class="vid-lab-premium"><img
-                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
+                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}"
                                                                 alt="ic-premium" title="Shows-ic-premium"></div>
                                                     @endif
                                                     <span
@@ -745,7 +745,7 @@
                                                 <div class="video-img">
                                                     @if (App\Sports::getSportsInfo($sport_data, 'video_access') == 'Paid')
                                                         <div class="vid-lab-premium"><img
-                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
+                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}"
                                                                 alt="ic-premium" title="Sports-ic-premium"></div>
                                                     @endif
                                                     <span
@@ -795,7 +795,7 @@
                                                 <div class="video-img">
                                                     @if (App\LiveTV::getLiveTvInfo($tv_data, 'channel_access') == 'Paid')
                                                         <div class="vid-lab-premium"><img
-                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg') }}"
+                                                                src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}"
                                                                 alt="ic-premium" title="LiveTV-ic-premium"></div>
                                                     @endif
                                                     <span

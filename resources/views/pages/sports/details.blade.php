@@ -274,7 +274,7 @@
           <div class="dtl-poster-img" style="background: linear-gradient(90deg, #ff8508, #fd0575); height: 250px; display: flex; align-items: center; justify-content: center; color: white; font-size: 64px; border-radius: 8px; position: relative; margin-bottom: 20px;">
             @if($audio->license_price && $audio->license_price > 0)
               <div class="premium-badge" style="position: absolute; top: 15px; right: 15px; background: linear-gradient(45deg, #ffd700, #ffed4e); color: #333; padding: 8px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 10; box-shadow: 0 2px 8px rgba(255,215,0,0.3);">
-                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium"> Premium - {{getcong('currency_symbol')}}{{number_format($audio->license_price, 2)}}
+                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="Premium"> Premium - {{getcong('currency_symbol')}}{{number_format($audio->license_price, 2)}}
               </div>
             @endif
             <i class="fa fa-music"></i>
@@ -395,7 +395,7 @@
 
                       @if($related_audio->license_price && $related_audio->license_price > 0)
                         <div class="audio-premium-badge">
-                          <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
+                          <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="Premium">
                           <span>Premium</span>
                         </div>
                       @endif

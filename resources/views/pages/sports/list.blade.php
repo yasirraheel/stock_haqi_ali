@@ -342,7 +342,7 @@
 
               @if($audio->license_price && $audio->license_price > 0)
               <div class="audio-premium-badge">
-                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="Premium">
+                <img class="premium-inline-icon" src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="Premium">
                 <span>Premium</span>
               </div>
               @endif

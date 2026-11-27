@@ -35,7 +35,7 @@
                 <a href="{{ URL::to('livetv/details/'.App\LiveTV::getLiveTvInfo($tv_data,'channel_slug').'/'.$tv_data) }}" title="{{App\LiveTV::getLiveTvInfo($tv_data,'channel_name')}}">
                    <div class="video-img">       
                       @if(App\LiveTV::getLiveTvInfo($tv_data,'channel_access')=="Paid")
-                      <div class="vid-lab-premium"><img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="ic-premium" title="ic-premium"></div>
+                      <div class="vid-lab-premium"><img src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="ic-premium" title="ic-premium"></div>
                       @endif   
                     <span class="video-item-content">{{App\LiveTV::getLiveTvInfo($tv_data,'channel_name')}}</span>
                     <img src="{{ live_tv_thumb_url(App\LiveTV::getLiveTvInfo($tv_data,'channel_thumb')) }}" alt="{{App\LiveTV::getLiveTvInfo($tv_data,'channel_name')}}" title="{{App\LiveTV::getLiveTvInfo($tv_data,'channel_name')}}" />

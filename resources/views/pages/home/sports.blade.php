@@ -35,7 +35,7 @@
              <a href="{{ URL::to('sports/details/'.App\Sports::getSportsInfo($sport_data,'video_slug').'/'.$sport_data) }}" title="{{App\Sports::getSportsInfo($sport_data,'video_title')}}">
                 <div class="video-img">       
                    @if(App\Sports::getSportsInfo($sport_data,'video_access')=="Paid")
-                   <div class="vid-lab-premium"><img src="{{ URL::asset('site_assets/images/ic-premium.svg') }}" alt="ic-premium" title="ic-premium"></div>
+                   <div class="vid-lab-premium"><img src="{{ URL::asset('site_assets/images/ic-premium.svg?v=3') }}" alt="ic-premium" title="ic-premium"></div>
                    @endif   
                  <span class="video-item-content">{{App\Sports::getSportsInfo($sport_data,'video_title')}}</span>
                  <img src="{{URL::to('/'.App\Sports::getSportsInfo($sport_data,'video_image'))}}" alt="{{App\Sports::getSportsInfo($sport_data,'video_title')}}" title="{{App\Sports::getSportsInfo($sport_data,'video_title')}}" />         
