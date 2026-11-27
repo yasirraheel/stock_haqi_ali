@@ -115,28 +115,39 @@
                                 <div class="col-md-6">
                                     <h4 class="m-t-0 m-b-30 header-title" style="font-size: 20px;">
                                         {{ trans('words.movie_poster_thumb_video') }}</h4>
-                                    @if (isset($movie->id))
-                                        @php
-                                            $placeholderUrl = URL::asset(stock_placeholder_path());
-                                        @endphp
-                                        <div class="form-group row">
-                                            <label class="col-sm-3 col-form-label">&nbsp;</label>
-                                            <div class="col-sm-8">
-                                                <div id="movie-image-preview">
-                                                    <img src="{{ stock_image_url($movie->video_image_thumb) }}" alt="video thumb"
-                                                        class="img-thumbnail" width="220">
+                                    @php
+                                        $placeholderUrl = URL::asset(stock_placeholder_path());
+                                        $currentMovieImage = isset($movie->id)
+                                            ? stock_image_url($movie->video_image_thumb)
+                                            : $placeholderUrl;
+                                    @endphp
+                                    <div class="form-group row">
+                                        <label class="col-sm-3 col-form-label">Image</label>
+                                        <div class="col-sm-8">
+                                            <div id="movie-image-preview">
+                                                <img src="{{ $currentMovieImage }}" alt="video thumb"
+                                                    class="img-thumbnail" width="220">
+                                                @if (isset($movie->id))
                                                     <div class="mt-2">
                                                         <button type="button" id="remove_movie_image" class="btn btn-outline-danger btn-sm">
                                                             <i class="fa fa-trash"></i> Remove image
                                                         </button>
                                                         <small id="movie-image-placeholder-note" class="form-text text-muted" style="display:none;">
-                                                            The CineStock placeholder will be used after saving.
+                                                            Placeholder selected. Choose a new image below to replace it.
                                                         </small>
                                                     </div>
-                                                </div>
+                                                @endif
+                                            </div>
+                                            <div class="mt-3">
+                                                <label for="movie_image_upload" class="mb-1">Upload new image</label>
+                                                <input type="file" name="movie_image_upload" id="movie_image_upload"
+                                                    class="form-control-file" accept="image/jpeg,image/png,image/webp">
+                                                <small class="form-text text-muted">
+                                                    Optional. JPG, PNG or WebP, maximum 5 MB.
+                                                </small>
                                             </div>
                                         </div>
-                                    @endif
+                                    </div>
                                     <input type="hidden" name="remove_image" id="remove_image" value="0">
 
                                     <div class="form-group row">
@@ -265,13 +276,38 @@
 
 
     <script type="text/javascript">
-        $(function() {
-            $('#remove_movie_image').on('click', function() {
-                $('#remove_image').val('1');
-                $('#movie-image-preview img').attr('src', '{{ $placeholderUrl ?? URL::asset(stock_placeholder_path()) }}');
-                $(this).prop('disabled', true).html('<i class="fa fa-check"></i> Placeholder selected');
-                $('#movie-image-placeholder-note').show();
-            });
+        document.addEventListener('DOMContentLoaded', function() {
+            var removeButton = document.getElementById('remove_movie_image');
+            var removeInput = document.getElementById('remove_image');
+            var imageUpload = document.getElementById('movie_image_upload');
+            var imagePreview = document.querySelector('#movie-image-preview img');
+            var placeholderNote = document.getElementById('movie-image-placeholder-note');
+            var placeholderUrl = '{{ $placeholderUrl }}';
+
+            if (removeButton && removeInput && imagePreview) {
+                removeButton.addEventListener('click', function() {
+                    removeInput.value = '1';
+                    imagePreview.src = placeholderUrl;
+                    removeButton.disabled = true;
+                    removeButton.innerHTML = '<i class="fa fa-check"></i> Placeholder selected';
+                    if (placeholderNote) placeholderNote.style.display = 'block';
+                });
+            }
+
+            if (imageUpload && imagePreview && removeInput) {
+                imageUpload.addEventListener('change', function() {
+                    var file = imageUpload.files && imageUpload.files[0];
+                    if (!file) return;
+
+                    removeInput.value = '0';
+                    imagePreview.src = URL.createObjectURL(file);
+                    if (removeButton) {
+                        removeButton.disabled = false;
+                        removeButton.innerHTML = '<i class="fa fa-trash"></i> Remove image';
+                    }
+                    if (placeholderNote) placeholderNote.style.display = 'none';
+                });
+            }
         });
 
         // function to update the file selected by elfinder

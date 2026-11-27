@@ -133,7 +133,8 @@ class MoviesController extends MainAdminController
         // Set validation rules
         $rule = [
             'genres' => 'required',
-            'video_title' => 'required'
+            'video_title' => 'required',
+            'movie_image_upload' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120'
         ];
 
         $validator = Validator::make($data, $rule);
@@ -146,6 +147,20 @@ class MoviesController extends MainAdminController
         $movie_obj = !empty($inputs['id']) ? Movies::findOrFail($inputs['id']) : new Movies;
         $removeImage = $request->boolean('remove_image');
         $placeholderPath = stock_placeholder_path();
+        $uploadedImagePath = null;
+
+        if ($request->hasFile('movie_image_upload') && $request->file('movie_image_upload')->isValid()) {
+            $image = $request->file('movie_image_upload');
+            $imageDirectory = public_path('upload/images');
+
+            if (!is_dir($imageDirectory)) {
+                mkdir($imageDirectory, 0755, true);
+            }
+
+            $imageName = 'movie_' . time() . '_' . Str::random(12) . '.' . strtolower($image->getClientOriginalExtension());
+            $image->move($imageDirectory, $imageName);
+            $uploadedImagePath = 'upload/images/' . $imageName;
+        }
 
         // Store original values for comparison (for updates)
         $original_title = $movie_obj->video_title ?? '';
@@ -183,7 +198,10 @@ class MoviesController extends MainAdminController
         $movie_obj->video_url = $video_url;
         $movie_obj->video_type = "URL";
 
-        if ($removeImage) {
+        if ($uploadedImagePath) {
+            $movie_obj->video_image = $uploadedImagePath;
+            $movie_obj->video_image_thumb = $uploadedImagePath;
+        } elseif ($removeImage) {
             $movie_obj->video_image = $placeholderPath;
             $movie_obj->video_image_thumb = $placeholderPath;
         }
@@ -213,10 +231,10 @@ class MoviesController extends MainAdminController
         // Save the movie object
         $movie_obj->save();
 
-        if ($removeImage) {
+        if ($removeImage || $uploadedImagePath) {
             Thumbnail::updateOrCreate(
                 ['file_id' => $fileId],
-                ['video_image_thumb' => $placeholderPath]
+                ['video_image_thumb' => $uploadedImagePath ?: $placeholderPath]
             );
 
             Session::flash('flash_message', trans('words.successfully_updated'));
