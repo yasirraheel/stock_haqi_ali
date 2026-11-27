@@ -89,6 +89,30 @@
           flex: 0 0 auto;
       }
 
+      /* Premium image badges use their own polished medallion; do not wrap them in the theme's green circle. */
+      .vid-lab-premium {
+          width: 38px !important;
+          height: 38px !important;
+          padding: 0 !important;
+          display: flex !important;
+          align-items: center;
+          justify-content: center;
+          background: transparent !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+      }
+
+      .vid-lab-premium img {
+          width: 38px !important;
+          height: 38px !important;
+          max-width: none !important;
+          max-height: none !important;
+          object-fit: contain !important;
+          display: block !important;
+          margin: 0 !important;
+      }
+
       .premium-badge .premium-inline-icon,
       .premium-alert .premium-inline-icon {
           width: 1.35em;
@@ -432,6 +456,12 @@
 
       /* Mobile Responsive Audio Cards */
       @media (max-width: 768px) {
+          .vid-lab-premium,
+          .vid-lab-premium img {
+              width: 34px !important;
+              height: 34px !important;
+          }
+
           .vfx-item-section {
               flex-direction: column;
               align-items: flex-start;
